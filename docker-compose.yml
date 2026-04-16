@@ -1,0 +1,17 @@
+services:
+  trasck-frontend:
+    build:
+      context: .
+      args:
+        - VITE_API_URL=${VITE_API_URL}
+    networks:
+      - trasck-network
+      - shared-network
+    ports:
+      - "6100:80"
+    container_name: trasck-frontend
+networks:
+  trasck-network:
+    external: true
+  shared-network:
+    external: true
