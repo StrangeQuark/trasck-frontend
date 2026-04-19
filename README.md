@@ -26,6 +26,16 @@ docker-compose up --build
 ```
 <br>
 
+For local Vite development:
+
+```
+npm install
+npm run dev
+```
+
+The dev server runs on `http://localhost:8080`. The backend defaults to `http://localhost:6100`; override it with `VITE_TRASCK_API_BASE_URL` or the existing `VITE_API_URL`.
+<br>
+
 ### API Client Generation
 The frontend keeps a generated TypeScript API client under `src/api/generated`. Start the Trasck backend, then regenerate the client when the backend OpenAPI contract changes:
 
