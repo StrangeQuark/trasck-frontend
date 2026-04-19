@@ -7,7 +7,7 @@ export default defineConfig({
     react()
   ],
   server: {
-    port: 6100
+    port: 8080
   },
   optimizeDeps: {
     include: ['react', 'react-dom'],
