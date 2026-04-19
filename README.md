@@ -26,6 +26,16 @@ docker-compose up --build
 ```
 <br>
 
+### API Client Generation
+The frontend keeps a generated TypeScript API client under `src/api/generated`. Start the Trasck backend, then regenerate the client when the backend OpenAPI contract changes:
+
+```
+npm run generate:api
+```
+
+By default the generator reads `http://localhost:6100/v3/api-docs`. Override it with `TRASCK_OPENAPI_URL` for another running backend, or `TRASCK_OPENAPI_SOURCE` to generate from a local OpenAPI JSON file.
+<br>
+
 ## Deployment
 This project includes a `Jenkinsfile` for use in CI/CD pipelines. Jenkins must be configured with:
 
