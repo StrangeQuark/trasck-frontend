@@ -6190,6 +6190,54 @@
         }
       }
     },
+    "/api/v1/saved-filters/{savedFilterId}/work-items": {
+      "get": {
+        "tags": [
+          "saved-filter-controller"
+        ],
+        "operationId": "executeWorkItems",
+        "parameters": [
+          {
+            "name": "savedFilterId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageResponseWorkItemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/reports/workspaces/{workspaceId}/dashboard-summary": {
       "get": {
         "tags": [
@@ -10660,6 +10708,27 @@
           }
         }
       },
+      "CursorPageResponseWorkItemResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkItemResponse"
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
       "CycleTimeMetricsResponse": {
         "type": "object",
         "properties": {
@@ -11403,27 +11472,6 @@
           },
           "visibility": {
             "type": "string"
-          }
-        }
-      },
-      "CursorPageResponseWorkItemResponse": {
-        "type": "object",
-        "properties": {
-          "items": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/WorkItemResponse"
-            }
-          },
-          "nextCursor": {
-            "type": "string"
-          },
-          "hasMore": {
-            "type": "boolean"
-          },
-          "limit": {
-            "type": "integer",
-            "format": "int32"
           }
         }
       },
