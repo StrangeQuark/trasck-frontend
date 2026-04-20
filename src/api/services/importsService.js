@@ -255,6 +255,13 @@ export const createImportsService = (api) => ({
     });
   },
 
+  listWorkspaceConflictResolutionJobs(workspaceId, query = {}) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs', {
+      path: { workspaceId },
+      query,
+    });
+  },
+
   getConflictResolutionJob(jobId) {
     return api.request('get', '/api/v1/import-conflict-resolution-jobs/{jobId}', {
       path: { jobId },
@@ -264,6 +271,25 @@ export const createImportsService = (api) => ({
   runConflictResolutionJob(jobId) {
     return api.request('post', '/api/v1/import-conflict-resolution-jobs/{jobId}/run', {
       path: { jobId },
+    });
+  },
+
+  cancelConflictResolutionJob(jobId) {
+    return api.request('post', '/api/v1/import-conflict-resolution-jobs/{jobId}/cancel', {
+      path: { jobId },
+    });
+  },
+
+  retryConflictResolutionJob(jobId) {
+    return api.request('post', '/api/v1/import-conflict-resolution-jobs/{jobId}/retry', {
+      path: { jobId },
+    });
+  },
+
+  processConflictResolutionJobs(workspaceId, query = {}) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs/process', {
+      path: { workspaceId },
+      query,
     });
   },
 
@@ -302,6 +328,19 @@ export const createImportsService = (api) => ({
   exportJobVersionDiffs(importJobId) {
     return api.request('get', '/api/v1/import-jobs/{importJobId}/version-diffs/export', {
       path: { importJobId },
+    });
+  },
+
+  createJobVersionDiffExportJob(importJobId) {
+    return api.request('post', '/api/v1/import-jobs/{importJobId}/version-diffs/export-jobs', {
+      path: { importJobId },
+    });
+  },
+
+  listExportJobs(workspaceId, query = {}) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/export-jobs', {
+      path: { workspaceId },
+      query,
     });
   },
 

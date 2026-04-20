@@ -31,6 +31,8 @@ export const ImportJobDetailPage = ({ context }) => {
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [jobVersionDiffs, setJobVersionDiffs] = useState(null);
   const [jobVersionDiffExport, setJobVersionDiffExport] = useState(null);
+  const [jobVersionDiffExportJob, setJobVersionDiffExportJob] = useState(null);
+  const [conflictResolutionWorkerResult, setConflictResolutionWorkerResult] = useState(null);
   const [materializeResult, setMaterializeResult] = useState(null);
   const [recordEditForm, setRecordEditForm] = useState(importRecordToForm());
   const [conflictForm, setConflictForm] = useState({ recordId: '', resolution: 'create_new' });
@@ -73,6 +75,7 @@ export const ImportJobDetailPage = ({ context }) => {
       setConflictResolutionJobs(resolutionJobRows || []);
       setJobVersionDiffs(jobDiffRows || null);
       setJobVersionDiffExport(null);
+      setJobVersionDiffExportJob(null);
       setMaterializationRuns(runRows || []);
       await syncRecordEditForm(recordRows);
       setConflictForm((current) => ({ ...current, recordId: firstId(conflictRows) }));
@@ -142,10 +145,47 @@ export const ImportJobDetailPage = ({ context }) => {
     await load();
   };
 
+  const cancelConflictResolutionJob = async () => {
+    if (!conflictResolutionJobId) {
+      action.setError('Conflict resolution job is required');
+      return;
+    }
+    await action.run(() => context.services.imports.cancelConflictResolutionJob(conflictResolutionJobId), 'Conflict resolution job canceled');
+    await load();
+  };
+
+  const retryConflictResolutionJob = async () => {
+    if (!conflictResolutionJobId) {
+      action.setError('Conflict resolution job is required');
+      return;
+    }
+    await action.run(() => context.services.imports.retryConflictResolutionJob(conflictResolutionJobId), 'Conflict resolution job retried');
+    await load();
+  };
+
+  const processConflictResolutionJobs = async () => {
+    if (!context.workspaceId) {
+      action.setError('Workspace ID is required');
+      return;
+    }
+    const result = await action.run(() => context.services.imports.processConflictResolutionJobs(context.workspaceId, { limit: 10 }), 'Queued conflict jobs processed');
+    if (result) {
+      setConflictResolutionWorkerResult(result);
+      await load();
+    }
+  };
+
   const loadJobVersionDiffExport = async () => {
     const exported = await action.run(() => context.services.imports.exportJobVersionDiffs(importJobId), 'Job diff export loaded');
     if (exported) {
       setJobVersionDiffExport(exported);
+    }
+  };
+
+  const createJobVersionDiffExportJob = async () => {
+    const exportJob = await action.run(() => context.services.imports.createJobVersionDiffExportJob(importJobId), 'Job diff export artifact created');
+    if (exportJob) {
+      setJobVersionDiffExportJob(exportJob);
     }
   };
 
@@ -204,7 +244,13 @@ export const ImportJobDetailPage = ({ context }) => {
       </Panel>
       <Panel title="Conflict Jobs" icon={<FiActivity />}>
         <RecordSelect label="Resolution job" records={conflictResolutionJobs} value={conflictResolutionJobId} onChange={setConflictResolutionJobId} />
-        <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={runConflictResolutionJob} type="button"><FiActivity />Run job</button>
+        <div className="button-row wrap">
+          <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={runConflictResolutionJob} type="button"><FiActivity />Run job</button>
+          <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={retryConflictResolutionJob} type="button"><FiRefreshCw />Retry job</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processConflictResolutionJobs} type="button"><FiActivity />Process queued</button>
+          <button className="icon-button danger" disabled={action.pending || !conflictResolutionJobId} onClick={cancelConflictResolutionJob} title="Cancel conflict resolution job" type="button"><FiX /></button>
+        </div>
+        <JsonPreview title="Worker Result" value={conflictResolutionWorkerResult} />
         <JsonPreview title="Resolution Jobs" value={conflictResolutionJobs} />
       </Panel>
       <Panel title="Rerun Snapshot" icon={<FiRefreshCw />}>
@@ -231,12 +277,14 @@ export const ImportJobDetailPage = ({ context }) => {
       <Panel title="Records" icon={<FiEye />} wide>
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending} onClick={loadJobVersionDiffExport} type="button"><FiEye />Load job diff export</button>
+          <button className="secondary-button" disabled={action.pending} onClick={createJobVersionDiffExportJob} type="button"><FiPlus />Create export artifact</button>
         </div>
         <JsonPreview title="Job" value={job} />
         <JsonPreview title="Open Conflicts" value={conflicts} />
         <JsonPreview title="Conflict Resolution Jobs" value={conflictResolutionJobs} />
         <JsonPreview title="Job Version Diffs" value={jobVersionDiffs} />
         <JsonPreview title="Job Version Diff Export" value={jobVersionDiffExport} />
+        <JsonPreview title="Job Version Diff Export Artifact" value={jobVersionDiffExportJob} />
         <JsonPreview title="Materialization Runs" value={materializationRuns} />
         <JsonPreview title="Materialize Result" value={materializeResult} />
         <JsonPreview title="Records" value={records} />

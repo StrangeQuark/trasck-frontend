@@ -35,6 +35,8 @@ const filterRequest = (filters) => ({
   sourceType: filters.sourceType || undefined,
 });
 
+const pageItems = (page) => (Array.isArray(page) ? page : page?.items || []);
+
 const openConflictCompletionPhrase = 'COMPLETE WITH OPEN CONFLICTS';
 const filteredConflictResolutionPhrase = 'RESOLVE FILTERED CONFLICTS';
 
@@ -51,10 +53,15 @@ export const ImportsPage = ({ context }) => {
   const [recordVersionDiffs, setRecordVersionDiffs] = useState([]);
   const [conflicts, setConflicts] = useState([]);
   const [conflictResolutionJobs, setConflictResolutionJobs] = useState([]);
+  const [workspaceConflictResolutionJobs, setWorkspaceConflictResolutionJobs] = useState([]);
   const [conflictResolutionJobId, setConflictResolutionJobId] = useState('');
+  const [conflictResolutionJobStatus, setConflictResolutionJobStatus] = useState('');
+  const [conflictResolutionWorkerResult, setConflictResolutionWorkerResult] = useState(null);
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [jobVersionDiffs, setJobVersionDiffs] = useState(null);
   const [jobVersionDiffExport, setJobVersionDiffExport] = useState(null);
+  const [jobVersionDiffExportJob, setJobVersionDiffExportJob] = useState(null);
+  const [exportJobs, setExportJobs] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [parseResult, setParseResult] = useState(null);
   const [materializeResult, setMaterializeResult] = useState(null);
@@ -126,7 +133,7 @@ export const ImportsPage = ({ context }) => {
       const nextJobId = importJobId || firstId(jobRows);
       const nextTemplateId = mappingTemplateId || firstId(templateRows);
       const nextPresetId = transformPresetId || firstId(presetRows);
-      const [job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows] = await Promise.all([
+      const [job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows, workspaceResolutionJobRows, exportJobPage] = await Promise.all([
         nextJobId ? context.services.imports.getJob(nextJobId) : Promise.resolve(null),
         nextJobId ? context.services.imports.listRecords(nextJobId, filterRequest(recordFilters)) : Promise.resolve([]),
         nextJobId ? context.services.imports.listConflicts(nextJobId) : Promise.resolve([]),
@@ -134,8 +141,10 @@ export const ImportsPage = ({ context }) => {
         nextJobId ? context.services.imports.listJobVersionDiffs(nextJobId) : Promise.resolve(null),
         nextJobId ? context.services.imports.listMaterializationRuns(nextJobId) : Promise.resolve([]),
         nextPresetId ? context.services.imports.listTransformPresetVersions(nextPresetId) : Promise.resolve([]),
+        context.services.imports.listWorkspaceConflictResolutionJobs(context.workspaceId, { status: conflictResolutionJobStatus || undefined }),
+        context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }),
       ]);
-      return { jobRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows };
+      return { jobRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows, workspaceResolutionJobRows, exportJobPage };
     });
     if (result) {
       setJobs(result.jobRows || []);
@@ -148,8 +157,11 @@ export const ImportsPage = ({ context }) => {
       setRecords(result.recordRows || []);
       setConflicts(result.conflictRows || []);
       setConflictResolutionJobs(result.resolutionJobRows || []);
+      setWorkspaceConflictResolutionJobs(result.workspaceResolutionJobRows || []);
       setJobVersionDiffs(result.jobDiffRows || null);
       setJobVersionDiffExport(null);
+      setJobVersionDiffExportJob(null);
+      setExportJobs(pageItems(result.exportJobPage));
       setMaterializationRuns(result.runRows || []);
       setTransformPresetVersions(result.versionRows || []);
       await syncRecordEditForm(result.recordRows);
@@ -424,6 +436,36 @@ export const ImportsPage = ({ context }) => {
     await loadRecords();
   };
 
+  const cancelConflictResolutionJob = async () => {
+    if (!conflictResolutionJobId) {
+      action.setError('Conflict resolution job is required');
+      return;
+    }
+    await action.run(() => context.services.imports.cancelConflictResolutionJob(conflictResolutionJobId), 'Conflict resolution job canceled');
+    await loadRecords();
+  };
+
+  const retryConflictResolutionJob = async () => {
+    if (!conflictResolutionJobId) {
+      action.setError('Conflict resolution job is required');
+      return;
+    }
+    await action.run(() => context.services.imports.retryConflictResolutionJob(conflictResolutionJobId), 'Conflict resolution job retried');
+    await loadRecords();
+  };
+
+  const processConflictResolutionJobs = async () => {
+    if (!context.workspaceId) {
+      action.setError('Workspace ID is required');
+      return;
+    }
+    const result = await action.run(() => context.services.imports.processConflictResolutionJobs(context.workspaceId, { limit: 10 }), 'Queued conflict jobs processed');
+    if (result) {
+      setConflictResolutionWorkerResult(result);
+      await loadRecords();
+    }
+  };
+
   const loadJobVersionDiffExport = async () => {
     if (!importJobId) {
       action.setError('Import job is required');
@@ -432,6 +474,37 @@ export const ImportsPage = ({ context }) => {
     const exported = await action.run(() => context.services.imports.exportJobVersionDiffs(importJobId), 'Job diff export loaded');
     if (exported) {
       setJobVersionDiffExport(exported);
+    }
+  };
+
+  const createJobVersionDiffExportJob = async () => {
+    if (!importJobId) {
+      action.setError('Import job is required');
+      return;
+    }
+    const exportJob = await action.run(() => context.services.imports.createJobVersionDiffExportJob(importJobId), 'Job diff export artifact created');
+    if (exportJob) {
+      setJobVersionDiffExportJob(exportJob);
+      if (context.workspaceId) {
+        const exportJobPage = await action.run(() => context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }));
+        setExportJobs(pageItems(exportJobPage));
+      }
+    }
+  };
+
+  const loadImportOpsAudit = async () => {
+    if (!context.workspaceId) {
+      action.setError('Workspace ID is required');
+      return;
+    }
+    const result = await action.run(() => Promise.all([
+      context.services.imports.listWorkspaceConflictResolutionJobs(context.workspaceId, { status: conflictResolutionJobStatus || undefined }),
+      context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }),
+    ]));
+    if (result) {
+      const [workspaceResolutionJobRows, exportJobPage] = result;
+      setWorkspaceConflictResolutionJobs(workspaceResolutionJobRows || []);
+      setExportJobs(pageItems(exportJobPage));
     }
   };
 
@@ -459,15 +532,20 @@ export const ImportsPage = ({ context }) => {
       context.services.imports.listConflictResolutionJobs(importJobId),
       context.services.imports.listJobVersionDiffs(importJobId),
       context.services.imports.listMaterializationRuns(importJobId),
+      context.workspaceId ? context.services.imports.listWorkspaceConflictResolutionJobs(context.workspaceId, { status: conflictResolutionJobStatus || undefined }) : Promise.resolve([]),
+      context.workspaceId ? context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }) : Promise.resolve({ items: [] }),
     ]));
     if (result) {
-      const [job, rows, conflictRows, resolutionJobRows, jobDiffRows, runs] = result;
+      const [job, rows, conflictRows, resolutionJobRows, jobDiffRows, runs, workspaceResolutionJobRows, exportJobPage] = result;
       setSelectedJob(job || null);
       setRecords(rows || []);
       setConflicts(conflictRows || []);
       setConflictResolutionJobs(resolutionJobRows || []);
+      setWorkspaceConflictResolutionJobs(workspaceResolutionJobRows || []);
       setJobVersionDiffs(jobDiffRows || null);
       setJobVersionDiffExport(null);
+      setJobVersionDiffExportJob(null);
+      setExportJobs(pageItems(exportJobPage));
       setMaterializationRuns(runs || []);
       await syncRecordEditForm(rows, preferredRecordId);
       setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(conflictRows, current.recordId) }));
@@ -603,6 +681,16 @@ export const ImportsPage = ({ context }) => {
           <button className="icon-button danger" disabled={action.pending || !importJobId} onClick={() => jobCommand(context.services.imports.cancel, 'Import canceled')} title="Cancel import" type="button"><FiX /></button>
         </div>
       </Panel>
+      <Panel title="Import Ops Audit" icon={<FiActivity />}>
+        <SelectField label="Conflict job status" value={conflictResolutionJobStatus} onChange={setConflictResolutionJobStatus} options={['', 'queued', 'running', 'completed', 'failed', 'cancelled']} />
+        <div className="button-row wrap">
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadImportOpsAudit} type="button"><FiRefreshCw />Load audit</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processConflictResolutionJobs} type="button"><FiActivity />Process queued</button>
+        </div>
+        <JsonPreview title="Worker Result" value={conflictResolutionWorkerResult} />
+        <JsonPreview title="Workspace Conflict Jobs" value={workspaceConflictResolutionJobs} />
+        <JsonPreview title="Import Diff Export Jobs" value={exportJobs} />
+      </Panel>
       <Panel title="Import Records" icon={<FiEye />} wide>
         <ErrorLine message={action.error} />
         <div className="data-columns two no-margin">
@@ -668,7 +756,11 @@ export const ImportsPage = ({ context }) => {
             <button className="secondary-button" disabled={action.pending || !filteredConflictPreview?.matched} onClick={resolveFilteredConflicts} type="button"><FiCheck />Resolve filtered</button>
             <button className="secondary-button" disabled={action.pending || !filteredConflictPreview?.matched} onClick={queueFilteredConflictResolutionJob} type="button"><FiPlus />Queue filtered</button>
             <RecordSelect label="Resolution job" records={conflictResolutionJobs} value={conflictResolutionJobId} onChange={setConflictResolutionJobId} />
-            <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={runConflictResolutionJob} type="button"><FiActivity />Run job</button>
+            <div className="button-row wrap">
+              <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={runConflictResolutionJob} type="button"><FiActivity />Run job</button>
+              <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={retryConflictResolutionJob} type="button"><FiRefreshCw />Retry job</button>
+              <button className="icon-button danger" disabled={action.pending || !conflictResolutionJobId} onClick={cancelConflictResolutionJob} title="Cancel conflict resolution job" type="button"><FiX /></button>
+            </div>
             <JsonPreview title="Filtered Conflict Preview" value={filteredConflictPreview} />
             <JsonPreview title="Resolution Jobs" value={conflictResolutionJobs} />
           </form>
@@ -701,6 +793,7 @@ export const ImportsPage = ({ context }) => {
         />
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={loadJobVersionDiffExport} type="button"><FiEye />Load job diff export</button>
+          <button className="secondary-button" disabled={action.pending || !importJobId} onClick={createJobVersionDiffExportJob} type="button"><FiPlus />Create export artifact</button>
         </div>
         <div className="data-columns">
           <JsonPreview title="Jobs" value={jobs} />
@@ -712,8 +805,11 @@ export const ImportsPage = ({ context }) => {
           <JsonPreview title="Materialize Result" value={materializeResult} />
           <JsonPreview title="Job Version Diffs" value={jobVersionDiffs} />
           <JsonPreview title="Job Version Diff Export" value={jobVersionDiffExport} />
+          <JsonPreview title="Job Version Diff Export Artifact" value={jobVersionDiffExportJob} />
           <JsonPreview title="Materialization Runs" value={materializationRuns} />
           <JsonPreview title="Conflict Resolution Jobs" value={conflictResolutionJobs} />
+          <JsonPreview title="Workspace Conflict Resolution Jobs" value={workspaceConflictResolutionJobs} />
+          <JsonPreview title="Import Diff Export Jobs" value={exportJobs} />
           <JsonPreview title="Open Conflicts" value={conflicts} />
           <JsonPreview title="Records" value={records} />
         </div>

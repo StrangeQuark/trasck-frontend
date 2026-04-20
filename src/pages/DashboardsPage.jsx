@@ -12,6 +12,10 @@ import { useApiAction } from '../hooks/useApiAction';
 export const DashboardsPage = ({ context }) => {
   const [dashboards, setDashboards] = useState([]);
   const [rendered, setRendered] = useState(null);
+  const [projectSummary, setProjectSummary] = useState(null);
+  const [workspaceSummary, setWorkspaceSummary] = useState(null);
+  const [projectImportCompletions, setProjectImportCompletions] = useState(null);
+  const [workspaceImportCompletions, setWorkspaceImportCompletions] = useState(null);
   const [dashboardForm, setDashboardForm] = useState({ name: 'Project Health', visibility: 'project', layoutText: JSON.stringify({ columns: 12 }, null, 2) });
   const [widgetForm, setWidgetForm] = useState({
     widgetType: 'project_summary',
@@ -21,6 +25,10 @@ export const DashboardsPage = ({ context }) => {
     positionY: '0',
     width: '6',
     height: '4',
+  });
+  const [reportForm, setReportForm] = useState({
+    from: '2020-01-01T00:00:00Z',
+    to: '2030-01-01T00:00:00Z',
   });
   const action = useApiAction(context.addToast);
 
@@ -77,6 +85,39 @@ export const DashboardsPage = ({ context }) => {
     }
   };
 
+  const loadImportReports = async () => {
+    if (!context.workspaceId) {
+      action.setError('Workspace ID is required');
+      return;
+    }
+    const query = {
+      from: reportForm.from || undefined,
+      to: reportForm.to || undefined,
+    };
+    const result = await action.run(() => Promise.all([
+      context.projectId ? context.services.dashboards.projectSummary(context.projectId, query) : Promise.resolve(null),
+      context.services.dashboards.workspaceSummary(context.workspaceId, query),
+      context.projectId ? context.services.dashboards.projectImportCompletions(context.projectId, query) : Promise.resolve(null),
+      context.services.dashboards.workspaceImportCompletions(context.workspaceId, query),
+    ]));
+    if (result) {
+      const [nextProjectSummary, nextWorkspaceSummary, nextProjectImportCompletions, nextWorkspaceImportCompletions] = result;
+      setProjectSummary(nextProjectSummary);
+      setWorkspaceSummary(nextWorkspaceSummary);
+      setProjectImportCompletions(nextProjectImportCompletions);
+      setWorkspaceImportCompletions(nextWorkspaceImportCompletions);
+    }
+  };
+
+  const useImportWidgetTemplate = (widgetType, title, config) => {
+    setWidgetForm((current) => ({
+      ...current,
+      widgetType,
+      title,
+      configText: JSON.stringify(config, null, 2),
+    }));
+  };
+
   return (
     <div className="content-grid">
       <Panel title="Dashboard Builder" icon={<FiBarChart2 />}>
@@ -92,6 +133,10 @@ export const DashboardsPage = ({ context }) => {
       <Panel title="Widget" icon={<FiActivity />}>
         <form className="stack" onSubmit={createWidget}>
           <RecordSelect label="Dashboard" records={dashboards} value={context.dashboardId} onChange={context.setDashboardId} />
+          <div className="button-row wrap">
+            <button className="secondary-button" onClick={() => useImportWidgetTemplate('import_completion_summary', 'Import Completion Summary', { reportType: 'project_dashboard_summary', query: { projectId: context.projectId || '' } })} type="button"><FiBarChart2 />Project import</button>
+            <button className="secondary-button" onClick={() => useImportWidgetTemplate('portfolio_import_completion_summary', 'Portfolio Import Completion Summary', { reportType: 'workspace_dashboard_summary', query: {} })} type="button"><FiBarChart2 />Workspace import</button>
+          </div>
           <TextField label="Type" value={widgetForm.widgetType} onChange={(widgetType) => setWidgetForm({ ...widgetForm, widgetType })} />
           <TextField label="Title" value={widgetForm.title} onChange={(title) => setWidgetForm({ ...widgetForm, title })} />
           <Field label="Config JSON">
@@ -115,6 +160,21 @@ export const DashboardsPage = ({ context }) => {
         <div className="data-columns two">
           <JsonPreview title="Dashboards" value={dashboards} />
           <JsonPreview title="Rendered" value={rendered} />
+        </div>
+      </Panel>
+      <Panel title="Import Reports" icon={<FiBarChart2 />} wide>
+        <div className="data-columns two no-margin">
+          <TextField label="From" value={reportForm.from} onChange={(from) => setReportForm({ ...reportForm, from })} />
+          <TextField label="To" value={reportForm.to} onChange={(to) => setReportForm({ ...reportForm, to })} />
+        </div>
+        <div className="button-row wrap">
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadImportReports} type="button"><FiRefreshCw />Load import reports</button>
+        </div>
+        <div className="data-columns two">
+          <JsonPreview title="Project Summary" value={projectSummary} />
+          <JsonPreview title="Workspace Summary" value={workspaceSummary} />
+          <JsonPreview title="Project Import Completions" value={projectImportCompletions} />
+          <JsonPreview title="Workspace Import Completions" value={workspaceImportCompletions} />
         </div>
       </Panel>
     </div>

@@ -539,6 +539,35 @@ export interface ImportJobResponse {
   records?: ImportJobRecordResponse[];
 }
 
+export interface ImportConflictResolutionJobResponse {
+  id?: string;
+  workspaceId?: string;
+  importJobId?: string;
+  requestedById?: string;
+  resolution?: string;
+  scope?: string;
+  status?: string;
+  statusFilter?: string;
+  conflictStatusFilter?: string;
+  sourceTypeFilter?: string;
+  expectedCount?: number;
+  matchedCount?: number;
+  resolvedCount?: number;
+  failedCount?: number;
+  errorMessage?: string;
+  requestedAt?: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
+export interface ImportConflictResolutionWorkerResponse {
+  workspaceId?: string;
+  processed?: number;
+  completed?: number;
+  failed?: number;
+  jobs?: ImportConflictResolutionJobResponse[];
+}
+
 export interface FieldConfigurationRequest {
   customFieldId?: string;
   projectId?: string;
@@ -1586,6 +1615,21 @@ export interface ImportMappingStatusTranslationResponse {
   updatedAt?: string;
 }
 
+export interface ExportJobResponse {
+  id?: string;
+  workspaceId?: string;
+  requestedById?: string;
+  exportType?: string;
+  status?: string;
+  fileAttachmentId?: string;
+  filename?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  checksum?: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
 export interface ImportJobRecordRequest {
   sourceType?: string;
   sourceId?: string;
@@ -1650,27 +1694,6 @@ export interface ImportConflictBulkResolutionPreviewResponse {
   hasMore?: boolean;
   maxResolutionBatchSize?: number;
   records?: ImportJobRecordResponse[];
-}
-
-export interface ImportConflictResolutionJobResponse {
-  id?: string;
-  workspaceId?: string;
-  importJobId?: string;
-  requestedById?: string;
-  resolution?: string;
-  scope?: string;
-  status?: string;
-  statusFilter?: string;
-  conflictStatusFilter?: string;
-  sourceTypeFilter?: string;
-  expectedCount?: number;
-  matchedCount?: number;
-  resolvedCount?: number;
-  failedCount?: number;
-  errorMessage?: string;
-  requestedAt?: string;
-  startedAt?: string;
-  finishedAt?: string;
 }
 
 export interface ImportJobCompleteRequest {
@@ -1946,21 +1969,6 @@ export interface CursorPageResponseExportJobResponse {
   limit?: number;
 }
 
-export interface ExportJobResponse {
-  id?: string;
-  workspaceId?: string;
-  requestedById?: string;
-  exportType?: string;
-  status?: string;
-  fileAttachmentId?: string;
-  filename?: string;
-  contentType?: string;
-  sizeBytes?: number;
-  checksum?: string;
-  startedAt?: string;
-  finishedAt?: string;
-}
-
 export interface AutomationWorkerHealthResponse {
   workspaceId?: string;
   workerType?: string;
@@ -1987,6 +1995,13 @@ export interface CursorPageResponseWorkItemResponse {
   limit?: number;
 }
 
+export interface ImportCompletionMetricsResponse {
+  completedJobs?: number;
+  completedWithOpenConflicts?: number;
+  acceptedOpenConflictCount?: number;
+  lastOpenConflictCompletedAt?: string;
+}
+
 export interface CycleTimeMetricsResponse {
   completedWorkItems?: number;
   averageLeadTimeMinutes?: number;
@@ -2011,13 +2026,6 @@ export interface EstimateTimeMetricsResponse {
   workLogMinutes?: number;
   workLogUserCount?: number;
   workLogDeletedBehavior?: string;
-}
-
-export interface ImportCompletionMetricsResponse {
-  completedJobs?: number;
-  completedWithOpenConflicts?: number;
-  acceptedOpenConflictCount?: number;
-  lastOpenConflictCompletedAt?: string;
 }
 
 export interface PortfolioReportSummaryResponse {
@@ -2812,6 +2820,18 @@ export interface ApiPaths {
     };
       query: undefined;
       body: ImportJobRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs/process": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: {
+      limit?: number;
+    };
+      body: undefined;
       response: unknown;
     };
   };
@@ -3652,6 +3672,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/version-diffs/export-jobs": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/import-jobs/{importJobId}/start": {
     post: {
       path: {
@@ -3775,6 +3805,26 @@ export interface ApiPaths {
     };
   };
   "/api/v1/import-conflict-resolution-jobs/{jobId}/run": {
+    post: {
+      path: {
+      jobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-conflict-resolution-jobs/{jobId}/retry": {
+    post: {
+      path: {
+      jobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-conflict-resolution-jobs/{jobId}/cancel": {
     post: {
       path: {
       jobId: string;
@@ -4930,6 +4980,18 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: {
+      status?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/export-jobs": {
     get: {
       path: {
@@ -5129,6 +5191,20 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/reports/workspaces/{workspaceId}/imports/completions": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: {
+      from?: string;
+      to?: string;
+      projectIds?: string[];
+    };
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/reports/workspaces/{workspaceId}/dashboard-summary": {
     get: {
       path: {
@@ -5201,6 +5277,21 @@ export interface ApiPaths {
       query: {
       fromDate?: string;
       toDate?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/reports/projects/{projectId}/imports/completions": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: {
+      from?: string;
+      to?: string;
+      teamId?: string;
+      iterationId?: string;
     };
       body: undefined;
       response: unknown;
@@ -5685,6 +5776,7 @@ export const apiOperations = {
   "createMappingTemplate": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "listImportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
   "createImportJob": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
+  "processConflictResolutionJobs": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs/process" },
   "listFieldConfigurations": { method: "get", path: "/api/v1/workspaces/{workspaceId}/field-configurations" },
   "createFieldConfiguration": { method: "post", path: "/api/v1/workspaces/{workspaceId}/field-configurations" },
   "processEmailDeliveries": { method: "post", path: "/api/v1/workspaces/{workspaceId}/email-deliveries/process" },
@@ -5769,6 +5861,7 @@ export const apiOperations = {
   "createTypeTranslation": { method: "post", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations" },
   "listStatusTranslations": { method: "get", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations" },
   "createStatusTranslation": { method: "post", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations" },
+  "createJobVersionDiffExportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/version-diffs/export-jobs" },
   "startImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/start" },
   "listRecords": { method: "get", path: "/api/v1/import-jobs/{importJobId}/records" },
   "createRecord": { method: "post", path: "/api/v1/import-jobs/{importJobId}/records" },
@@ -5782,6 +5875,8 @@ export const apiOperations = {
   "cancelImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/cancel" },
   "resolveConflict": { method: "post", path: "/api/v1/import-job-records/{recordId}/resolve-conflict" },
   "runConflictResolutionJob": { method: "post", path: "/api/v1/import-conflict-resolution-jobs/{jobId}/run" },
+  "retryConflictResolutionJob": { method: "post", path: "/api/v1/import-conflict-resolution-jobs/{jobId}/retry" },
+  "cancelConflictResolutionJob": { method: "post", path: "/api/v1/import-conflict-resolution-jobs/{jobId}/cancel" },
   "retryEmailDelivery": { method: "post", path: "/api/v1/email-deliveries/{deliveryId}/retry" },
   "cancelEmailDelivery": { method: "post", path: "/api/v1/email-deliveries/{deliveryId}/cancel" },
   "createWidget": { method: "post", path: "/api/v1/dashboards/{dashboardId}/widgets" },
@@ -5905,6 +6000,7 @@ export const apiOperations = {
   "updateProvider": { method: "patch", path: "/api/v1/agent-providers/{providerId}" },
   "projectActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity" },
   "listNotifications": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notifications" },
+  "listWorkspaceConflictResolutionJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs" },
   "listExportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs" },
   "getExportJob": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}" },
   "downloadExportJob": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}/download" },
@@ -5923,6 +6019,7 @@ export const apiOperations = {
   "listTeamViews": { method: "get", path: "/api/v1/teams/{teamId}/personalization/views" },
   "listByTeam_2": { method: "get", path: "/api/v1/teams/{teamId}/dashboards" },
   "executeWorkItems": { method: "get", path: "/api/v1/saved-filters/{savedFilterId}/work-items" },
+  "workspaceImportCompletions": { method: "get", path: "/api/v1/reports/workspaces/{workspaceId}/imports/completions" },
   "workspaceDashboardSummary": { method: "get", path: "/api/v1/reports/workspaces/{workspaceId}/dashboard-summary" },
   "workLogSummary": { method: "get", path: "/api/v1/reports/work-items/{workItemId}/work-log-summary" },
   "teamHistory": { method: "get", path: "/api/v1/reports/work-items/{workItemId}/team-history" },
@@ -5930,6 +6027,7 @@ export const apiOperations = {
   "estimateHistory": { method: "get", path: "/api/v1/reports/work-items/{workItemId}/estimate-history" },
   "assignmentHistory": { method: "get", path: "/api/v1/reports/work-items/{workItemId}/assignment-history" },
   "projectSnapshots": { method: "get", path: "/api/v1/reports/projects/{projectId}/snapshots" },
+  "projectImportCompletions": { method: "get", path: "/api/v1/reports/projects/{projectId}/imports/completions" },
   "projectDashboardSummary": { method: "get", path: "/api/v1/reports/projects/{projectId}/dashboard-summary" },
   "programDashboardSummary": { method: "get", path: "/api/v1/reports/programs/{programId}/dashboard-summary" },
   "iterationReport": { method: "get", path: "/api/v1/reports/iterations/{iterationId}/report" },

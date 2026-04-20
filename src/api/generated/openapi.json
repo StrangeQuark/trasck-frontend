@@ -1751,6 +1751,46 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs/process": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "processConflictResolutionJobs",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportConflictResolutionWorkerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/field-configurations": {
       "get": {
         "tags": [
@@ -5223,6 +5263,37 @@
         }
       }
     },
+    "/api/v1/import-jobs/{importJobId}/version-diffs/export-jobs": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "createJobVersionDiffExportJob",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-jobs/{importJobId}/start": {
       "post": {
         "tags": [
@@ -5705,6 +5776,68 @@
           "import-job-controller"
         ],
         "operationId": "runConflictResolutionJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportConflictResolutionJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-conflict-resolution-jobs/{jobId}/retry": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "retryConflictResolutionJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportConflictResolutionJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-conflict-resolution-jobs/{jobId}/cancel": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "cancelConflictResolutionJob",
         "parameters": [
           {
             "name": "jobId",
@@ -10022,6 +10155,48 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listWorkspaceConflictResolutionJobs",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportConflictResolutionJobResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/export-jobs": {
       "get": {
         "tags": [
@@ -10729,6 +10904,65 @@
         }
       }
     },
+    "/api/v1/reports/workspaces/{workspaceId}/imports/completions": {
+      "get": {
+        "tags": [
+          "reporting-controller"
+        ],
+        "operationId": "workspaceImportCompletions",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "projectIds",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "format": "uuid"
+              }
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportCompletionMetricsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/reports/workspaces/{workspaceId}/dashboard-summary": {
       "get": {
         "tags": [
@@ -10995,6 +11229,71 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ProjectReportingSnapshotsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/reports/projects/{projectId}/imports/completions": {
+      "get": {
+        "tags": [
+          "reporting-controller"
+        ],
+        "operationId": "projectImportCompletions",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "teamId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "iterationId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportCompletionMetricsResponse"
                 }
               }
             }
@@ -13882,6 +14181,103 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/ImportJobRecordResponse"
+            }
+          }
+        }
+      },
+      "ImportConflictResolutionJobResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "statusFilter": {
+            "type": "string"
+          },
+          "conflictStatusFilter": {
+            "type": "string"
+          },
+          "sourceTypeFilter": {
+            "type": "string"
+          },
+          "expectedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "matchedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "resolvedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ImportConflictResolutionWorkerResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "processed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportConflictResolutionJobResponse"
             }
           }
         }
@@ -16961,6 +17357,54 @@
           }
         }
       },
+      "ExportJobResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "exportType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "fileAttachmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "filename": {
+            "type": "string"
+          },
+          "contentType": {
+            "type": "string"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "checksum": {
+            "type": "string"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ImportJobRecordRequest": {
         "type": "object",
         "properties": {
@@ -17155,76 +17599,6 @@
             "items": {
               "$ref": "#/components/schemas/ImportJobRecordResponse"
             }
-          }
-        }
-      },
-      "ImportConflictResolutionJobResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workspaceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "importJobId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "requestedById": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "resolution": {
-            "type": "string"
-          },
-          "scope": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "statusFilter": {
-            "type": "string"
-          },
-          "conflictStatusFilter": {
-            "type": "string"
-          },
-          "sourceTypeFilter": {
-            "type": "string"
-          },
-          "expectedCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "matchedCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "resolvedCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "failedCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "errorMessage": {
-            "type": "string"
-          },
-          "requestedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "startedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "finishedAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -17978,54 +18352,6 @@
           }
         }
       },
-      "ExportJobResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workspaceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "requestedById": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "exportType": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "fileAttachmentId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "filename": {
-            "type": "string"
-          },
-          "contentType": {
-            "type": "string"
-          },
-          "sizeBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "checksum": {
-            "type": "string"
-          },
-          "startedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "finishedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
       "AutomationWorkerHealthResponse": {
         "type": "object",
         "properties": {
@@ -18106,6 +18432,27 @@
           }
         }
       },
+      "ImportCompletionMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "completedJobs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completedWithOpenConflicts": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "acceptedOpenConflictCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastOpenConflictCompletedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "CycleTimeMetricsResponse": {
         "type": "object",
         "properties": {
@@ -18180,27 +18527,6 @@
           },
           "workLogDeletedBehavior": {
             "type": "string"
-          }
-        }
-      },
-      "ImportCompletionMetricsResponse": {
-        "type": "object",
-        "properties": {
-          "completedJobs": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "completedWithOpenConflicts": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "acceptedOpenConflictCount": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "lastOpenConflictCompletedAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },

@@ -38,4 +38,25 @@ export const createDashboardsService = (api) => ({
       query,
     });
   },
+
+  workspaceSummary(workspaceId, query = {}) {
+    return api.request('get', '/api/v1/reports/workspaces/{workspaceId}/dashboard-summary', {
+      path: { workspaceId },
+      query,
+    });
+  },
+
+  projectImportCompletions(projectId, query = {}) {
+    return api.request('get', '/api/v1/reports/projects/{projectId}/imports/completions', {
+      path: { projectId },
+      query,
+    });
+  },
+
+  workspaceImportCompletions(workspaceId, query = {}) {
+    return api.request('get', '/api/v1/reports/workspaces/{workspaceId}/imports/completions', {
+      path: { workspaceId },
+      query,
+    });
+  },
 });
