@@ -426,6 +426,7 @@ export interface ImportMappingTemplateRequest {
   statusKey?: string;
   fieldMapping?: unknown;
   defaults?: unknown;
+  transformationConfig?: unknown;
   enabled?: boolean;
 }
 
@@ -441,6 +442,7 @@ export interface ImportMappingTemplateResponse {
   statusKey?: string;
   fieldMapping?: unknown;
   defaults?: unknown;
+  transformationConfig?: unknown;
   enabled?: boolean;
   createdAt?: string;
   updatedAt?: string;
@@ -1379,6 +1381,60 @@ export interface IterationCloseRequest {
   carryOverIterationId?: string;
 }
 
+export interface ImportMappingValueLookupRequest {
+  sourceField?: string;
+  sourceValue?: string;
+  targetField?: string;
+  targetValue?: unknown;
+  sortOrder?: number;
+  enabled?: boolean;
+}
+
+export interface ImportMappingValueLookupResponse {
+  id?: string;
+  mappingTemplateId?: string;
+  sourceField?: string;
+  sourceValue?: string;
+  targetField?: string;
+  targetValue?: unknown;
+  sortOrder?: number;
+  enabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ImportMappingTypeTranslationRequest {
+  sourceTypeKey?: string;
+  targetTypeKey?: string;
+  enabled?: boolean;
+}
+
+export interface ImportMappingTypeTranslationResponse {
+  id?: string;
+  mappingTemplateId?: string;
+  sourceTypeKey?: string;
+  targetTypeKey?: string;
+  enabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ImportMappingStatusTranslationRequest {
+  sourceStatusKey?: string;
+  targetStatusKey?: string;
+  enabled?: boolean;
+}
+
+export interface ImportMappingStatusTranslationResponse {
+  id?: string;
+  mappingTemplateId?: string;
+  sourceStatusKey?: string;
+  targetStatusKey?: string;
+  enabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ImportJobRecordRequest {
   sourceType?: string;
   sourceId?: string;
@@ -1659,6 +1715,37 @@ export interface ExportJobResponse {
   checksum?: string;
   startedAt?: string;
   finishedAt?: string;
+}
+
+export interface AutomationWorkerRunHistoryResponse {
+  id?: string;
+  workspaceId?: string;
+  workerType?: string;
+  triggerType?: string;
+  status?: string;
+  dryRun?: boolean;
+  requestedLimit?: number;
+  maxAttempts?: number;
+  processedCount?: number;
+  successCount?: number;
+  failureCount?: number;
+  deadLetterCount?: number;
+  errorMessage?: string;
+  metadata?: unknown;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
+export interface AutomationWorkerHealthResponse {
+  workspaceId?: string;
+  workerType?: string;
+  lastRunId?: string;
+  lastStatus?: string;
+  lastStartedAt?: string;
+  lastFinishedAt?: string;
+  consecutiveFailures?: number;
+  lastError?: string;
+  updatedAt?: string;
 }
 
 export interface CursorPageResponseAuditLogEntryResponse {
@@ -3073,6 +3160,60 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups": {
+    get: {
+      path: {
+      mappingTemplateId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      mappingTemplateId: string;
+    };
+      query: undefined;
+      body: ImportMappingValueLookupRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations": {
+    get: {
+      path: {
+      mappingTemplateId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      mappingTemplateId: string;
+    };
+      query: undefined;
+      body: ImportMappingTypeTranslationRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations": {
+    get: {
+      path: {
+      mappingTemplateId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      mappingTemplateId: string;
+    };
+      query: undefined;
+      body: ImportMappingStatusTranslationRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/import-jobs/{importJobId}/start": {
     post: {
       path: {
@@ -3874,6 +4015,66 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups/{lookupId}": {
+    patch: {
+      path: {
+      mappingTemplateId: string;
+      lookupId: string;
+    };
+      query: undefined;
+      body: ImportMappingValueLookupRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      mappingTemplateId: string;
+      lookupId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations/{translationId}": {
+    patch: {
+      path: {
+      mappingTemplateId: string;
+      translationId: string;
+    };
+      query: undefined;
+      body: ImportMappingTypeTranslationRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      mappingTemplateId: string;
+      translationId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations/{translationId}": {
+    patch: {
+      path: {
+      mappingTemplateId: string;
+      translationId: string;
+    };
+      query: undefined;
+      body: ImportMappingStatusTranslationRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      mappingTemplateId: string;
+      translationId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/field-configurations/{fieldConfigurationId}": {
     get: {
       path: {
@@ -4205,6 +4406,26 @@ export interface ApiPaths {
     };
   };
   "/api/v1/workspaces/{workspaceId}/email-deliveries": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/automation-worker-runs": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/automation-worker-health": {
     get: {
       path: {
       workspaceId: string;
@@ -4881,6 +5102,12 @@ export const apiOperations = {
   "addWorkItem": { method: "post", path: "/api/v1/iterations/{iterationId}/work-items" },
   "commitIteration": { method: "post", path: "/api/v1/iterations/{iterationId}/commit" },
   "closeIteration": { method: "post", path: "/api/v1/iterations/{iterationId}/close" },
+  "listValueLookups": { method: "get", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups" },
+  "createValueLookup": { method: "post", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups" },
+  "listTypeTranslations": { method: "get", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations" },
+  "createTypeTranslation": { method: "post", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations" },
+  "listStatusTranslations": { method: "get", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations" },
+  "createStatusTranslation": { method: "post", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations" },
   "startImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/start" },
   "listRecords": { method: "get", path: "/api/v1/import-jobs/{importJobId}/records" },
   "createRecord": { method: "post", path: "/api/v1/import-jobs/{importJobId}/records" },
@@ -4968,6 +5195,12 @@ export const apiOperations = {
   "cancelIteration": { method: "delete", path: "/api/v1/iterations/{iterationId}" },
   "updateMappingTemplate": { method: "patch", path: "/api/v1/import-mapping-templates/{mappingTemplateId}" },
   "deleteMappingTemplate": { method: "delete", path: "/api/v1/import-mapping-templates/{mappingTemplateId}" },
+  "updateValueLookup": { method: "patch", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups/{lookupId}" },
+  "deleteValueLookup": { method: "delete", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups/{lookupId}" },
+  "updateTypeTranslation": { method: "patch", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations/{translationId}" },
+  "deleteTypeTranslation": { method: "delete", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations/{translationId}" },
+  "updateStatusTranslation": { method: "patch", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations/{translationId}" },
+  "deleteStatusTranslation": { method: "delete", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations/{translationId}" },
   "getFieldConfiguration": { method: "get", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
   "updateFieldConfiguration": { method: "patch", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
   "deleteFieldConfiguration": { method: "delete", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
@@ -5003,6 +5236,8 @@ export const apiOperations = {
   "getExportJob": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}" },
   "downloadExportJob": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}/download" },
   "listEmailDeliveries": { method: "get", path: "/api/v1/workspaces/{workspaceId}/email-deliveries" },
+  "listWorkerRuns": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-worker-runs" },
+  "listWorkerHealth": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-worker-health" },
   "listAuditLog": { method: "get", path: "/api/v1/workspaces/{workspaceId}/audit-log" },
   "workspaceActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/activity" },
   "listValues": { method: "get", path: "/api/v1/work-items/{workItemId}/custom-fields" },

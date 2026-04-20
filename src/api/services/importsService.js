@@ -38,6 +38,84 @@ export const createImportsService = (api) => ({
     });
   },
 
+  listValueLookups(mappingTemplateId) {
+    return api.request('get', '/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups', {
+      path: { mappingTemplateId },
+    });
+  },
+
+  createValueLookup(mappingTemplateId, request) {
+    return api.request('post', '/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups', {
+      path: { mappingTemplateId },
+      body: request,
+    });
+  },
+
+  updateValueLookup(mappingTemplateId, lookupId, request) {
+    return api.request('patch', '/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups/{lookupId}', {
+      path: { mappingTemplateId, lookupId },
+      body: request,
+    });
+  },
+
+  deleteValueLookup(mappingTemplateId, lookupId) {
+    return api.request('delete', '/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups/{lookupId}', {
+      path: { mappingTemplateId, lookupId },
+    });
+  },
+
+  listTypeTranslations(mappingTemplateId) {
+    return api.request('get', '/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations', {
+      path: { mappingTemplateId },
+    });
+  },
+
+  createTypeTranslation(mappingTemplateId, request) {
+    return api.request('post', '/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations', {
+      path: { mappingTemplateId },
+      body: request,
+    });
+  },
+
+  updateTypeTranslation(mappingTemplateId, translationId, request) {
+    return api.request('patch', '/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations/{translationId}', {
+      path: { mappingTemplateId, translationId },
+      body: request,
+    });
+  },
+
+  deleteTypeTranslation(mappingTemplateId, translationId) {
+    return api.request('delete', '/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations/{translationId}', {
+      path: { mappingTemplateId, translationId },
+    });
+  },
+
+  listStatusTranslations(mappingTemplateId) {
+    return api.request('get', '/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations', {
+      path: { mappingTemplateId },
+    });
+  },
+
+  createStatusTranslation(mappingTemplateId, request) {
+    return api.request('post', '/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations', {
+      path: { mappingTemplateId },
+      body: request,
+    });
+  },
+
+  updateStatusTranslation(mappingTemplateId, translationId, request) {
+    return api.request('patch', '/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations/{translationId}', {
+      path: { mappingTemplateId, translationId },
+      body: request,
+    });
+  },
+
+  deleteStatusTranslation(mappingTemplateId, translationId) {
+    return api.request('delete', '/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations/{translationId}', {
+      path: { mappingTemplateId, translationId },
+    });
+  },
+
   getJob(importJobId) {
     return api.request('get', '/api/v1/import-jobs/{importJobId}', {
       path: { importJobId },

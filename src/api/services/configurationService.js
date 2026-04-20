@@ -1,7 +1,8 @@
 export const createConfigurationService = (api) => ({
-  listCustomFields(workspaceId) {
+  listCustomFields(workspaceId, query = {}) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/custom-fields', {
       path: { workspaceId },
+      query,
     });
   },
 
@@ -9,6 +10,25 @@ export const createConfigurationService = (api) => ({
     return api.request('post', '/api/v1/workspaces/{workspaceId}/custom-fields', {
       path: { workspaceId },
       body: request,
+    });
+  },
+
+  getCustomField(customFieldId) {
+    return api.request('get', '/api/v1/custom-fields/{customFieldId}', {
+      path: { customFieldId },
+    });
+  },
+
+  updateCustomField(customFieldId, request) {
+    return api.request('patch', '/api/v1/custom-fields/{customFieldId}', {
+      path: { customFieldId },
+      body: request,
+    });
+  },
+
+  archiveCustomField(customFieldId) {
+    return api.request('delete', '/api/v1/custom-fields/{customFieldId}', {
+      path: { customFieldId },
     });
   },
 
@@ -25,10 +45,48 @@ export const createConfigurationService = (api) => ({
     });
   },
 
+  getFieldConfiguration(fieldConfigurationId) {
+    return api.request('get', '/api/v1/field-configurations/{fieldConfigurationId}', {
+      path: { fieldConfigurationId },
+    });
+  },
+
+  updateFieldConfiguration(fieldConfigurationId, request) {
+    return api.request('patch', '/api/v1/field-configurations/{fieldConfigurationId}', {
+      path: { fieldConfigurationId },
+      body: request,
+    });
+  },
+
+  deleteFieldConfiguration(fieldConfigurationId) {
+    return api.request('delete', '/api/v1/field-configurations/{fieldConfigurationId}', {
+      path: { fieldConfigurationId },
+    });
+  },
+
+  listCustomFieldContexts(customFieldId) {
+    return api.request('get', '/api/v1/custom-fields/{customFieldId}/contexts', {
+      path: { customFieldId },
+    });
+  },
+
   createCustomFieldContext(customFieldId, request) {
     return api.request('post', '/api/v1/custom-fields/{customFieldId}/contexts', {
       path: { customFieldId },
       body: request,
+    });
+  },
+
+  updateCustomFieldContext(customFieldId, contextId, request) {
+    return api.request('patch', '/api/v1/custom-fields/{customFieldId}/contexts/{contextId}', {
+      path: { customFieldId, contextId },
+      body: request,
+    });
+  },
+
+  deleteCustomFieldContext(customFieldId, contextId) {
+    return api.request('delete', '/api/v1/custom-fields/{customFieldId}/contexts/{contextId}', {
+      path: { customFieldId, contextId },
     });
   },
 
@@ -45,6 +103,25 @@ export const createConfigurationService = (api) => ({
     });
   },
 
+  getScreen(screenId) {
+    return api.request('get', '/api/v1/screens/{screenId}', {
+      path: { screenId },
+    });
+  },
+
+  updateScreen(screenId, request) {
+    return api.request('patch', '/api/v1/screens/{screenId}', {
+      path: { screenId },
+      body: request,
+    });
+  },
+
+  deleteScreen(screenId) {
+    return api.request('delete', '/api/v1/screens/{screenId}', {
+      path: { screenId },
+    });
+  },
+
   listScreenFields(screenId) {
     return api.request('get', '/api/v1/screens/{screenId}/fields', {
       path: { screenId },
@@ -58,6 +135,19 @@ export const createConfigurationService = (api) => ({
     });
   },
 
+  updateScreenField(screenId, screenFieldId, request) {
+    return api.request('patch', '/api/v1/screens/{screenId}/fields/{screenFieldId}', {
+      path: { screenId, screenFieldId },
+      body: request,
+    });
+  },
+
+  deleteScreenField(screenId, screenFieldId) {
+    return api.request('delete', '/api/v1/screens/{screenId}/fields/{screenFieldId}', {
+      path: { screenId, screenFieldId },
+    });
+  },
+
   listScreenAssignments(screenId) {
     return api.request('get', '/api/v1/screens/{screenId}/assignments', {
       path: { screenId },
@@ -68,6 +158,19 @@ export const createConfigurationService = (api) => ({
     return api.request('post', '/api/v1/screens/{screenId}/assignments', {
       path: { screenId },
       body: request,
+    });
+  },
+
+  updateScreenAssignment(screenId, assignmentId, request) {
+    return api.request('patch', '/api/v1/screens/{screenId}/assignments/{assignmentId}', {
+      path: { screenId, assignmentId },
+      body: request,
+    });
+  },
+
+  deleteScreenAssignment(screenId, assignmentId) {
+    return api.request('delete', '/api/v1/screens/{screenId}/assignments/{assignmentId}', {
+      path: { screenId, assignmentId },
     });
   },
 });

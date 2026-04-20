@@ -51,6 +51,25 @@ export const createAutomationService = (api) => ({
     });
   },
 
+  getRule(ruleId) {
+    return api.request('get', '/api/v1/automation-rules/{ruleId}', {
+      path: { ruleId },
+    });
+  },
+
+  updateRule(ruleId, request) {
+    return api.request('patch', '/api/v1/automation-rules/{ruleId}', {
+      path: { ruleId },
+      body: request,
+    });
+  },
+
+  deleteRule(ruleId) {
+    return api.request('delete', '/api/v1/automation-rules/{ruleId}', {
+      path: { ruleId },
+    });
+  },
+
   createCondition(ruleId, request) {
     return api.request('post', '/api/v1/automation-rules/{ruleId}/conditions', {
       path: { ruleId },
@@ -58,10 +77,36 @@ export const createAutomationService = (api) => ({
     });
   },
 
+  updateCondition(ruleId, conditionId, request) {
+    return api.request('patch', '/api/v1/automation-rules/{ruleId}/conditions/{conditionId}', {
+      path: { ruleId, conditionId },
+      body: request,
+    });
+  },
+
+  deleteCondition(ruleId, conditionId) {
+    return api.request('delete', '/api/v1/automation-rules/{ruleId}/conditions/{conditionId}', {
+      path: { ruleId, conditionId },
+    });
+  },
+
   createAction(ruleId, request) {
     return api.request('post', '/api/v1/automation-rules/{ruleId}/actions', {
       path: { ruleId },
       body: request,
+    });
+  },
+
+  updateAction(ruleId, actionId, request) {
+    return api.request('patch', '/api/v1/automation-rules/{ruleId}/actions/{actionId}', {
+      path: { ruleId, actionId },
+      body: request,
+    });
+  },
+
+  deleteAction(ruleId, actionId) {
+    return api.request('delete', '/api/v1/automation-rules/{ruleId}/actions/{actionId}', {
+      path: { ruleId, actionId },
     });
   },
 
@@ -110,6 +155,18 @@ export const createAutomationService = (api) => ({
     });
   },
 
+  listWorkerRuns(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/automation-worker-runs', {
+      path: { workspaceId },
+    });
+  },
+
+  listWorkerHealth(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/automation-worker-health', {
+      path: { workspaceId },
+    });
+  },
+
   listWebhooks(workspaceId) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/webhooks', {
       path: { workspaceId },
@@ -120,6 +177,19 @@ export const createAutomationService = (api) => ({
     return api.request('post', '/api/v1/workspaces/{workspaceId}/webhooks', {
       path: { workspaceId },
       body: request,
+    });
+  },
+
+  updateWebhook(webhookId, request) {
+    return api.request('patch', '/api/v1/webhooks/{webhookId}', {
+      path: { webhookId },
+      body: request,
+    });
+  },
+
+  deleteWebhook(webhookId) {
+    return api.request('delete', '/api/v1/webhooks/{webhookId}', {
+      path: { webhookId },
     });
   },
 

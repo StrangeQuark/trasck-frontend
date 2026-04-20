@@ -29,4 +29,18 @@ describe('App', () => {
     expect(within(primaryNavigation).getByRole('link', { name: /Planning/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /Agents/i })).toBeInTheDocument();
   });
+
+  it.each([
+    ['/configuration/custom-fields/00000000-0000-0000-0000-000000000001', 'Custom Field Detail'],
+    ['/configuration/screens/00000000-0000-0000-0000-000000000002', 'Screen Detail'],
+    ['/planning/boards/00000000-0000-0000-0000-000000000003', 'Board Detail'],
+    ['/automation/rules/00000000-0000-0000-0000-000000000004', 'Automation Rule Detail'],
+    ['/imports/templates/00000000-0000-0000-0000-000000000005', 'Import Template Detail'],
+  ])('renders detail route %s', async (path, title) => {
+    window.history.pushState({}, '', path);
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument();
+  });
 });
