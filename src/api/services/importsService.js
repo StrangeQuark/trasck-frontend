@@ -12,6 +12,38 @@ export const createImportsService = (api) => ({
     });
   },
 
+  listTransformPresets(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/import-transform-presets', {
+      path: { workspaceId },
+    });
+  },
+
+  createTransformPreset(workspaceId, request) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/import-transform-presets', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
+  getTransformPreset(presetId) {
+    return api.request('get', '/api/v1/import-transform-presets/{presetId}', {
+      path: { presetId },
+    });
+  },
+
+  updateTransformPreset(presetId, request) {
+    return api.request('patch', '/api/v1/import-transform-presets/{presetId}', {
+      path: { presetId },
+      body: request,
+    });
+  },
+
+  deleteTransformPreset(presetId) {
+    return api.request('delete', '/api/v1/import-transform-presets/{presetId}', {
+      path: { presetId },
+    });
+  },
+
   listMappingTemplates(workspaceId) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/import-mapping-templates', {
       path: { workspaceId },

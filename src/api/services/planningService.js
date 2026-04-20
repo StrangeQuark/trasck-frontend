@@ -103,6 +103,20 @@ export const createPlanningService = (api) => ({
     });
   },
 
+  rankBoardWorkItem(boardId, workItemId, request) {
+    return api.request('post', '/api/v1/boards/{boardId}/work-items/{workItemId}/rank', {
+      path: { boardId, workItemId },
+      body: request,
+    });
+  },
+
+  transitionBoardWorkItem(boardId, workItemId, request) {
+    return api.request('post', '/api/v1/boards/{boardId}/work-items/{workItemId}/transition', {
+      path: { boardId, workItemId },
+      body: request,
+    });
+  },
+
   listBoardColumns(boardId) {
     return api.request('get', '/api/v1/boards/{boardId}/columns', {
       path: { boardId },
