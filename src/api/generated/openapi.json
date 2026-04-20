@@ -19091,6 +19091,9 @@
           "importConflictResolutionEnabled": {
             "type": "boolean"
           },
+          "importReviewExportsEnabled": {
+            "type": "boolean"
+          },
           "automationLimit": {
             "type": "integer",
             "format": "int32"
@@ -19104,6 +19107,10 @@
             "format": "int32"
           },
           "importConflictResolutionLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "importReviewExportLimit": {
             "type": "integer",
             "format": "int32"
           },
@@ -19143,6 +19150,29 @@
           },
           "workerRunPruningWindowEnd": {
             "type": "string"
+          },
+          "agentDispatchAttemptRetentionEnabled": {
+            "type": "boolean"
+          },
+          "agentDispatchAttemptRetentionDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agentDispatchAttemptExportBeforePrune": {
+            "type": "boolean"
+          },
+          "agentDispatchAttemptPruningAutomaticEnabled": {
+            "type": "boolean"
+          },
+          "agentDispatchAttemptPruningIntervalMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agentDispatchAttemptPruningWindowStart": {
+            "type": "string"
+          },
+          "agentDispatchAttemptPruningWindowEnd": {
+            "type": "string"
           }
         }
       },
@@ -19165,6 +19195,9 @@
           "importConflictResolutionEnabled": {
             "type": "boolean"
           },
+          "importReviewExportsEnabled": {
+            "type": "boolean"
+          },
           "automationLimit": {
             "type": "integer",
             "format": "int32"
@@ -19178,6 +19211,10 @@
             "format": "int32"
           },
           "importConflictResolutionLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "importReviewExportLimit": {
             "type": "integer",
             "format": "int32"
           },
@@ -19223,6 +19260,37 @@
             "format": "date-time"
           },
           "workerRunPruningLastFinishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "agentDispatchAttemptRetentionEnabled": {
+            "type": "boolean"
+          },
+          "agentDispatchAttemptRetentionDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agentDispatchAttemptExportBeforePrune": {
+            "type": "boolean"
+          },
+          "agentDispatchAttemptPruningAutomaticEnabled": {
+            "type": "boolean"
+          },
+          "agentDispatchAttemptPruningIntervalMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "agentDispatchAttemptPruningWindowStart": {
+            "type": "string"
+          },
+          "agentDispatchAttemptPruningWindowEnd": {
+            "type": "string"
+          },
+          "agentDispatchAttemptPruningLastStartedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "agentDispatchAttemptPruningLastFinishedAt": {
             "type": "string",
             "format": "date-time"
           },

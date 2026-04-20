@@ -11,7 +11,7 @@ import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
 import { firstId, numberOrUndefined, parseJsonOrThrow, settingsToForm } from '../../utils/forms';
 
-const workerTypeOptions = ['all', 'automation', 'webhook', 'email', 'import_conflict_resolution'];
+const workerTypeOptions = ['all', 'automation', 'webhook', 'email', 'import_conflict_resolution', 'import_review_export'];
 
 export const AutomationPage = ({ context }) => {
   const [notifications, setNotifications] = useState(null);
@@ -46,10 +46,12 @@ export const AutomationPage = ({ context }) => {
     webhookDeliveriesEnabled: 'false',
     emailDeliveriesEnabled: 'false',
     importConflictResolutionEnabled: 'false',
+    importReviewExportsEnabled: 'false',
     automationLimit: '25',
     webhookLimit: '25',
     emailLimit: '25',
     importConflictResolutionLimit: '10',
+    importReviewExportLimit: '10',
     webhookMaxAttempts: '3',
     emailMaxAttempts: '3',
     webhookDryRun: 'true',
@@ -61,6 +63,13 @@ export const AutomationPage = ({ context }) => {
     workerRunPruningIntervalMinutes: '1440',
     workerRunPruningWindowStart: '',
     workerRunPruningWindowEnd: '',
+    agentDispatchAttemptRetentionEnabled: 'false',
+    agentDispatchAttemptRetentionDays: '30',
+    agentDispatchAttemptExportBeforePrune: 'true',
+    agentDispatchAttemptPruningAutomaticEnabled: 'false',
+    agentDispatchAttemptPruningIntervalMinutes: '1440',
+    agentDispatchAttemptPruningWindowStart: '',
+    agentDispatchAttemptPruningWindowEnd: '',
   });
   const action = useApiAction(context.addToast);
 
@@ -274,10 +283,12 @@ export const AutomationPage = ({ context }) => {
       webhookDeliveriesEnabled: workerSettingsForm.webhookDeliveriesEnabled === 'true',
       emailDeliveriesEnabled: workerSettingsForm.emailDeliveriesEnabled === 'true',
       importConflictResolutionEnabled: workerSettingsForm.importConflictResolutionEnabled === 'true',
+      importReviewExportsEnabled: workerSettingsForm.importReviewExportsEnabled === 'true',
       automationLimit: numberOrUndefined(workerSettingsForm.automationLimit),
       webhookLimit: numberOrUndefined(workerSettingsForm.webhookLimit),
       emailLimit: numberOrUndefined(workerSettingsForm.emailLimit),
       importConflictResolutionLimit: numberOrUndefined(workerSettingsForm.importConflictResolutionLimit),
+      importReviewExportLimit: numberOrUndefined(workerSettingsForm.importReviewExportLimit),
       webhookMaxAttempts: numberOrUndefined(workerSettingsForm.webhookMaxAttempts),
       emailMaxAttempts: numberOrUndefined(workerSettingsForm.emailMaxAttempts),
       webhookDryRun: workerSettingsForm.webhookDryRun === 'true',
@@ -289,6 +300,13 @@ export const AutomationPage = ({ context }) => {
       workerRunPruningIntervalMinutes: numberOrUndefined(workerSettingsForm.workerRunPruningIntervalMinutes),
       workerRunPruningWindowStart: workerSettingsForm.workerRunPruningWindowStart || undefined,
       workerRunPruningWindowEnd: workerSettingsForm.workerRunPruningWindowEnd || undefined,
+      agentDispatchAttemptRetentionEnabled: workerSettingsForm.agentDispatchAttemptRetentionEnabled === 'true',
+      agentDispatchAttemptRetentionDays: numberOrUndefined(workerSettingsForm.agentDispatchAttemptRetentionDays),
+      agentDispatchAttemptExportBeforePrune: workerSettingsForm.agentDispatchAttemptExportBeforePrune === 'true',
+      agentDispatchAttemptPruningAutomaticEnabled: workerSettingsForm.agentDispatchAttemptPruningAutomaticEnabled === 'true',
+      agentDispatchAttemptPruningIntervalMinutes: numberOrUndefined(workerSettingsForm.agentDispatchAttemptPruningIntervalMinutes),
+      agentDispatchAttemptPruningWindowStart: workerSettingsForm.agentDispatchAttemptPruningWindowStart || undefined,
+      agentDispatchAttemptPruningWindowEnd: workerSettingsForm.agentDispatchAttemptPruningWindowEnd || undefined,
     }), 'Worker settings saved');
     if (settings) {
       setWorkerSettings(settings);
@@ -439,10 +457,12 @@ export const AutomationPage = ({ context }) => {
               <SelectField label="Webhook schedule" value={workerSettingsForm.webhookDeliveriesEnabled} onChange={(webhookDeliveriesEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, webhookDeliveriesEnabled })} options={['false', 'true']} />
               <SelectField label="Email schedule" value={workerSettingsForm.emailDeliveriesEnabled} onChange={(emailDeliveriesEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, emailDeliveriesEnabled })} options={['false', 'true']} />
               <SelectField label="Import schedule" value={workerSettingsForm.importConflictResolutionEnabled} onChange={(importConflictResolutionEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, importConflictResolutionEnabled })} options={['false', 'true']} />
+              <SelectField label="Review exports" value={workerSettingsForm.importReviewExportsEnabled} onChange={(importReviewExportsEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, importReviewExportsEnabled })} options={['false', 'true']} />
               <TextField label="Job limit" type="number" value={workerSettingsForm.automationLimit} onChange={(automationLimit) => setWorkerSettingsForm({ ...workerSettingsForm, automationLimit })} />
               <TextField label="Webhook limit" type="number" value={workerSettingsForm.webhookLimit} onChange={(webhookLimit) => setWorkerSettingsForm({ ...workerSettingsForm, webhookLimit })} />
               <TextField label="Email limit" type="number" value={workerSettingsForm.emailLimit} onChange={(emailLimit) => setWorkerSettingsForm({ ...workerSettingsForm, emailLimit })} />
               <TextField label="Import limit" type="number" value={workerSettingsForm.importConflictResolutionLimit} onChange={(importConflictResolutionLimit) => setWorkerSettingsForm({ ...workerSettingsForm, importConflictResolutionLimit })} />
+              <TextField label="Review export limit" type="number" value={workerSettingsForm.importReviewExportLimit} onChange={(importReviewExportLimit) => setWorkerSettingsForm({ ...workerSettingsForm, importReviewExportLimit })} />
               <TextField label="Webhook attempts" type="number" value={workerSettingsForm.webhookMaxAttempts} onChange={(webhookMaxAttempts) => setWorkerSettingsForm({ ...workerSettingsForm, webhookMaxAttempts })} />
               <TextField label="Email attempts" type="number" value={workerSettingsForm.emailMaxAttempts} onChange={(emailMaxAttempts) => setWorkerSettingsForm({ ...workerSettingsForm, emailMaxAttempts })} />
               <SelectField label="Webhook dry" value={workerSettingsForm.webhookDryRun} onChange={(webhookDryRun) => setWorkerSettingsForm({ ...workerSettingsForm, webhookDryRun })} options={['true', 'false']} />
@@ -454,6 +474,13 @@ export const AutomationPage = ({ context }) => {
               <TextField label="Prune minutes" type="number" value={workerSettingsForm.workerRunPruningIntervalMinutes} onChange={(workerRunPruningIntervalMinutes) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunPruningIntervalMinutes })} />
               <TextField label="Window start" type="time" value={workerSettingsForm.workerRunPruningWindowStart} onChange={(workerRunPruningWindowStart) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunPruningWindowStart })} />
               <TextField label="Window end" type="time" value={workerSettingsForm.workerRunPruningWindowEnd} onChange={(workerRunPruningWindowEnd) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunPruningWindowEnd })} />
+              <SelectField label="Agent retention" value={workerSettingsForm.agentDispatchAttemptRetentionEnabled} onChange={(agentDispatchAttemptRetentionEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, agentDispatchAttemptRetentionEnabled })} options={['false', 'true']} />
+              <TextField label="Agent retention days" type="number" value={workerSettingsForm.agentDispatchAttemptRetentionDays} onChange={(agentDispatchAttemptRetentionDays) => setWorkerSettingsForm({ ...workerSettingsForm, agentDispatchAttemptRetentionDays })} />
+              <SelectField label="Agent export first" value={workerSettingsForm.agentDispatchAttemptExportBeforePrune} onChange={(agentDispatchAttemptExportBeforePrune) => setWorkerSettingsForm({ ...workerSettingsForm, agentDispatchAttemptExportBeforePrune })} options={['true', 'false']} />
+              <SelectField label="Agent auto prune" value={workerSettingsForm.agentDispatchAttemptPruningAutomaticEnabled} onChange={(agentDispatchAttemptPruningAutomaticEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, agentDispatchAttemptPruningAutomaticEnabled })} options={['false', 'true']} />
+              <TextField label="Agent prune minutes" type="number" value={workerSettingsForm.agentDispatchAttemptPruningIntervalMinutes} onChange={(agentDispatchAttemptPruningIntervalMinutes) => setWorkerSettingsForm({ ...workerSettingsForm, agentDispatchAttemptPruningIntervalMinutes })} />
+              <TextField label="Agent window start" type="time" value={workerSettingsForm.agentDispatchAttemptPruningWindowStart} onChange={(agentDispatchAttemptPruningWindowStart) => setWorkerSettingsForm({ ...workerSettingsForm, agentDispatchAttemptPruningWindowStart })} />
+              <TextField label="Agent window end" type="time" value={workerSettingsForm.agentDispatchAttemptPruningWindowEnd} onChange={(agentDispatchAttemptPruningWindowEnd) => setWorkerSettingsForm({ ...workerSettingsForm, agentDispatchAttemptPruningWindowEnd })} />
             </div>
             <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={saveWorkerSettings} type="button"><FiCheck />Save worker settings</button>
           </div>
