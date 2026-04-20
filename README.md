@@ -46,6 +46,20 @@ npm run generate:api
 By default the generator reads `http://localhost:6100/v3/api-docs`. Override it with `TRASCK_OPENAPI_URL` for another running backend, or `TRASCK_OPENAPI_SOURCE` to generate from a local OpenAPI JSON file.
 <br>
 
+### Source Structure
+The Vite app keeps routing and app wiring separate from feature pages:
+
+- `src/App.jsx` contains the top-level router and app wiring.
+- `src/app` contains app-level shell components.
+- `src/constants` contains shared constants used across routes.
+- `src/pages` contains route-level feature pages, with subfolders for larger feature areas such as planning, configuration, automation, and imports.
+- `src/components` contains shared UI primitives used across pages, with one component per file.
+- `src/hooks` contains reusable React hooks.
+- `src/utils` contains shared parsing/form helpers.
+- `src/styles` contains app-level styles that are not owned by a single route.
+- `src/api/services` contains feature-specific wrappers around the generated API client.
+<br>
+
 ## Deployment
 This project includes a `Jenkinsfile` for use in CI/CD pipelines. Jenkins must be configured with:
 

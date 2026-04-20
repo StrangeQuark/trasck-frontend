@@ -1,0 +1,214 @@
+import { useEffect, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { FiCheck, FiDatabase, FiEye, FiPlus, FiRefreshCw, FiSliders, FiUploadCloud, FiX } from 'react-icons/fi';
+import { DetailLayout } from '../../components/DetailLayout';
+import { ErrorLine } from '../../components/ErrorLine';
+import { Field } from '../../components/Field';
+import { JsonPreview } from '../../components/JsonPreview';
+import { Panel } from '../../components/Panel';
+import { SelectField } from '../../components/SelectField';
+import { TextField } from '../../components/TextField';
+import { useApiAction } from '../../hooks/useApiAction';
+
+export const ImportJobDetailPage = ({ context }) => {
+  const { importJobId } = useParams();
+  const action = useApiAction(context.addToast);
+  const [job, setJob] = useState(null);
+  const [records, setRecords] = useState([]);
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.imports.getJob(importJobId),
+      context.services.imports.listRecords(importJobId),
+    ]));
+    if (result) {
+      const [jobRow, recordRows] = result;
+      setJob(jobRow);
+      setRecords(recordRows || []);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [importJobId]);
+
+  const command = async (fn, success) => {
+    await action.run(() => fn(importJobId), success);
+    await load();
+  };
+
+  return (
+    <DetailLayout backTo="/imports" title="Import Job Detail">
+      <Panel title="Lifecycle" icon={<FiUploadCloud />}>
+        <div className="button-row wrap">
+          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          <button className="secondary-button" disabled={action.pending} onClick={() => command(context.services.imports.start, 'Import started')} type="button">Start</button>
+          <button className="secondary-button" disabled={action.pending} onClick={() => command(context.services.imports.complete, 'Import completed')} type="button">Complete</button>
+          <button className="secondary-button" disabled={action.pending} onClick={() => command(context.services.imports.fail, 'Import failed')} type="button">Fail</button>
+          <button className="icon-button danger" disabled={action.pending} onClick={() => command(context.services.imports.cancel, 'Import canceled')} title="Cancel import" type="button"><FiX /></button>
+        </div>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Records" icon={<FiEye />} wide>
+        <JsonPreview title="Job" value={job} />
+        <JsonPreview title="Records" value={records} />
+      </Panel>
+    </DetailLayout>
+  );
+};
+
+export const ImportTemplateDetailPage = ({ context }) => {
+  const { mappingTemplateId } = useParams();
+  const navigate = useNavigate();
+  const action = useApiAction(context.addToast);
+  const [template, setTemplate] = useState(null);
+  const [lookups, setLookups] = useState([]);
+  const [typeTranslations, setTypeTranslations] = useState([]);
+  const [statusTranslations, setStatusTranslations] = useState([]);
+  const [form, setForm] = useState({ name: '', provider: 'csv', sourceType: '', workItemTypeKey: '', statusKey: '', fieldMappingText: '{}', defaultsText: '{}', transformationConfigText: '{}', enabled: 'true' });
+  const [lookupForm, setLookupForm] = useState({ sourceField: '', sourceValue: '', targetField: '', targetValueText: 'null' });
+  const [typeForm, setTypeForm] = useState({ sourceTypeKey: '', targetTypeKey: '' });
+  const [statusForm, setStatusForm] = useState({ sourceStatusKey: '', targetStatusKey: '' });
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.imports.listMappingTemplates(context.workspaceId),
+      context.services.imports.listValueLookups(mappingTemplateId),
+      context.services.imports.listTypeTranslations(mappingTemplateId),
+      context.services.imports.listStatusTranslations(mappingTemplateId),
+    ]));
+    if (result) {
+      const [templates, lookupRows, typeRows, statusRows] = result;
+      const selected = (templates || []).find((row) => row.id === mappingTemplateId) || null;
+      setTemplate(selected);
+      setLookups(lookupRows || []);
+      setTypeTranslations(typeRows || []);
+      setStatusTranslations(statusRows || []);
+      if (selected) {
+        setForm({
+          name: selected.name || '',
+          provider: selected.provider || 'csv',
+          sourceType: selected.sourceType || '',
+          workItemTypeKey: selected.workItemTypeKey || '',
+          statusKey: selected.statusKey || '',
+          fieldMappingText: toJsonText(selected.fieldMapping || {}),
+          defaultsText: toJsonText(selected.defaults || {}),
+          transformationConfigText: toJsonText(selected.transformationConfig || {}),
+          enabled: String(selected.enabled ?? true),
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [mappingTemplateId, context.workspaceId]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.imports.updateMappingTemplate(mappingTemplateId, {
+      name: form.name,
+      provider: form.provider,
+      sourceType: form.sourceType || undefined,
+      targetType: 'work_item',
+      projectId: context.projectId || template?.projectId,
+      workItemTypeKey: form.workItemTypeKey || undefined,
+      statusKey: form.statusKey || undefined,
+      fieldMapping: parseJsonOrThrow(form.fieldMappingText),
+      defaults: parseJsonOrThrow(form.defaultsText),
+      transformationConfig: parseJsonOrThrow(form.transformationConfigText),
+      enabled: form.enabled === 'true',
+    }), 'Mapping template saved');
+    if (saved) {
+      await load();
+    }
+  };
+
+  const disable = async () => {
+    await action.run(() => context.services.imports.deleteMappingTemplate(mappingTemplateId), 'Template disabled');
+    navigate('/imports');
+  };
+
+  const createLookup = async (event) => {
+    event.preventDefault();
+    await action.run(() => context.services.imports.createValueLookup(mappingTemplateId, {
+      sourceField: lookupForm.sourceField,
+      sourceValue: lookupForm.sourceValue,
+      targetField: lookupForm.targetField,
+      targetValue: parseJsonOrThrow(lookupForm.targetValueText),
+      enabled: true,
+    }), 'Lookup added');
+    await load();
+  };
+
+  const createTypeTranslation = async (event) => {
+    event.preventDefault();
+    await action.run(() => context.services.imports.createTypeTranslation(mappingTemplateId, { ...typeForm, enabled: true }), 'Type translation added');
+    await load();
+  };
+
+  const createStatusTranslation = async (event) => {
+    event.preventDefault();
+    await action.run(() => context.services.imports.createStatusTranslation(mappingTemplateId, { ...statusForm, enabled: true }), 'Status translation added');
+    await load();
+  };
+
+  return (
+    <DetailLayout backTo="/imports" title="Import Template Detail">
+      <Panel title="Template" icon={<FiSliders />}>
+        <form className="stack" onSubmit={save}>
+          <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+          <SelectField label="Provider" value={form.provider} onChange={(provider) => setForm({ ...form, provider })} options={['csv', 'jira', 'rally']} />
+          <TextField label="Source type" value={form.sourceType} onChange={(sourceType) => setForm({ ...form, sourceType })} />
+          <TextField label="Type fallback" value={form.workItemTypeKey} onChange={(workItemTypeKey) => setForm({ ...form, workItemTypeKey })} />
+          <TextField label="Status fallback" value={form.statusKey} onChange={(statusKey) => setForm({ ...form, statusKey })} />
+          <SelectField label="Enabled" value={form.enabled} onChange={(enabled) => setForm({ ...form, enabled })} options={['true', 'false']} />
+          <Field label="Field mapping JSON">
+            <textarea value={form.fieldMappingText} onChange={(event) => setForm({ ...form, fieldMappingText: event.target.value })} rows={6} spellCheck="false" />
+          </Field>
+          <Field label="Defaults JSON">
+            <textarea value={form.defaultsText} onChange={(event) => setForm({ ...form, defaultsText: event.target.value })} rows={4} spellCheck="false" />
+          </Field>
+          <Field label="Transformations JSON">
+            <textarea value={form.transformationConfigText} onChange={(event) => setForm({ ...form, transformationConfigText: event.target.value })} rows={4} spellCheck="false" />
+          </Field>
+          <div className="button-row wrap">
+            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending} onClick={disable} title="Disable template" type="button"><FiX /></button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          </div>
+        </form>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Mapping Rules" icon={<FiDatabase />} wide>
+        <div className="data-columns two no-margin">
+          <form className="stack" onSubmit={createLookup}>
+            <TextField label="Source field" value={lookupForm.sourceField} onChange={(sourceField) => setLookupForm({ ...lookupForm, sourceField })} />
+            <TextField label="Source value" value={lookupForm.sourceValue} onChange={(sourceValue) => setLookupForm({ ...lookupForm, sourceValue })} />
+            <TextField label="Target field" value={lookupForm.targetField} onChange={(targetField) => setLookupForm({ ...lookupForm, targetField })} />
+            <TextField label="Target value JSON" value={lookupForm.targetValueText} onChange={(targetValueText) => setLookupForm({ ...lookupForm, targetValueText })} />
+            <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Add lookup</button>
+          </form>
+          <div className="stack">
+            <form className="stack" onSubmit={createTypeTranslation}>
+              <TextField label="Source type" value={typeForm.sourceTypeKey} onChange={(sourceTypeKey) => setTypeForm({ ...typeForm, sourceTypeKey })} />
+              <TextField label="Target type" value={typeForm.targetTypeKey} onChange={(targetTypeKey) => setTypeForm({ ...typeForm, targetTypeKey })} />
+              <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Add type</button>
+            </form>
+            <form className="stack nested-form" onSubmit={createStatusTranslation}>
+              <TextField label="Source status" value={statusForm.sourceStatusKey} onChange={(sourceStatusKey) => setStatusForm({ ...statusForm, sourceStatusKey })} />
+              <TextField label="Target status" value={statusForm.targetStatusKey} onChange={(targetStatusKey) => setStatusForm({ ...statusForm, targetStatusKey })} />
+              <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Add status</button>
+            </form>
+          </div>
+        </div>
+        <div className="data-columns">
+          <JsonPreview title="Lookups" value={lookups} />
+          <JsonPreview title="Type Translations" value={typeTranslations} />
+          <JsonPreview title="Status Translations" value={statusTranslations} />
+          <JsonPreview title="Template" value={template} />
+        </div>
+      </Panel>
+    </DetailLayout>
+  );
+};
