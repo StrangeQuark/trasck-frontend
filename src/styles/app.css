@@ -190,6 +190,20 @@
   padding-top: 16px;
 }
 
+.checkbox-row {
+  align-items: center;
+  color: #39464f;
+  display: flex;
+  font-size: 0.86rem;
+  font-weight: 800;
+  gap: 8px;
+}
+
+.checkbox-row input {
+  height: 16px;
+  width: 16px;
+}
+
 .two-column,
 .data-columns.two {
   display: grid;

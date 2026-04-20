@@ -13,6 +13,7 @@ import { useApiAction } from '../../hooks/useApiAction';
 import { firstId, numberOrUndefined, parseJsonOrThrow, toJsonText } from '../../utils/forms';
 import { ImportConflictDetails } from './ImportConflictDetails';
 import { ImportRecordEditor } from './ImportRecordEditor';
+import { TransformPipelineEditor } from './TransformPipelineEditor';
 import { importRecordFormToRequest, importRecordToForm } from './importRecordForms';
 
 export const ImportJobDetailPage = ({ context }) => {
@@ -20,6 +21,7 @@ export const ImportJobDetailPage = ({ context }) => {
   const action = useApiAction(context.addToast);
   const [job, setJob] = useState(null);
   const [records, setRecords] = useState([]);
+  const [recordVersions, setRecordVersions] = useState([]);
   const [conflicts, setConflicts] = useState([]);
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [materializeResult, setMaterializeResult] = useState(null);
@@ -29,12 +31,16 @@ export const ImportJobDetailPage = ({ context }) => {
   const selectedConflict = conflicts.find((record) => record.id === conflictForm.recordId) || null;
   const selectedImportRecord = records.find((record) => record.id === recordEditForm.recordId) || null;
 
-  const syncRecordEditForm = (recordRows) => {
-    setRecordEditForm((current) => {
-      const rows = recordRows || [];
-      const selected = rows.find((record) => record.id === current.recordId) || rows[0] || null;
-      return importRecordToForm(selected);
-    });
+  const syncRecordEditForm = async (recordRows) => {
+    const rows = recordRows || [];
+    const selected = rows.find((record) => record.id === recordEditForm.recordId) || rows[0] || null;
+    setRecordEditForm(importRecordToForm(selected));
+    if (selected?.id) {
+      const versions = await action.run(() => context.services.imports.listRecordVersions(selected.id));
+      setRecordVersions(versions || []);
+    } else {
+      setRecordVersions([]);
+    }
   };
 
   const load = async () => {
@@ -50,7 +56,7 @@ export const ImportJobDetailPage = ({ context }) => {
       setRecords(recordRows || []);
       setConflicts(conflictRows || []);
       setMaterializationRuns(runRows || []);
-      syncRecordEditForm(recordRows);
+      await syncRecordEditForm(recordRows);
       setConflictForm((current) => ({ ...current, recordId: firstId(conflictRows) }));
       setRerunForm((current) => ({ ...current, materializationRunId: firstId(runRows) }));
     }
@@ -60,9 +66,17 @@ export const ImportJobDetailPage = ({ context }) => {
     load();
   }, [importJobId]);
 
-  const command = async (fn, success) => {
-    await action.run(() => fn(importJobId), success);
+  const command = async (fn, success, request) => {
+    await action.run(() => fn(importJobId, request), success);
     await load();
+  };
+
+  const completeImportJob = async () => {
+    const hasOpenConflicts = conflicts.length > 0;
+    if (hasOpenConflicts && !window.confirm('Open import conflicts remain. Complete this import anyway?')) {
+      return;
+    }
+    await command(context.services.imports.complete, 'Import completed', hasOpenConflicts ? { acceptOpenConflicts: true } : undefined);
   };
 
   const resolveConflict = async (event) => {
@@ -85,9 +99,15 @@ export const ImportJobDetailPage = ({ context }) => {
     }
   };
 
-  const selectRecordForEdit = (recordId) => {
+  const selectRecordForEdit = async (recordId) => {
     const selected = records.find((record) => record.id === recordId) || null;
     setRecordEditForm(importRecordToForm(selected));
+    if (selected?.id) {
+      const versions = await action.run(() => context.services.imports.listRecordVersions(selected.id));
+      setRecordVersions(versions || []);
+    } else {
+      setRecordVersions([]);
+    }
   };
 
   const updateRecord = async (event) => {
@@ -95,6 +115,8 @@ export const ImportJobDetailPage = ({ context }) => {
     const saved = await action.run(() => context.services.imports.updateRecord(recordEditForm.recordId, importRecordFormToRequest(recordEditForm, parseJsonOrThrow)), 'Record saved');
     if (saved) {
       setRecordEditForm(importRecordToForm(saved));
+      const versions = await action.run(() => context.services.imports.listRecordVersions(saved.id));
+      setRecordVersions(versions || []);
       await load();
     }
   };
@@ -105,7 +127,7 @@ export const ImportJobDetailPage = ({ context }) => {
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
           <button className="secondary-button" disabled={action.pending} onClick={() => command(context.services.imports.start, 'Import started')} type="button">Start</button>
-          <button className="secondary-button" disabled={action.pending} onClick={() => command(context.services.imports.complete, 'Import completed')} type="button">Complete</button>
+          <button className="secondary-button" disabled={action.pending} onClick={completeImportJob} type="button">Complete</button>
           <button className="secondary-button" disabled={action.pending} onClick={() => command(context.services.imports.fail, 'Import failed')} type="button">Fail</button>
           <button className="icon-button danger" disabled={action.pending} onClick={() => command(context.services.imports.cancel, 'Import canceled')} title="Cancel import" type="button"><FiX /></button>
         </div>
@@ -136,6 +158,7 @@ export const ImportJobDetailPage = ({ context }) => {
           pending={action.pending}
           records={records}
           selectedRecord={selectedImportRecord}
+          versions={recordVersions}
         />
       </Panel>
       <Panel title="Records" icon={<FiEye />} wide>
@@ -261,9 +284,7 @@ export const ImportTemplateDetailPage = ({ context }) => {
           <Field label="Defaults JSON">
             <textarea value={form.defaultsText} onChange={(event) => setForm({ ...form, defaultsText: event.target.value })} rows={4} spellCheck="false" />
           </Field>
-          <Field label="Transformations JSON">
-            <textarea value={form.transformationConfigText} onChange={(event) => setForm({ ...form, transformationConfigText: event.target.value })} rows={4} spellCheck="false" />
-          </Field>
+          <TransformPipelineEditor label="Transformations" value={form.transformationConfigText} onChange={(transformationConfigText) => setForm({ ...form, transformationConfigText })} />
           <div className="button-row wrap">
             <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
             <button className="icon-button danger" disabled={action.pending} onClick={disable} title="Disable template" type="button"><FiX /></button>

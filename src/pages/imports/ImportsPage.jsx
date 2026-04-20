@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { FiActivity, FiArrowRight, FiDatabase, FiEye, FiPlus, FiRefreshCw, FiSliders, FiUploadCloud, FiX } from 'react-icons/fi';
+import { FiActivity, FiArrowRight, FiCheck, FiDatabase, FiEye, FiPlus, FiRefreshCw, FiSliders, FiUploadCloud, FiX } from 'react-icons/fi';
 import { DetailLinkGrid } from '../../components/DetailLinkGrid';
 import { ErrorLine } from '../../components/ErrorLine';
 import { Field } from '../../components/Field';
@@ -13,12 +13,27 @@ import { useApiAction } from '../../hooks/useApiAction';
 import { firstId, numberOrUndefined, parseJson, parseJsonOrThrow, pick } from '../../utils/forms';
 import { ImportConflictDetails } from './ImportConflictDetails';
 import { ImportRecordEditor } from './ImportRecordEditor';
+import { TransformPipelineEditor } from './TransformPipelineEditor';
 import { importRecordFormToRequest, importRecordToForm } from './importRecordForms';
 
 const selectedIdOrFirst = (records, selectedId) => {
   const rows = records || [];
   return rows.some((record) => record.id === selectedId) ? selectedId : firstId(rows);
 };
+
+const selectedRecordFromRows = (records, preferredRecordId, currentRecordId) => {
+  const rows = records || [];
+  return rows.find((record) => record.id === preferredRecordId)
+    || rows.find((record) => record.id === currentRecordId)
+    || rows[0]
+    || null;
+};
+
+const filterRequest = (filters) => ({
+  status: filters.status || undefined,
+  conflictStatus: filters.conflictStatus || undefined,
+  sourceType: filters.sourceType || undefined,
+});
 
 export const ImportsPage = ({ context }) => {
   const [jobs, setJobs] = useState([]);
@@ -29,6 +44,7 @@ export const ImportsPage = ({ context }) => {
   const [transformPresetId, setTransformPresetId] = useState('');
   const [transformPresetVersions, setTransformPresetVersions] = useState([]);
   const [records, setRecords] = useState([]);
+  const [recordVersions, setRecordVersions] = useState([]);
   const [conflicts, setConflicts] = useState([]);
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -59,22 +75,26 @@ export const ImportsPage = ({ context }) => {
   const [materializeForm, setMaterializeForm] = useState({ limit: '25', updateExisting: 'false' });
   const [recordForm, setRecordForm] = useState({ sourceType: 'issue', sourceId: 'MANUAL-1', targetType: 'work_item', targetId: '', rawPayloadText: '{}' });
   const [recordEditForm, setRecordEditForm] = useState(importRecordToForm());
+  const [recordFilters, setRecordFilters] = useState({ status: '', conflictStatus: '', sourceType: '' });
   const [cloneForm, setCloneForm] = useState({ versionId: '', name: '', enabled: 'true' });
+  const [retargetForm, setRetargetForm] = useState({ versionId: '', name: '', enabled: 'true', mappingTemplateIds: [] });
+  const [retargetPreview, setRetargetPreview] = useState(null);
   const [conflictForm, setConflictForm] = useState({ recordId: '', resolution: 'create_new' });
+  const [bulkConflictIds, setBulkConflictIds] = useState([]);
   const [rerunForm, setRerunForm] = useState({ materializationRunId: '', limit: '25', updateExisting: 'source' });
   const action = useApiAction(context.addToast);
   const selectedConflict = conflicts.find((record) => record.id === conflictForm.recordId) || null;
   const selectedImportRecord = records.find((record) => record.id === recordEditForm.recordId) || null;
 
-  const syncRecordEditForm = (recordRows, preferredRecordId) => {
-    setRecordEditForm((current) => {
-      const rows = recordRows || [];
-      const selected = rows.find((record) => record.id === preferredRecordId)
-        || rows.find((record) => record.id === current.recordId)
-        || rows[0]
-        || null;
-      return importRecordToForm(selected);
-    });
+  const syncRecordEditForm = async (recordRows, preferredRecordId) => {
+    const selected = selectedRecordFromRows(recordRows, preferredRecordId, recordEditForm.recordId);
+    setRecordEditForm(importRecordToForm(selected));
+    if (selected?.id) {
+      const versions = await action.run(() => context.services.imports.listRecordVersions(selected.id));
+      setRecordVersions(versions || []);
+    } else {
+      setRecordVersions([]);
+    }
   };
 
   const load = async () => {
@@ -93,7 +113,7 @@ export const ImportsPage = ({ context }) => {
       const nextPresetId = transformPresetId || firstId(presetRows);
       const [job, recordRows, conflictRows, runRows, versionRows] = await Promise.all([
         nextJobId ? context.services.imports.getJob(nextJobId) : Promise.resolve(null),
-        nextJobId ? context.services.imports.listRecords(nextJobId) : Promise.resolve([]),
+        nextJobId ? context.services.imports.listRecords(nextJobId, filterRequest(recordFilters)) : Promise.resolve([]),
         nextJobId ? context.services.imports.listConflicts(nextJobId) : Promise.resolve([]),
         nextJobId ? context.services.imports.listMaterializationRuns(nextJobId) : Promise.resolve([]),
         nextPresetId ? context.services.imports.listTransformPresetVersions(nextPresetId) : Promise.resolve([]),
@@ -112,10 +132,12 @@ export const ImportsPage = ({ context }) => {
       setConflicts(result.conflictRows || []);
       setMaterializationRuns(result.runRows || []);
       setTransformPresetVersions(result.versionRows || []);
-      syncRecordEditForm(result.recordRows);
+      await syncRecordEditForm(result.recordRows);
       setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(result.conflictRows, current.recordId) }));
+      setBulkConflictIds((current) => current.filter((recordId) => (result.conflictRows || []).some((record) => record.id === recordId)));
       setRerunForm((current) => ({ ...current, materializationRunId: selectedIdOrFirst(result.runRows, current.materializationRunId) }));
       setCloneForm((current) => ({ ...current, versionId: selectedIdOrFirst(result.versionRows, current.versionId) }));
+      setRetargetForm((current) => ({ ...current, versionId: selectedIdOrFirst(result.versionRows, current.versionId) }));
     }
   };
 
@@ -211,9 +233,15 @@ export const ImportsPage = ({ context }) => {
     await loadRecords(record?.id);
   };
 
-  const selectRecordForEdit = (recordId) => {
+  const selectRecordForEdit = async (recordId) => {
     const selected = records.find((record) => record.id === recordId) || null;
     setRecordEditForm(importRecordToForm(selected));
+    if (selected?.id) {
+      const versions = await action.run(() => context.services.imports.listRecordVersions(selected.id));
+      setRecordVersions(versions || []);
+    } else {
+      setRecordVersions([]);
+    }
   };
 
   const updateRecord = async (event) => {
@@ -221,6 +249,8 @@ export const ImportsPage = ({ context }) => {
     const saved = await action.run(() => context.services.imports.updateRecord(recordEditForm.recordId, importRecordFormToRequest(recordEditForm, parseJsonOrThrow)), 'Record saved');
     if (saved) {
       setRecordEditForm(importRecordToForm(saved));
+      const versions = await action.run(() => context.services.imports.listRecordVersions(saved.id));
+      setRecordVersions(versions || []);
     }
     await loadRecords();
   };
@@ -238,11 +268,59 @@ export const ImportsPage = ({ context }) => {
     }
   };
 
+  const retargetRequest = () => ({
+    name: retargetForm.name || undefined,
+    enabled: retargetForm.enabled === 'true',
+    mappingTemplateIds: retargetForm.mappingTemplateIds,
+  });
+
+  const toggleRetargetTemplate = (templateId) => {
+    setRetargetPreview(null);
+    setRetargetForm((current) => ({
+      ...current,
+      mappingTemplateIds: current.mappingTemplateIds.includes(templateId)
+        ? current.mappingTemplateIds.filter((id) => id !== templateId)
+        : [...current.mappingTemplateIds, templateId],
+    }));
+  };
+
+  const previewRetarget = async (event) => {
+    event.preventDefault();
+    const preview = await action.run(() => context.services.imports.previewCloneRetargetTransformPresetVersion(transformPresetId, retargetForm.versionId, retargetRequest()), 'Retarget preview ready');
+    if (preview) {
+      setRetargetPreview(preview);
+    }
+  };
+
+  const applyRetarget = async () => {
+    const applied = await action.run(() => context.services.imports.cloneRetargetTransformPresetVersion(transformPresetId, retargetForm.versionId, retargetRequest()), 'Templates retargeted');
+    if (applied?.clonedPreset?.id) {
+      setTransformPresetId(applied.clonedPreset.id);
+      setRetargetPreview(applied);
+      await load();
+    }
+  };
+
   const resolveConflict = async (event) => {
     event.preventDefault();
     await action.run(() => context.services.imports.resolveConflict(conflictForm.recordId, {
       resolution: conflictForm.resolution,
     }), 'Import conflict resolved');
+    await loadRecords();
+  };
+
+  const toggleBulkConflict = (recordId) => {
+    setBulkConflictIds((current) => current.includes(recordId)
+      ? current.filter((id) => id !== recordId)
+      : [...current, recordId]);
+  };
+
+  const resolveSelectedConflicts = async () => {
+    await action.run(() => context.services.imports.resolveConflicts(importJobId, {
+      recordIds: bulkConflictIds,
+      resolution: conflictForm.resolution,
+    }), 'Import conflicts resolved');
+    setBulkConflictIds([]);
     await loadRecords();
   };
 
@@ -265,7 +343,7 @@ export const ImportsPage = ({ context }) => {
     }
     const result = await action.run(() => Promise.all([
       context.services.imports.getJob(importJobId),
-      context.services.imports.listRecords(importJobId),
+      context.services.imports.listRecords(importJobId, filterRequest(recordFilters)),
       context.services.imports.listConflicts(importJobId),
       context.services.imports.listMaterializationRuns(importJobId),
     ]));
@@ -275,8 +353,9 @@ export const ImportsPage = ({ context }) => {
       setRecords(rows || []);
       setConflicts(conflictRows || []);
       setMaterializationRuns(runs || []);
-      syncRecordEditForm(rows, preferredRecordId);
+      await syncRecordEditForm(rows, preferredRecordId);
       setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(conflictRows, current.recordId) }));
+      setBulkConflictIds((current) => current.filter((recordId) => (conflictRows || []).some((record) => record.id === recordId)));
       setRerunForm((current) => ({ ...current, materializationRunId: selectedIdOrFirst(runs, current.materializationRunId) }));
     }
   };
@@ -291,11 +370,22 @@ export const ImportsPage = ({ context }) => {
       setTransformPresetId(presetId);
       setTransformPresetVersions(versions || []);
       setCloneForm((current) => ({ ...current, versionId: selectedIdOrFirst(versions, current.versionId) }));
+      setRetargetPreview(null);
+      setRetargetForm((current) => ({ ...current, versionId: selectedIdOrFirst(versions, current.versionId) }));
     }
   };
 
   const jobCommand = async (command, success) => {
     await action.run(() => command(importJobId), success);
+    await loadRecords();
+  };
+
+  const completeImportJob = async () => {
+    const hasOpenConflicts = conflicts.length > 0;
+    if (hasOpenConflicts && !window.confirm('Open import conflicts remain. Complete this import anyway?')) {
+      return;
+    }
+    await action.run(() => context.services.imports.complete(importJobId, hasOpenConflicts ? { acceptOpenConflicts: true } : undefined), 'Import completed');
     await loadRecords();
   };
 
@@ -325,9 +415,7 @@ export const ImportsPage = ({ context }) => {
           <TextField label="Name" value={presetForm.name} onChange={(name) => setPresetForm({ ...presetForm, name })} />
           <TextField label="Description" value={presetForm.description} onChange={(description) => setPresetForm({ ...presetForm, description })} />
           <SelectField label="Enabled" value={presetForm.enabled} onChange={(enabled) => setPresetForm({ ...presetForm, enabled })} options={['true', 'false']} />
-          <Field label="Transform JSON">
-            <textarea value={presetForm.transformationConfigText} onChange={(event) => setPresetForm({ ...presetForm, transformationConfigText: event.target.value })} rows={5} spellCheck="false" />
-          </Field>
+          <TransformPipelineEditor label="Transform" value={presetForm.transformationConfigText} onChange={(transformationConfigText) => setPresetForm({ ...presetForm, transformationConfigText })} />
           <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create preset</button>
         </form>
       </Panel>
@@ -347,9 +435,7 @@ export const ImportsPage = ({ context }) => {
           <Field label="Defaults JSON">
             <textarea value={templateForm.defaultsText} onChange={(event) => setTemplateForm({ ...templateForm, defaultsText: event.target.value })} rows={4} spellCheck="false" />
           </Field>
-          <Field label="Transformations JSON">
-            <textarea value={templateForm.transformationConfigText} onChange={(event) => setTemplateForm({ ...templateForm, transformationConfigText: event.target.value })} rows={4} spellCheck="false" />
-          </Field>
+          <TransformPipelineEditor label="Template transformations" value={templateForm.transformationConfigText} onChange={(transformationConfigText) => setTemplateForm({ ...templateForm, transformationConfigText })} />
           <button className="primary-button" disabled={action.pending || !context.workspaceId || !context.projectId} type="submit"><FiPlus />Create template</button>
         </form>
       </Panel>
@@ -379,7 +465,7 @@ export const ImportsPage = ({ context }) => {
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={() => jobCommand(context.services.imports.start, 'Import started')} type="button">Start</button>
-          <button className="secondary-button" disabled={action.pending || !importJobId} onClick={() => jobCommand(context.services.imports.complete, 'Import completed')} type="button">Complete</button>
+          <button className="secondary-button" disabled={action.pending || !importJobId} onClick={completeImportJob} type="button">Complete</button>
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={() => jobCommand(context.services.imports.fail, 'Import failed')} type="button">Fail</button>
           <button className="icon-button danger" disabled={action.pending || !importJobId} onClick={() => jobCommand(context.services.imports.cancel, 'Import canceled')} title="Cancel import" type="button"><FiX /></button>
         </div>
@@ -394,6 +480,15 @@ export const ImportsPage = ({ context }) => {
           <RecordSelect label="Version history preset" records={transformPresets} value={transformPresetId} onChange={(presetId) => loadPresetVersions(presetId)} includeBlank />
           <button className="secondary-button" disabled={action.pending || !transformPresetId} onClick={() => loadPresetVersions()} type="button"><FiRefreshCw />Load versions</button>
         </div>
+        <form className="stack" onSubmit={(event) => { event.preventDefault(); loadRecords(); }}>
+          <h3>Filter Records</h3>
+          <div className="data-columns three no-margin">
+            <SelectField label="Status" value={recordFilters.status} onChange={(status) => setRecordFilters({ ...recordFilters, status })} options={['', 'pending', 'imported', 'failed', 'skipped', 'conflict']} />
+            <SelectField label="Conflict" value={recordFilters.conflictStatus} onChange={(conflictStatus) => setRecordFilters({ ...recordFilters, conflictStatus })} options={['', 'open', 'resolved']} />
+            <TextField label="Source type" value={recordFilters.sourceType} onChange={(sourceType) => setRecordFilters({ ...recordFilters, sourceType })} />
+          </div>
+          <button className="secondary-button" disabled={action.pending || !importJobId} type="submit"><FiRefreshCw />Apply filters</button>
+        </form>
         <div className="data-columns three no-margin">
           <form className="stack" onSubmit={cloneTransformPresetVersion}>
             <h3>Clone Version</h3>
@@ -402,12 +497,40 @@ export const ImportsPage = ({ context }) => {
             <SelectField label="Enabled" value={cloneForm.enabled} onChange={(enabled) => setCloneForm({ ...cloneForm, enabled })} options={['true', 'false']} />
             <button className="secondary-button" disabled={action.pending || !transformPresetId || !cloneForm.versionId} type="submit"><FiPlus />Clone</button>
           </form>
+          <form className="stack" onSubmit={previewRetarget}>
+            <h3>Retarget Version</h3>
+            <RecordSelect label="Version" records={transformPresetVersions} value={retargetForm.versionId} onChange={(versionId) => { setRetargetPreview(null); setRetargetForm((current) => ({ ...current, versionId })); }} />
+            <TextField label="Clone name" value={retargetForm.name} onChange={(name) => { setRetargetPreview(null); setRetargetForm((current) => ({ ...current, name })); }} />
+            <SelectField label="Enabled" value={retargetForm.enabled} onChange={(enabled) => { setRetargetPreview(null); setRetargetForm((current) => ({ ...current, enabled })); }} options={['true', 'false']} />
+            <div className="stack">
+              {templates.map((template) => (
+                <label className="checkbox-row" key={template.id}>
+                  <input checked={retargetForm.mappingTemplateIds.includes(template.id)} onChange={() => toggleRetargetTemplate(template.id)} type="checkbox" />
+                  <span>{template.name || template.id}</span>
+                </label>
+              ))}
+            </div>
+            <div className="button-row wrap">
+              <button className="secondary-button" disabled={action.pending || !transformPresetId || !retargetForm.versionId || retargetForm.mappingTemplateIds.length === 0} type="submit"><FiEye />Preview</button>
+              <button className="primary-button" disabled={action.pending || !retargetPreview || retargetForm.mappingTemplateIds.length === 0} onClick={applyRetarget} type="button"><FiArrowRight />Apply</button>
+            </div>
+            <JsonPreview title="Retarget Preview" value={retargetPreview} />
+          </form>
           <form className="stack" onSubmit={resolveConflict}>
             <h3>Conflict Review</h3>
             <RecordSelect label="Open conflict" records={conflicts} value={conflictForm.recordId} onChange={(recordId) => setConflictForm({ ...conflictForm, recordId })} />
             <SelectField label="Resolution" value={conflictForm.resolution} onChange={(resolution) => setConflictForm({ ...conflictForm, resolution })} options={['create_new', 'update_existing', 'skip']} />
             <ImportConflictDetails conflict={selectedConflict} resolution={conflictForm.resolution} />
+            <div className="stack">
+              {conflicts.map((conflict) => (
+                <label className="checkbox-row" key={conflict.id}>
+                  <input checked={bulkConflictIds.includes(conflict.id)} onChange={() => toggleBulkConflict(conflict.id)} type="checkbox" />
+                  <span>{[conflict.sourceType, conflict.sourceId].filter(Boolean).join(' / ')}</span>
+                </label>
+              ))}
+            </div>
             <button className="secondary-button" disabled={action.pending || !conflictForm.recordId} type="submit"><FiArrowRight />Resolve</button>
+            <button className="secondary-button" disabled={action.pending || bulkConflictIds.length === 0} onClick={resolveSelectedConflicts} type="button"><FiCheck />Resolve selected</button>
           </form>
           <form className="stack" onSubmit={rerunMaterialization}>
             <h3>Rerun Snapshot</h3>
@@ -425,6 +548,7 @@ export const ImportsPage = ({ context }) => {
           pending={action.pending}
           records={records}
           selectedRecord={selectedImportRecord}
+          versions={recordVersions}
         />
         <JsonRecordEditor
           records={transformPresets}

@@ -1472,6 +1472,36 @@ export interface IterationCloseRequest {
   carryOverIterationId?: string;
 }
 
+export interface ImportTransformPresetRetargetRequest {
+  name?: string;
+  description?: string;
+  enabled?: boolean;
+  mappingTemplateIds?: string[];
+}
+
+export interface ImportTransformPresetRetargetResponse {
+  workspaceId?: string;
+  sourcePresetId?: string;
+  sourceVersionId?: string;
+  sourceVersion?: number;
+  clonedPreset?: ImportTransformPresetResponse;
+  cloneName?: string;
+  cloneDescription?: string;
+  transformationConfig?: unknown;
+  enabled?: boolean;
+  templates?: ImportTransformPresetRetargetTemplateResponse[];
+}
+
+export interface ImportTransformPresetRetargetTemplateResponse {
+  id?: string;
+  name?: string;
+  provider?: string;
+  currentTransformPresetId?: string;
+  newTransformPresetId?: string;
+  willRetarget?: boolean;
+  reason?: string;
+}
+
 export interface ImportTransformPresetCloneRequest {
   name?: string;
   description?: string;
@@ -1580,6 +1610,23 @@ export interface ImportMaterializeRequest {
   projectId?: string;
   limit?: number;
   updateExisting?: boolean;
+}
+
+export interface ImportConflictBulkResolutionRequest {
+  recordIds?: string[];
+  resolution?: string;
+}
+
+export interface ImportConflictBulkResolutionResponse {
+  importJobId?: string;
+  resolution?: string;
+  requested?: number;
+  resolved?: number;
+  records?: ImportJobRecordResponse[];
+}
+
+export interface ImportJobCompleteRequest {
+  acceptOpenConflicts?: boolean;
 }
 
 export interface ImportConflictResolutionRequest {
@@ -2163,6 +2210,17 @@ export interface ImportMaterializationRunResponse {
   recordsConflicted?: number;
   createdAt?: string;
   finishedAt?: string;
+}
+
+export interface ImportJobRecordVersionResponse {
+  id?: string;
+  importJobRecordId?: string;
+  importJobId?: string;
+  version?: number;
+  changeType?: string;
+  changedById?: string;
+  snapshot?: unknown;
+  createdAt?: string;
 }
 
 export interface DashboardRenderResponse {
@@ -3393,6 +3451,28 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/retarget": {
+    post: {
+      path: {
+      presetId: string;
+      versionId: string;
+    };
+      query: undefined;
+      body: ImportTransformPresetRetargetRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/retarget-preview": {
+    post: {
+      path: {
+      presetId: string;
+      versionId: string;
+    };
+      query: undefined;
+      body: ImportTransformPresetRetargetRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/clone": {
     post: {
       path: {
@@ -3483,7 +3563,11 @@ export interface ApiPaths {
       path: {
       importJobId: string;
     };
-      query: undefined;
+      query: {
+      status?: string;
+      conflictStatus?: string;
+      sourceType?: string;
+    };
       body: undefined;
       response: unknown;
     };
@@ -3526,13 +3610,23 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/conflicts/resolve": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: ImportConflictBulkResolutionRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/import-jobs/{importJobId}/complete": {
     post: {
       path: {
       importJobId: string;
     };
       query: undefined;
-      body: undefined;
+      body: ImportJobCompleteRequest;
       response: unknown;
     };
   };
@@ -5128,6 +5222,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-job-records/{recordId}/versions": {
+    get: {
+      path: {
+      recordId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/email-deliveries/{deliveryId}": {
     get: {
       path: {
@@ -5471,6 +5575,8 @@ export const apiOperations = {
   "addWorkItem": { method: "post", path: "/api/v1/iterations/{iterationId}/work-items" },
   "commitIteration": { method: "post", path: "/api/v1/iterations/{iterationId}/commit" },
   "closeIteration": { method: "post", path: "/api/v1/iterations/{iterationId}/close" },
+  "cloneAndRetargetTransformPresetVersion": { method: "post", path: "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/retarget" },
+  "previewCloneAndRetargetTransformPresetVersion": { method: "post", path: "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/retarget-preview" },
   "cloneTransformPresetVersion": { method: "post", path: "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/clone" },
   "rerunMaterialization": { method: "post", path: "/api/v1/import-materialization-runs/{materializationRunId}/rerun" },
   "listValueLookups": { method: "get", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups" },
@@ -5485,6 +5591,7 @@ export const apiOperations = {
   "parseImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/parse" },
   "materializeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/materialize" },
   "failImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/fail" },
+  "resolveConflicts": { method: "post", path: "/api/v1/import-jobs/{importJobId}/conflicts/resolve" },
   "completeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/complete" },
   "cancelImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/cancel" },
   "resolveConflict": { method: "post", path: "/api/v1/import-job-records/{recordId}/resolve-conflict" },
@@ -5650,6 +5757,7 @@ export const apiOperations = {
   "getImportJob": { method: "get", path: "/api/v1/import-jobs/{importJobId}" },
   "listMaterializationRuns": { method: "get", path: "/api/v1/import-jobs/{importJobId}/materialization-runs" },
   "listConflicts": { method: "get", path: "/api/v1/import-jobs/{importJobId}/conflicts" },
+  "listRecordVersions": { method: "get", path: "/api/v1/import-job-records/{recordId}/versions" },
   "getEmailDelivery": { method: "get", path: "/api/v1/email-deliveries/{deliveryId}" },
   "render": { method: "get", path: "/api/v1/dashboards/{dashboardId}/render" },
   "listFieldConfigurationsForField": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/field-configurations" },

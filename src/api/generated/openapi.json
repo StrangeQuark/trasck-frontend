@@ -4817,6 +4817,104 @@
         }
       }
     },
+    "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/retarget": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "cloneAndRetargetTransformPresetVersion",
+        "parameters": [
+          {
+            "name": "presetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportTransformPresetRetargetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTransformPresetRetargetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/retarget-preview": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "previewCloneAndRetargetTransformPresetVersion",
+        "parameters": [
+          {
+            "name": "presetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "versionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportTransformPresetRetargetRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTransformPresetRetargetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/clone": {
       "post": {
         "tags": [
@@ -5171,6 +5269,30 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "conflictStatus",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "sourceType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -5342,6 +5464,47 @@
         }
       }
     },
+    "/api/v1/import-jobs/{importJobId}/conflicts/resolve": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "resolveConflicts",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportConflictBulkResolutionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportConflictBulkResolutionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-jobs/{importJobId}/complete": {
       "post": {
         "tags": [
@@ -5359,6 +5522,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportJobCompleteRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -11236,6 +11408,40 @@
         }
       }
     },
+    "/api/v1/import-job-records/{recordId}/versions": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listRecordVersions",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportJobRecordVersionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/email-deliveries/{deliveryId}": {
       "get": {
         "tags": [
@@ -16148,6 +16354,96 @@
           }
         }
       },
+      "ImportTransformPresetRetargetRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "mappingTemplateIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
+      "ImportTransformPresetRetargetResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourcePresetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceVersionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "clonedPreset": {
+            "$ref": "#/components/schemas/ImportTransformPresetResponse"
+          },
+          "cloneName": {
+            "type": "string"
+          },
+          "cloneDescription": {
+            "type": "string"
+          },
+          "transformationConfig": {},
+          "enabled": {
+            "type": "boolean"
+          },
+          "templates": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportTransformPresetRetargetTemplateResponse"
+            }
+          }
+        }
+      },
+      "ImportTransformPresetRetargetTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "currentTransformPresetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "newTransformPresetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "willRetarget": {
+            "type": "boolean"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
       "ImportTransformPresetCloneRequest": {
         "type": "object",
         "properties": {
@@ -16451,6 +16747,55 @@
             "format": "int32"
           },
           "updateExisting": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImportConflictBulkResolutionRequest": {
+        "type": "object",
+        "properties": {
+          "recordIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "resolution": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportConflictBulkResolutionResponse": {
+        "type": "object",
+        "properties": {
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "requested": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "resolved": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJobRecordResponse"
+            }
+          }
+        }
+      },
+      "ImportJobCompleteRequest": {
+        "type": "object",
+        "properties": {
+          "acceptOpenConflicts": {
             "type": "boolean"
           }
         }
@@ -18181,6 +18526,39 @@
             "format": "date-time"
           },
           "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ImportJobRecordVersionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "importJobRecordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "changeType": {
+            "type": "string"
+          },
+          "changedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "snapshot": {},
+          "createdAt": {
             "type": "string",
             "format": "date-time"
           }
