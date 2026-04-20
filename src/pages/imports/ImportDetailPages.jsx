@@ -11,6 +11,9 @@ import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
 import { firstId, numberOrUndefined, parseJsonOrThrow, toJsonText } from '../../utils/forms';
+import { ImportConflictDetails } from './ImportConflictDetails';
+import { ImportRecordEditor } from './ImportRecordEditor';
+import { importRecordFormToRequest, importRecordToForm } from './importRecordForms';
 
 export const ImportJobDetailPage = ({ context }) => {
   const { importJobId } = useParams();
@@ -20,8 +23,19 @@ export const ImportJobDetailPage = ({ context }) => {
   const [conflicts, setConflicts] = useState([]);
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [materializeResult, setMaterializeResult] = useState(null);
+  const [recordEditForm, setRecordEditForm] = useState(importRecordToForm());
   const [conflictForm, setConflictForm] = useState({ recordId: '', resolution: 'create_new' });
-  const [rerunForm, setRerunForm] = useState({ materializationRunId: '', limit: '25' });
+  const [rerunForm, setRerunForm] = useState({ materializationRunId: '', limit: '25', updateExisting: 'source' });
+  const selectedConflict = conflicts.find((record) => record.id === conflictForm.recordId) || null;
+  const selectedImportRecord = records.find((record) => record.id === recordEditForm.recordId) || null;
+
+  const syncRecordEditForm = (recordRows) => {
+    setRecordEditForm((current) => {
+      const rows = recordRows || [];
+      const selected = rows.find((record) => record.id === current.recordId) || rows[0] || null;
+      return importRecordToForm(selected);
+    });
+  };
 
   const load = async () => {
     const result = await action.run(() => Promise.all([
@@ -36,6 +50,7 @@ export const ImportJobDetailPage = ({ context }) => {
       setRecords(recordRows || []);
       setConflicts(conflictRows || []);
       setMaterializationRuns(runRows || []);
+      syncRecordEditForm(recordRows);
       setConflictForm((current) => ({ ...current, recordId: firstId(conflictRows) }));
       setRerunForm((current) => ({ ...current, materializationRunId: firstId(runRows) }));
     }
@@ -62,9 +77,24 @@ export const ImportJobDetailPage = ({ context }) => {
     event.preventDefault();
     const result = await action.run(() => context.services.imports.rerunMaterialization(rerunForm.materializationRunId, {
       limit: numberOrUndefined(rerunForm.limit),
+      updateExisting: rerunForm.updateExisting === 'source' ? undefined : rerunForm.updateExisting === 'true',
     }), 'Materialization rerun completed');
     if (result) {
       setMaterializeResult(result);
+      await load();
+    }
+  };
+
+  const selectRecordForEdit = (recordId) => {
+    const selected = records.find((record) => record.id === recordId) || null;
+    setRecordEditForm(importRecordToForm(selected));
+  };
+
+  const updateRecord = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.imports.updateRecord(recordEditForm.recordId, importRecordFormToRequest(recordEditForm, parseJsonOrThrow)), 'Record saved');
+    if (saved) {
+      setRecordEditForm(importRecordToForm(saved));
       await load();
     }
   };
@@ -85,6 +115,7 @@ export const ImportJobDetailPage = ({ context }) => {
         <form className="stack" onSubmit={resolveConflict}>
           <RecordSelect label="Open conflict" records={conflicts} value={conflictForm.recordId} onChange={(recordId) => setConflictForm({ ...conflictForm, recordId })} />
           <SelectField label="Resolution" value={conflictForm.resolution} onChange={(resolution) => setConflictForm({ ...conflictForm, resolution })} options={['create_new', 'update_existing', 'skip']} />
+          <ImportConflictDetails conflict={selectedConflict} resolution={conflictForm.resolution} />
           <button className="secondary-button" disabled={action.pending || !conflictForm.recordId} type="submit"><FiCheck />Resolve</button>
         </form>
       </Panel>
@@ -92,8 +123,20 @@ export const ImportJobDetailPage = ({ context }) => {
         <form className="stack" onSubmit={rerunMaterialization}>
           <RecordSelect label="Run" records={materializationRuns} value={rerunForm.materializationRunId} onChange={(materializationRunId) => setRerunForm({ ...rerunForm, materializationRunId })} />
           <TextField label="Limit" type="number" value={rerunForm.limit} onChange={(limit) => setRerunForm({ ...rerunForm, limit })} />
+          <SelectField label="Update existing" value={rerunForm.updateExisting} onChange={(updateExisting) => setRerunForm({ ...rerunForm, updateExisting })} options={['source', 'true', 'false']} />
           <button className="secondary-button" disabled={action.pending || !rerunForm.materializationRunId} type="submit"><FiRefreshCw />Rerun</button>
         </form>
+      </Panel>
+      <Panel title="Record Review" icon={<FiEye />} wide>
+        <ImportRecordEditor
+          form={recordEditForm}
+          onChange={setRecordEditForm}
+          onSelect={selectRecordForEdit}
+          onSubmit={updateRecord}
+          pending={action.pending}
+          records={records}
+          selectedRecord={selectedImportRecord}
+        />
       </Panel>
       <Panel title="Records" icon={<FiEye />} wide>
         <JsonPreview title="Job" value={job} />

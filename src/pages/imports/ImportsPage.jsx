@@ -11,6 +11,9 @@ import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
 import { firstId, numberOrUndefined, parseJson, parseJsonOrThrow, pick } from '../../utils/forms';
+import { ImportConflictDetails } from './ImportConflictDetails';
+import { ImportRecordEditor } from './ImportRecordEditor';
+import { importRecordFormToRequest, importRecordToForm } from './importRecordForms';
 
 const selectedIdOrFirst = (records, selectedId) => {
   const rows = records || [];
@@ -55,10 +58,24 @@ export const ImportsPage = ({ context }) => {
   });
   const [materializeForm, setMaterializeForm] = useState({ limit: '25', updateExisting: 'false' });
   const [recordForm, setRecordForm] = useState({ sourceType: 'issue', sourceId: 'MANUAL-1', targetType: 'work_item', targetId: '', rawPayloadText: '{}' });
+  const [recordEditForm, setRecordEditForm] = useState(importRecordToForm());
   const [cloneForm, setCloneForm] = useState({ versionId: '', name: '', enabled: 'true' });
   const [conflictForm, setConflictForm] = useState({ recordId: '', resolution: 'create_new' });
-  const [rerunForm, setRerunForm] = useState({ materializationRunId: '', limit: '25' });
+  const [rerunForm, setRerunForm] = useState({ materializationRunId: '', limit: '25', updateExisting: 'source' });
   const action = useApiAction(context.addToast);
+  const selectedConflict = conflicts.find((record) => record.id === conflictForm.recordId) || null;
+  const selectedImportRecord = records.find((record) => record.id === recordEditForm.recordId) || null;
+
+  const syncRecordEditForm = (recordRows, preferredRecordId) => {
+    setRecordEditForm((current) => {
+      const rows = recordRows || [];
+      const selected = rows.find((record) => record.id === preferredRecordId)
+        || rows.find((record) => record.id === current.recordId)
+        || rows[0]
+        || null;
+      return importRecordToForm(selected);
+    });
+  };
 
   const load = async () => {
     if (!context.workspaceId) {
@@ -95,6 +112,7 @@ export const ImportsPage = ({ context }) => {
       setConflicts(result.conflictRows || []);
       setMaterializationRuns(result.runRows || []);
       setTransformPresetVersions(result.versionRows || []);
+      syncRecordEditForm(result.recordRows);
       setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(result.conflictRows, current.recordId) }));
       setRerunForm((current) => ({ ...current, materializationRunId: selectedIdOrFirst(result.runRows, current.materializationRunId) }));
       setCloneForm((current) => ({ ...current, versionId: selectedIdOrFirst(result.versionRows, current.versionId) }));
@@ -180,13 +198,30 @@ export const ImportsPage = ({ context }) => {
 
   const createRecord = async (event) => {
     event.preventDefault();
-    await action.run(() => context.services.imports.createRecord(importJobId, {
+    const record = await action.run(() => context.services.imports.createRecord(importJobId, {
       sourceType: recordForm.sourceType,
       sourceId: recordForm.sourceId,
       targetType: recordForm.targetType || undefined,
       targetId: recordForm.targetId || undefined,
       rawPayload: parseJsonOrThrow(recordForm.rawPayloadText),
     }), 'Record created');
+    if (record) {
+      setRecordEditForm(importRecordToForm(record));
+    }
+    await loadRecords(record?.id);
+  };
+
+  const selectRecordForEdit = (recordId) => {
+    const selected = records.find((record) => record.id === recordId) || null;
+    setRecordEditForm(importRecordToForm(selected));
+  };
+
+  const updateRecord = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.imports.updateRecord(recordEditForm.recordId, importRecordFormToRequest(recordEditForm, parseJsonOrThrow)), 'Record saved');
+    if (saved) {
+      setRecordEditForm(importRecordToForm(saved));
+    }
     await loadRecords();
   };
 
@@ -215,6 +250,7 @@ export const ImportsPage = ({ context }) => {
     event.preventDefault();
     const result = await action.run(() => context.services.imports.rerunMaterialization(rerunForm.materializationRunId, {
       limit: numberOrUndefined(rerunForm.limit),
+      updateExisting: rerunForm.updateExisting === 'source' ? undefined : rerunForm.updateExisting === 'true',
     }), 'Materialization rerun completed');
     if (result) {
       setMaterializeResult(result);
@@ -222,7 +258,7 @@ export const ImportsPage = ({ context }) => {
     }
   };
 
-  const loadRecords = async () => {
+  const loadRecords = async (preferredRecordId) => {
     if (!importJobId) {
       action.setError('Import job is required');
       return;
@@ -239,6 +275,7 @@ export const ImportsPage = ({ context }) => {
       setRecords(rows || []);
       setConflicts(conflictRows || []);
       setMaterializationRuns(runs || []);
+      syncRecordEditForm(rows, preferredRecordId);
       setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(conflictRows, current.recordId) }));
       setRerunForm((current) => ({ ...current, materializationRunId: selectedIdOrFirst(runs, current.materializationRunId) }));
     }
@@ -369,15 +406,26 @@ export const ImportsPage = ({ context }) => {
             <h3>Conflict Review</h3>
             <RecordSelect label="Open conflict" records={conflicts} value={conflictForm.recordId} onChange={(recordId) => setConflictForm({ ...conflictForm, recordId })} />
             <SelectField label="Resolution" value={conflictForm.resolution} onChange={(resolution) => setConflictForm({ ...conflictForm, resolution })} options={['create_new', 'update_existing', 'skip']} />
+            <ImportConflictDetails conflict={selectedConflict} resolution={conflictForm.resolution} />
             <button className="secondary-button" disabled={action.pending || !conflictForm.recordId} type="submit"><FiArrowRight />Resolve</button>
           </form>
           <form className="stack" onSubmit={rerunMaterialization}>
             <h3>Rerun Snapshot</h3>
             <RecordSelect label="Run" records={materializationRuns} value={rerunForm.materializationRunId} onChange={(materializationRunId) => setRerunForm({ ...rerunForm, materializationRunId })} />
             <TextField label="Limit" type="number" value={rerunForm.limit} onChange={(limit) => setRerunForm({ ...rerunForm, limit })} />
+            <SelectField label="Update existing" value={rerunForm.updateExisting} onChange={(updateExisting) => setRerunForm({ ...rerunForm, updateExisting })} options={['source', 'true', 'false']} />
             <button className="secondary-button" disabled={action.pending || !rerunForm.materializationRunId} type="submit"><FiRefreshCw />Rerun</button>
           </form>
         </div>
+        <ImportRecordEditor
+          form={recordEditForm}
+          onChange={setRecordEditForm}
+          onSelect={selectRecordForEdit}
+          onSubmit={updateRecord}
+          pending={action.pending}
+          records={records}
+          selectedRecord={selectedImportRecord}
+        />
         <JsonRecordEditor
           records={transformPresets}
           title="Transform Presets"
