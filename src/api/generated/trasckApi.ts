@@ -567,8 +567,24 @@ export interface ExportJobResponse {
   contentType?: string;
   sizeBytes?: number;
   checksum?: string;
+  requestPayload?: unknown;
+  errorMessage?: string;
+  createdAt?: string;
   startedAt?: string;
   finishedAt?: string;
+}
+
+export interface ImportReviewCsvExportWorkerRequest {
+  limit?: number;
+}
+
+export interface ImportReviewCsvExportWorkerResponse {
+  workspaceId?: string;
+  requestedLimit?: number;
+  processed?: number;
+  completed?: number;
+  failed?: number;
+  jobs?: ExportJobResponse[];
 }
 
 export interface ImportMappingTemplateRequest {
@@ -771,6 +787,10 @@ export interface AutomationWorkerRunHistoryResponse {
 export interface AutomationWorkerRunRetentionResponse {
   workspaceId?: string;
   workerType?: string;
+  triggerType?: string;
+  status?: string;
+  startedFrom?: string;
+  startedTo?: string;
   retentionEnabled?: boolean;
   retentionDays?: number;
   exportBeforePrune?: boolean;
@@ -1103,6 +1123,50 @@ export interface AgentProviderResponse {
   enabled?: boolean;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface AgentDispatchAttemptRetentionRequest {
+  agentTaskId?: string;
+  providerId?: string;
+  agentProfileId?: string;
+  workItemId?: string;
+  attemptType?: string;
+  status?: string;
+  startedFrom?: string;
+  startedTo?: string;
+  retentionDays?: number;
+  exportBeforePrune?: boolean;
+}
+
+export interface AgentDispatchAttemptRetentionResponse {
+  workspaceId?: string;
+  agentTaskId?: string;
+  providerId?: string;
+  agentProfileId?: string;
+  workItemId?: string;
+  attemptType?: string;
+  status?: string;
+  startedFrom?: string;
+  startedTo?: string;
+  cutoff?: string;
+  attemptsEligible?: number;
+  attemptsIncluded?: number;
+  attemptsPruned?: number;
+  exportJobId?: string;
+  fileAttachmentId?: string;
+  attempts?: AgentDispatchAttemptResponse[];
+}
+
+export interface AgentDispatchAttemptExportRequest {
+  agentTaskId?: string;
+  providerId?: string;
+  agentProfileId?: string;
+  workItemId?: string;
+  attemptType?: string;
+  status?: string;
+  startedFrom?: string;
+  startedTo?: string;
+  limit?: number;
 }
 
 export interface WorkLogRequest {
@@ -1900,6 +1964,25 @@ export interface AgentTaskHumanMessageRequest {
   bodyDocument?: unknown;
 }
 
+export interface AgentRuntimePreviewRequest {
+  agentProfileId?: string;
+  workItemId?: string;
+  action?: string;
+}
+
+export interface AgentRuntimePreviewResponse {
+  providerId?: string;
+  providerKey?: string;
+  providerType?: string;
+  dispatchMode?: string;
+  runtimeMode?: string;
+  transport?: string;
+  externalExecutionEnabled?: boolean;
+  valid?: boolean;
+  validationErrors?: string[];
+  previewPayload?: unknown;
+}
+
 export interface AgentProviderCredentialRequest {
   credentialType?: string;
   secret?: string;
@@ -2062,6 +2145,13 @@ export interface AutomationWorkerHealthResponse {
 
 export interface CursorPageResponseAuditLogEntryResponse {
   items?: AuditLogEntryResponse[];
+  nextCursor?: string;
+  hasMore?: boolean;
+  limit?: number;
+}
+
+export interface CursorPageResponseAgentDispatchAttemptResponse {
+  items?: AgentDispatchAttemptResponse[];
   nextCursor?: string;
   hasMore?: boolean;
   limit?: number;
@@ -2887,6 +2977,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/import-review/export-jobs/process": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: ImportReviewCsvExportWorkerRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/import-mapping-templates": {
     get: {
       path: {
@@ -3018,6 +3118,10 @@ export interface ApiPaths {
     };
       query: {
       workerType?: string;
+      triggerType?: string;
+      status?: string;
+      startedFrom?: string;
+      startedTo?: string;
     };
       body: undefined;
       response: unknown;
@@ -3031,6 +3135,10 @@ export interface ApiPaths {
       query: {
       limit?: number;
       workerType?: string;
+      triggerType?: string;
+      status?: string;
+      startedFrom?: string;
+      startedTo?: string;
     };
       body: undefined;
       response: unknown;
@@ -3202,6 +3310,26 @@ export interface ApiPaths {
     };
       query: undefined;
       body: AgentProviderRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/prune": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: AgentDispatchAttemptRetentionRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/export": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: AgentDispatchAttemptExportRequest;
       response: unknown;
     };
   };
@@ -4197,6 +4325,16 @@ export interface ApiPaths {
     };
       query: undefined;
       body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/agent-providers/{providerId}/runtime-preview": {
+    post: {
+      path: {
+      providerId: string;
+    };
+      query: undefined;
+      body: AgentRuntimePreviewRequest;
       response: unknown;
     };
   };
@@ -5206,6 +5344,27 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: {
+      agentTaskId?: string;
+      providerId?: string;
+      agentProfileId?: string;
+      workItemId?: string;
+      attemptType?: string;
+      status?: string;
+      startedFrom?: string;
+      startedTo?: string;
+      limit?: number;
+      cursor?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/activity": {
     get: {
       path: {
@@ -5909,6 +6068,7 @@ export const apiOperations = {
   "createTransformPreset": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
   "createSampleImportJob": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-samples/{sampleKey}/jobs" },
   "createImportReviewCsvExportJob": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-review/export-jobs" },
+  "processImportReviewCsvExportJobs": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-review/export-jobs/process" },
   "listMappingTemplates": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "createMappingTemplate": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "listImportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
@@ -5940,6 +6100,8 @@ export const apiOperations = {
   "claimTask": { method: "post", path: "/api/v1/workspaces/{workspaceId}/agent-workers/{providerKey}/tasks/claim" },
   "listProviders": { method: "get", path: "/api/v1/workspaces/{workspaceId}/agent-providers" },
   "createProvider": { method: "post", path: "/api/v1/workspaces/{workspaceId}/agent-providers" },
+  "pruneDispatchAttempts": { method: "post", path: "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/prune" },
+  "exportDispatchAttempts": { method: "post", path: "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/export" },
   "listWorkLogs": { method: "get", path: "/api/v1/work-items/{workItemId}/work-logs" },
   "createWorkLog": { method: "post", path: "/api/v1/work-items/{workItemId}/work-logs" },
   "listWatchers": { method: "get", path: "/api/v1/work-items/{workItemId}/watchers" },
@@ -6042,6 +6204,7 @@ export const apiOperations = {
   "addHumanMessage": { method: "post", path: "/api/v1/agent-tasks/{taskId}/messages" },
   "cancelTask": { method: "post", path: "/api/v1/agent-tasks/{taskId}/cancel" },
   "acceptResult": { method: "post", path: "/api/v1/agent-tasks/{taskId}/accept-result" },
+  "previewRuntime": { method: "post", path: "/api/v1/agent-providers/{providerId}/runtime-preview" },
   "listCredentials": { method: "get", path: "/api/v1/agent-providers/{providerId}/credentials" },
   "createCredential": { method: "post", path: "/api/v1/agent-providers/{providerId}/credentials" },
   "deactivateCredential": { method: "post", path: "/api/v1/agent-providers/{providerId}/credentials/{credentialId}/deactivate" },
@@ -6148,6 +6311,7 @@ export const apiOperations = {
   "listWorkerRuns": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-worker-runs" },
   "listWorkerHealth": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-worker-health" },
   "listAuditLog": { method: "get", path: "/api/v1/workspaces/{workspaceId}/audit-log" },
+  "listDispatchAttempts": { method: "get", path: "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts" },
   "workspaceActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/activity" },
   "listValues": { method: "get", path: "/api/v1/work-items/{workItemId}/custom-fields" },
   "downloadAttachment": { method: "get", path: "/api/v1/work-items/{workItemId}/attachments/{attachmentId}/download" },

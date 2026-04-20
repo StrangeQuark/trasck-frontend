@@ -68,6 +68,7 @@ export const ImportsPage = ({ context }) => {
   const [conflictResolutionJobId, setConflictResolutionJobId] = useState('');
   const [conflictResolutionJobStatus, setConflictResolutionJobStatus] = useState('');
   const [conflictResolutionWorkerResult, setConflictResolutionWorkerResult] = useState(null);
+  const [reviewExportWorkerResult, setReviewExportWorkerResult] = useState(null);
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [jobVersionDiffs, setJobVersionDiffs] = useState(null);
   const [jobVersionDiffExport, setJobVersionDiffExport] = useState(null);
@@ -560,10 +561,22 @@ export const ImportsPage = ({ context }) => {
       action.setError('Workspace ID is required');
       return;
     }
-    const exportJob = await action.run(() => context.services.imports.createReviewCsvExportJob(context.workspaceId, request), 'Import review export artifact created');
+    const exportJob = await action.run(() => context.services.imports.createReviewCsvExportJob(context.workspaceId, request), 'Import review export queued');
     if (exportJob) {
       setJobVersionDiffExportJob(exportJob);
       setExportJobs((current) => [exportJob, ...current.filter((job) => job.id !== exportJob.id)].slice(0, 20));
+    }
+  };
+
+  const processReviewCsvExportJobs = async () => {
+    if (!context.workspaceId) {
+      action.setError('Workspace ID is required');
+      return;
+    }
+    const result = await action.run(() => context.services.imports.processReviewCsvExportJobs(context.workspaceId, { limit: 10 }), 'Import review exports processed');
+    if (result) {
+      setReviewExportWorkerResult(result);
+      setExportJobs((current) => [...(result.jobs || []), ...current.filter((job) => !(result.jobs || []).some((processed) => processed.id === job.id))].slice(0, 20));
     }
   };
 
@@ -828,8 +841,10 @@ export const ImportsPage = ({ context }) => {
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadImportOpsAudit} type="button"><FiRefreshCw />Load audit</button>
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processConflictResolutionJobs} type="button"><FiActivity />Process queued</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processReviewCsvExportJobs} type="button"><FiActivity />Process review exports</button>
         </div>
         <JsonPreview title="Worker Result" value={conflictResolutionWorkerResult} />
+        <JsonPreview title="Review Export Result" value={reviewExportWorkerResult} />
         <ImportConflictResolutionJobsTable jobs={workspaceConflictResolutionJobs} onCsvExport={createConflictJobsCsvExportJob({ status: conflictResolutionJobStatus || undefined })} />
         <ImportExportJobsTable jobs={exportJobs} onCsvExport={createExportJobsCsvExportJob} onDownload={downloadExportJob} />
         <ImportCompletionMetricsTable title="Project" metrics={projectImportCompletions} onCsvExport={createCompletionCsvExportJob('project_completion', { projectId: context.projectId || undefined })} />

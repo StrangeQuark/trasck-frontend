@@ -328,7 +328,7 @@ export const ImportExportJobsTable = ({ jobs = [], onCsvExport, onDownload }) =>
                   <td>{job.finishedAtLabel}</td>
                   <td className="mono-cell truncate-cell">{job.checksum}</td>
                   <td>
-                    <button className="icon-button" disabled={!job.id || !onDownload} onClick={() => onDownload(job)} title="Download export artifact" type="button">
+                    <button className="icon-button" disabled={!job.id || !job.fileAttachmentId || job.status !== 'completed' || !onDownload} onClick={() => onDownload(job)} title="Download export artifact" type="button">
                       <FiDownload />
                     </button>
                   </td>

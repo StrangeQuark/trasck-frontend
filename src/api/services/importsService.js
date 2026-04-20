@@ -371,6 +371,13 @@ export const createImportsService = (api) => ({
     });
   },
 
+  processReviewCsvExportJobs(workspaceId, request = {}) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/import-review/export-jobs/process', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
   listExportJobs(workspaceId, query = {}) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/export-jobs', {
       path: { workspaceId },

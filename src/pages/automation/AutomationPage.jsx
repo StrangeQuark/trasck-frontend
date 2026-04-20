@@ -27,6 +27,7 @@ export const AutomationPage = ({ context }) => {
   const [workerRuns, setWorkerRuns] = useState([]);
   const [workerHealth, setWorkerHealth] = useState([]);
   const [workerTypeFilter, setWorkerTypeFilter] = useState('all');
+  const [workerRetentionForm, setWorkerRetentionForm] = useState({ triggerType: 'all', status: 'all', startedFrom: '', startedTo: '' });
   const [rules, setRules] = useState([]);
   const [ruleId, setRuleId] = useState('');
   const [jobs, setJobs] = useState([]);
@@ -62,6 +63,14 @@ export const AutomationPage = ({ context }) => {
     workerRunPruningWindowEnd: '',
   });
   const action = useApiAction(context.addToast);
+
+  const workerRetentionQuery = () => ({
+    ...(workerTypeFilter === 'all' ? {} : { workerType: workerTypeFilter }),
+    ...(workerRetentionForm.triggerType === 'all' ? {} : { triggerType: workerRetentionForm.triggerType }),
+    ...(workerRetentionForm.status === 'all' ? {} : { status: workerRetentionForm.status }),
+    ...(workerRetentionForm.startedFrom ? { startedFrom: new Date(workerRetentionForm.startedFrom).toISOString() } : {}),
+    ...(workerRetentionForm.startedTo ? { startedTo: new Date(workerRetentionForm.startedTo).toISOString() } : {}),
+  });
 
   const load = async () => {
     if (!context.workspaceId) {
@@ -288,10 +297,9 @@ export const AutomationPage = ({ context }) => {
   };
 
   const exportWorkerRuns = async () => {
-    const workerQuery = workerTypeFilter === 'all' ? {} : { workerType: workerTypeFilter };
     const result = await action.run(() => context.services.automation.exportWorkerRuns(context.workspaceId, {
       limit: numberOrUndefined(workerForm.limit),
-      ...workerQuery,
+      ...workerRetentionQuery(),
     }), 'Worker runs exported');
     if (result) {
       setRunResult(result);
@@ -300,8 +308,7 @@ export const AutomationPage = ({ context }) => {
   };
 
   const pruneWorkerRuns = async () => {
-    const workerQuery = workerTypeFilter === 'all' ? {} : { workerType: workerTypeFilter };
-    const result = await action.run(() => context.services.automation.pruneWorkerRuns(context.workspaceId, workerQuery), 'Worker runs pruned');
+    const result = await action.run(() => context.services.automation.pruneWorkerRuns(context.workspaceId, workerRetentionQuery()), 'Worker runs pruned');
     if (result) {
       setRunResult(result);
       await load();
@@ -453,6 +460,12 @@ export const AutomationPage = ({ context }) => {
           <div className="stack nested-form">
             <RecordSelect label="Webhook delivery" records={webhookDeliveries} value={webhookDeliveryId} onChange={setWebhookDeliveryId} />
             <RecordSelect label="Email delivery" records={emailDeliveries} value={emailDeliveryId} onChange={setEmailDeliveryId} />
+            <div className="two-column compact">
+              <SelectField label="Retention trigger" value={workerRetentionForm.triggerType} onChange={(triggerType) => setWorkerRetentionForm({ ...workerRetentionForm, triggerType })} options={['all', 'manual', 'scheduled']} />
+              <SelectField label="Retention status" value={workerRetentionForm.status} onChange={(status) => setWorkerRetentionForm({ ...workerRetentionForm, status })} options={['all', 'succeeded', 'failed', 'running']} />
+              <TextField label="Started from" type="datetime-local" value={workerRetentionForm.startedFrom} onChange={(startedFrom) => setWorkerRetentionForm({ ...workerRetentionForm, startedFrom })} />
+              <TextField label="Started to" type="datetime-local" value={workerRetentionForm.startedTo} onChange={(startedTo) => setWorkerRetentionForm({ ...workerRetentionForm, startedTo })} />
+            </div>
             <div className="button-row wrap">
               <button className="secondary-button" disabled={action.pending || !webhookDeliveryId} onClick={() => webhookDeliveryCommand(context.services.automation.retryWebhookDelivery, 'Webhook delivery queued')} type="button">Retry webhook</button>
               <button className="icon-button danger" disabled={action.pending || !webhookDeliveryId} onClick={() => webhookDeliveryCommand(context.services.automation.cancelWebhookDelivery, 'Webhook delivery canceled')} title="Cancel webhook delivery" type="button"><FiX /></button>

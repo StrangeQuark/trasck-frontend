@@ -12,6 +12,34 @@ export const createAgentsService = (api) => ({
     });
   },
 
+  previewRuntime(providerId, request = {}) {
+    return api.request('post', '/api/v1/agent-providers/{providerId}/runtime-preview', {
+      path: { providerId },
+      body: request,
+    });
+  },
+
+  listDispatchAttempts(workspaceId, query = {}) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts', {
+      path: { workspaceId },
+      query,
+    });
+  },
+
+  exportDispatchAttempts(workspaceId, request = {}) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/export', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
+  pruneDispatchAttempts(workspaceId, request = {}) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/prune', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
   listProfiles(workspaceId) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/agents', {
       path: { workspaceId },

@@ -1694,6 +1694,46 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/import-review/export-jobs/process": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "processImportReviewCsvExportJobs",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportReviewCsvExportWorkerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportReviewCsvExportWorkerResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/import-mapping-templates": {
       "get": {
         "tags": [
@@ -2211,6 +2251,40 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "triggerType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "startedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
           }
         ],
         "responses": {
@@ -2258,6 +2332,40 @@
             "required": false,
             "schema": {
               "type": "string"
+            }
+          },
+          {
+            "name": "triggerType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "startedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
             }
           }
         ],
@@ -3048,6 +3156,86 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/AgentProviderResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/prune": {
+      "post": {
+        "tags": [
+          "agent-dispatch-attempt-controller"
+        ],
+        "operationId": "pruneDispatchAttempts",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentDispatchAttemptRetentionRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentDispatchAttemptRetentionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/export": {
+      "post": {
+        "tags": [
+          "agent-dispatch-attempt-controller"
+        ],
+        "operationId": "exportDispatchAttempts",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentDispatchAttemptExportRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExportJobResponse"
                 }
               }
             }
@@ -6962,6 +7150,46 @@
         }
       }
     },
+    "/api/v1/agent-providers/{providerId}/runtime-preview": {
+      "post": {
+        "tags": [
+          "agent-provider-controller"
+        ],
+        "operationId": "previewRuntime",
+        "parameters": [
+          {
+            "name": "providerId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentRuntimePreviewRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentRuntimePreviewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/agent-providers/{providerId}/credentials": {
       "get": {
         "tags": [
@@ -10711,6 +10939,124 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CursorPageResponseAuditLogEntryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts": {
+      "get": {
+        "tags": [
+          "agent-dispatch-attempt-controller"
+        ],
+        "operationId": "listDispatchAttempts",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "agentTaskId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "providerId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "agentProfileId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "workItemId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "attemptType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "startedFrom",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "startedTo",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/CursorPageResponseAgentDispatchAttemptResponse"
                 }
               }
             }
@@ -14510,6 +14856,14 @@
           "checksum": {
             "type": "string"
           },
+          "requestPayload": {},
+          "errorMessage": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "startedAt": {
             "type": "string",
             "format": "date-time"
@@ -14517,6 +14871,46 @@
           "finishedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ImportReviewCsvExportWorkerRequest": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "ImportReviewCsvExportWorkerResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestedLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "processed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "completed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ExportJobResponse"
+            }
           }
         }
       },
@@ -15118,6 +15512,20 @@
           },
           "workerType": {
             "type": "string"
+          },
+          "triggerType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "startedFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedTo": {
+            "type": "string",
+            "format": "date-time"
           },
           "retentionEnabled": {
             "type": "boolean"
@@ -16101,6 +16509,156 @@
           "updatedAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "AgentDispatchAttemptRetentionRequest": {
+        "type": "object",
+        "properties": {
+          "agentTaskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agentProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "attemptType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "startedFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "retentionDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "exportBeforePrune": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AgentDispatchAttemptRetentionResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agentTaskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agentProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "attemptType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "startedFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "cutoff": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "attemptsEligible": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attemptsIncluded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "attemptsPruned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "exportJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileAttachmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "attempts": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentDispatchAttemptResponse"
+            }
+          }
+        }
+      },
+      "AgentDispatchAttemptExportRequest": {
+        "type": "object",
+        "properties": {
+          "agentTaskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "agentProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "attemptType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "startedFrom": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedTo": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
           }
         }
       },
@@ -18359,6 +18917,59 @@
           "bodyDocument": {}
         }
       },
+      "AgentRuntimePreviewRequest": {
+        "type": "object",
+        "properties": {
+          "agentProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "action": {
+            "type": "string"
+          }
+        }
+      },
+      "AgentRuntimePreviewResponse": {
+        "type": "object",
+        "properties": {
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerKey": {
+            "type": "string"
+          },
+          "providerType": {
+            "type": "string"
+          },
+          "dispatchMode": {
+            "type": "string"
+          },
+          "runtimeMode": {
+            "type": "string"
+          },
+          "transport": {
+            "type": "string"
+          },
+          "externalExecutionEnabled": {
+            "type": "boolean"
+          },
+          "valid": {
+            "type": "boolean"
+          },
+          "validationErrors": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "previewPayload": {}
+        }
+      },
       "AgentProviderCredentialRequest": {
         "type": "object",
         "properties": {
@@ -18852,6 +19463,27 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AuditLogEntryResponse"
+            }
+          },
+          "nextCursor": {
+            "type": "string"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "CursorPageResponseAgentDispatchAttemptResponse": {
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AgentDispatchAttemptResponse"
             }
           },
           "nextCursor": {
