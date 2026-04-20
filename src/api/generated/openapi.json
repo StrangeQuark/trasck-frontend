@@ -5591,6 +5591,56 @@
         }
       }
     },
+    "/api/v1/boards/{boardId}/work-items/{workItemId}/move": {
+      "post": {
+        "tags": [
+          "board-controller"
+        ],
+        "operationId": "moveBoardWorkItem",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "workItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoardWorkItemMoveRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/boards/{boardId}/swimlanes": {
       "get": {
         "tags": [
@@ -10913,6 +10963,40 @@
         }
       }
     },
+    "/api/v1/import-jobs/{importJobId}/materialization-runs": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listMaterializationRuns",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportMaterializationRunResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/email-deliveries/{deliveryId}": {
       "get": {
         "tags": [
@@ -12852,6 +12936,10 @@
           "transformationConfig": {},
           "enabled": {
             "type": "boolean"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
           },
           "createdAt": {
             "type": "string",
@@ -15722,6 +15810,10 @@
           "swimlaneType": {
             "type": "string"
           },
+          "savedFilterId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "query": {},
           "position": {
             "type": "integer",
@@ -16022,6 +16114,10 @@
       "ImportMaterializeResponse": {
         "type": "object",
         "properties": {
+          "materializationRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
           "importJobId": {
             "type": "string",
             "format": "uuid"
@@ -16159,6 +16255,30 @@
           }
         }
       },
+      "BoardWorkItemMoveRequest": {
+        "type": "object",
+        "properties": {
+          "transitionKey": {
+            "type": "string"
+          },
+          "targetColumnId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetStatusId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "previousWorkItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nextWorkItemId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "BoardSwimlaneRequest": {
         "type": "object",
         "properties": {
@@ -16167,6 +16287,13 @@
           },
           "swimlaneType": {
             "type": "string"
+          },
+          "savedFilterId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clearSavedFilter": {
+            "type": "boolean"
           },
           "query": {},
           "position": {
@@ -16477,6 +16604,16 @@
           },
           "workerRunPruningAutomaticEnabled": {
             "type": "boolean"
+          },
+          "workerRunPruningIntervalMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "workerRunPruningWindowStart": {
+            "type": "string"
+          },
+          "workerRunPruningWindowEnd": {
+            "type": "string"
           }
         }
       },
@@ -16534,6 +16671,24 @@
           },
           "workerRunPruningAutomaticEnabled": {
             "type": "boolean"
+          },
+          "workerRunPruningIntervalMinutes": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "workerRunPruningWindowStart": {
+            "type": "string"
+          },
+          "workerRunPruningWindowEnd": {
+            "type": "string"
+          },
+          "workerRunPruningLastStartedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "workerRunPruningLastFinishedAt": {
+            "type": "string",
+            "format": "date-time"
           },
           "updatedAt": {
             "type": "string",
@@ -17598,6 +17753,76 @@
           },
           "visibility": {
             "type": "string"
+          }
+        }
+      },
+      "ImportMaterializationRunResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mappingTemplateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "transformPresetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "transformPresetVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "updateExisting": {
+            "type": "boolean"
+          },
+          "mappingTemplateSnapshot": {},
+          "transformPresetSnapshot": {},
+          "transformationConfigSnapshot": {},
+          "status": {
+            "type": "string"
+          },
+          "recordsProcessed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordsCreated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordsUpdated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordsFailed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

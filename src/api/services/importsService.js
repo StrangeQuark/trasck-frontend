@@ -168,6 +168,12 @@ export const createImportsService = (api) => ({
     });
   },
 
+  listMaterializationRuns(importJobId) {
+    return api.request('get', '/api/v1/import-jobs/{importJobId}/materialization-runs', {
+      path: { importJobId },
+    });
+  },
+
   listRecords(importJobId) {
     return api.request('get', '/api/v1/import-jobs/{importJobId}/records', {
       path: { importJobId },

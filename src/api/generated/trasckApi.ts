@@ -458,6 +458,7 @@ export interface ImportTransformPresetResponse {
   description?: string;
   transformationConfig?: unknown;
   enabled?: boolean;
+  version?: number;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -1435,6 +1436,7 @@ export interface BoardSwimlaneResponse {
   boardId?: string;
   name?: string;
   swimlaneType?: string;
+  savedFilterId?: string;
   query?: unknown;
   position?: number;
   enabled?: boolean;
@@ -1548,6 +1550,7 @@ export interface ImportMaterializeRequest {
 }
 
 export interface ImportMaterializeResponse {
+  materializationRunId?: string;
   importJobId?: string;
   mappingTemplateId?: string;
   projectId?: string;
@@ -1597,9 +1600,19 @@ export interface BoardWorkItemRankRequest {
   nextWorkItemId?: string;
 }
 
+export interface BoardWorkItemMoveRequest {
+  transitionKey?: string;
+  targetColumnId?: string;
+  targetStatusId?: string;
+  previousWorkItemId?: string;
+  nextWorkItemId?: string;
+}
+
 export interface BoardSwimlaneRequest {
   name?: string;
   swimlaneType?: string;
+  savedFilterId?: string;
+  clearSavedFilter?: boolean;
   query?: unknown;
   position?: number;
   enabled?: boolean;
@@ -1721,6 +1734,9 @@ export interface AutomationWorkerSettingsRequest {
   workerRunRetentionDays?: number;
   workerRunExportBeforePrune?: boolean;
   workerRunPruningAutomaticEnabled?: boolean;
+  workerRunPruningIntervalMinutes?: number;
+  workerRunPruningWindowStart?: string;
+  workerRunPruningWindowEnd?: string;
 }
 
 export interface AutomationWorkerSettingsResponse {
@@ -1739,6 +1755,11 @@ export interface AutomationWorkerSettingsResponse {
   workerRunRetentionDays?: number;
   workerRunExportBeforePrune?: boolean;
   workerRunPruningAutomaticEnabled?: boolean;
+  workerRunPruningIntervalMinutes?: number;
+  workerRunPruningWindowStart?: string;
+  workerRunPruningWindowEnd?: string;
+  workerRunPruningLastStartedAt?: string;
+  workerRunPruningLastFinishedAt?: string;
   updatedAt?: string;
 }
 
@@ -2078,6 +2099,28 @@ export interface PublicProjectResponse {
   key?: string;
   description?: string;
   visibility?: string;
+}
+
+export interface ImportMaterializationRunResponse {
+  id?: string;
+  workspaceId?: string;
+  importJobId?: string;
+  mappingTemplateId?: string;
+  transformPresetId?: string;
+  transformPresetVersion?: number;
+  projectId?: string;
+  requestedById?: string;
+  updateExisting?: boolean;
+  mappingTemplateSnapshot?: unknown;
+  transformPresetSnapshot?: unknown;
+  transformationConfigSnapshot?: unknown;
+  status?: string;
+  recordsProcessed?: number;
+  recordsCreated?: number;
+  recordsUpdated?: number;
+  recordsFailed?: number;
+  createdAt?: string;
+  finishedAt?: string;
 }
 
 export interface DashboardRenderResponse {
@@ -3507,6 +3550,17 @@ export interface ApiPaths {
     };
       query: undefined;
       body: BoardWorkItemRankRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/boards/{boardId}/work-items/{workItemId}/move": {
+    post: {
+      path: {
+      boardId: string;
+      workItemId: string;
+    };
+      query: undefined;
+      body: BoardWorkItemMoveRequest;
       response: unknown;
     };
   };
@@ -4961,6 +5015,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/materialization-runs": {
+    get: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/email-deliveries/{deliveryId}": {
     get: {
       path: {
@@ -5325,6 +5389,7 @@ export const apiOperations = {
   "createContext": { method: "post", path: "/api/v1/custom-fields/{customFieldId}/contexts" },
   "transitionBoardWorkItem": { method: "post", path: "/api/v1/boards/{boardId}/work-items/{workItemId}/transition" },
   "rankBoardWorkItem": { method: "post", path: "/api/v1/boards/{boardId}/work-items/{workItemId}/rank" },
+  "moveBoardWorkItem": { method: "post", path: "/api/v1/boards/{boardId}/work-items/{workItemId}/move" },
   "listSwimlanes": { method: "get", path: "/api/v1/boards/{boardId}/swimlanes" },
   "createSwimlane": { method: "post", path: "/api/v1/boards/{boardId}/swimlanes" },
   "listColumns": { method: "get", path: "/api/v1/boards/{boardId}/columns" },
@@ -5475,6 +5540,7 @@ export const apiOperations = {
   "listProjectViews": { method: "get", path: "/api/v1/projects/{projectId}/personalization/views" },
   "listByProject_3": { method: "get", path: "/api/v1/projects/{projectId}/dashboards" },
   "getImportJob": { method: "get", path: "/api/v1/import-jobs/{importJobId}" },
+  "listMaterializationRuns": { method: "get", path: "/api/v1/import-jobs/{importJobId}/materialization-runs" },
   "getEmailDelivery": { method: "get", path: "/api/v1/email-deliveries/{deliveryId}" },
   "render": { method: "get", path: "/api/v1/dashboards/{dashboardId}/render" },
   "listFieldConfigurationsForField": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/field-configurations" },

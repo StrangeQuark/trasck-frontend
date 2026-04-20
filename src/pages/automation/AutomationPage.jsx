@@ -9,6 +9,7 @@ import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
+import { firstId, numberOrUndefined, parseJsonOrThrow, settingsToForm } from '../../utils/forms';
 
 export const AutomationPage = ({ context }) => {
   const [notifications, setNotifications] = useState(null);
@@ -47,6 +48,13 @@ export const AutomationPage = ({ context }) => {
     emailMaxAttempts: '3',
     webhookDryRun: 'true',
     emailDryRun: 'true',
+    workerRunRetentionEnabled: 'false',
+    workerRunRetentionDays: '',
+    workerRunExportBeforePrune: 'true',
+    workerRunPruningAutomaticEnabled: 'false',
+    workerRunPruningIntervalMinutes: '1440',
+    workerRunPruningWindowStart: '',
+    workerRunPruningWindowEnd: '',
   });
   const action = useApiAction(context.addToast);
 
@@ -257,10 +265,35 @@ export const AutomationPage = ({ context }) => {
       emailMaxAttempts: numberOrUndefined(workerSettingsForm.emailMaxAttempts),
       webhookDryRun: workerSettingsForm.webhookDryRun === 'true',
       emailDryRun: workerSettingsForm.emailDryRun === 'true',
+      workerRunRetentionEnabled: workerSettingsForm.workerRunRetentionEnabled === 'true',
+      workerRunRetentionDays: numberOrUndefined(workerSettingsForm.workerRunRetentionDays),
+      workerRunExportBeforePrune: workerSettingsForm.workerRunExportBeforePrune === 'true',
+      workerRunPruningAutomaticEnabled: workerSettingsForm.workerRunPruningAutomaticEnabled === 'true',
+      workerRunPruningIntervalMinutes: numberOrUndefined(workerSettingsForm.workerRunPruningIntervalMinutes),
+      workerRunPruningWindowStart: workerSettingsForm.workerRunPruningWindowStart || undefined,
+      workerRunPruningWindowEnd: workerSettingsForm.workerRunPruningWindowEnd || undefined,
     }), 'Worker settings saved');
     if (settings) {
       setWorkerSettings(settings);
       setWorkerSettingsForm(settingsToForm(settings));
+    }
+  };
+
+  const exportWorkerRuns = async () => {
+    const result = await action.run(() => context.services.automation.exportWorkerRuns(context.workspaceId, {
+      limit: numberOrUndefined(workerForm.limit),
+    }), 'Worker runs exported');
+    if (result) {
+      setRunResult(result);
+      await load();
+    }
+  };
+
+  const pruneWorkerRuns = async () => {
+    const result = await action.run(() => context.services.automation.pruneWorkerRuns(context.workspaceId), 'Worker runs pruned');
+    if (result) {
+      setRunResult(result);
+      await load();
     }
   };
 
@@ -394,6 +427,13 @@ export const AutomationPage = ({ context }) => {
               <TextField label="Email attempts" type="number" value={workerSettingsForm.emailMaxAttempts} onChange={(emailMaxAttempts) => setWorkerSettingsForm({ ...workerSettingsForm, emailMaxAttempts })} />
               <SelectField label="Webhook dry" value={workerSettingsForm.webhookDryRun} onChange={(webhookDryRun) => setWorkerSettingsForm({ ...workerSettingsForm, webhookDryRun })} options={['true', 'false']} />
               <SelectField label="Email dry" value={workerSettingsForm.emailDryRun} onChange={(emailDryRun) => setWorkerSettingsForm({ ...workerSettingsForm, emailDryRun })} options={['true', 'false']} />
+              <SelectField label="Retention" value={workerSettingsForm.workerRunRetentionEnabled} onChange={(workerRunRetentionEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunRetentionEnabled })} options={['false', 'true']} />
+              <TextField label="Retention days" type="number" value={workerSettingsForm.workerRunRetentionDays} onChange={(workerRunRetentionDays) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunRetentionDays })} />
+              <SelectField label="Export first" value={workerSettingsForm.workerRunExportBeforePrune} onChange={(workerRunExportBeforePrune) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunExportBeforePrune })} options={['true', 'false']} />
+              <SelectField label="Auto prune" value={workerSettingsForm.workerRunPruningAutomaticEnabled} onChange={(workerRunPruningAutomaticEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunPruningAutomaticEnabled })} options={['false', 'true']} />
+              <TextField label="Prune minutes" type="number" value={workerSettingsForm.workerRunPruningIntervalMinutes} onChange={(workerRunPruningIntervalMinutes) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunPruningIntervalMinutes })} />
+              <TextField label="Window start" type="time" value={workerSettingsForm.workerRunPruningWindowStart} onChange={(workerRunPruningWindowStart) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunPruningWindowStart })} />
+              <TextField label="Window end" type="time" value={workerSettingsForm.workerRunPruningWindowEnd} onChange={(workerRunPruningWindowEnd) => setWorkerSettingsForm({ ...workerSettingsForm, workerRunPruningWindowEnd })} />
             </div>
             <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={saveWorkerSettings} type="button"><FiCheck />Save worker settings</button>
           </div>
@@ -405,6 +445,8 @@ export const AutomationPage = ({ context }) => {
               <button className="icon-button danger" disabled={action.pending || !webhookDeliveryId} onClick={() => webhookDeliveryCommand(context.services.automation.cancelWebhookDelivery, 'Webhook delivery canceled')} title="Cancel webhook delivery" type="button"><FiX /></button>
               <button className="secondary-button" disabled={action.pending || !emailDeliveryId} onClick={() => emailDeliveryCommand(context.services.automation.retryEmailDelivery, 'Email delivery queued')} type="button">Retry email</button>
               <button className="icon-button danger" disabled={action.pending || !emailDeliveryId} onClick={() => emailDeliveryCommand(context.services.automation.cancelEmailDelivery, 'Email delivery canceled')} title="Cancel email delivery" type="button"><FiX /></button>
+              <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={exportWorkerRuns} type="button">Export runs</button>
+              <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={pruneWorkerRuns} type="button">Prune runs</button>
             </div>
           </div>
         </div>
