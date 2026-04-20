@@ -16,6 +16,8 @@ import { ImportRecordEditor } from './ImportRecordEditor';
 import { TransformPipelineEditor } from './TransformPipelineEditor';
 import { importRecordFormToRequest, importRecordToForm } from './importRecordForms';
 
+const openConflictCompletionPhrase = 'COMPLETE WITH OPEN CONFLICTS';
+
 export const ImportJobDetailPage = ({ context }) => {
   const { importJobId } = useParams();
   const action = useApiAction(context.addToast);
@@ -73,10 +75,25 @@ export const ImportJobDetailPage = ({ context }) => {
 
   const completeImportJob = async () => {
     const hasOpenConflicts = conflicts.length > 0;
-    if (hasOpenConflicts && !window.confirm('Open import conflicts remain. Complete this import anyway?')) {
-      return;
+    let request;
+    if (hasOpenConflicts) {
+      const confirmation = window.prompt(`Type ${openConflictCompletionPhrase} to complete with open conflicts.`);
+      if (confirmation !== openConflictCompletionPhrase) {
+        action.setError('Open-conflict completion confirmation did not match');
+        return;
+      }
+      const reason = window.prompt('Enter an audit reason for completing with open conflicts.');
+      if (!reason?.trim()) {
+        action.setError('Open-conflict completion requires an audit reason');
+        return;
+      }
+      request = {
+        acceptOpenConflicts: true,
+        openConflictConfirmation: confirmation,
+        openConflictReason: reason.trim(),
+      };
     }
-    await command(context.services.imports.complete, 'Import completed', hasOpenConflicts ? { acceptOpenConflicts: true } : undefined);
+    await command(context.services.imports.complete, 'Import completed', request);
   };
 
   const resolveConflict = async (event) => {

@@ -5505,6 +5505,47 @@
         }
       }
     },
+    "/api/v1/import-jobs/{importJobId}/conflicts/resolve-preview": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "previewResolveConflicts",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportConflictBulkResolutionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportConflictBulkResolutionPreviewResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-jobs/{importJobId}/complete": {
       "post": {
         "tags": [
@@ -16763,6 +16804,25 @@
           },
           "resolution": {
             "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "conflictStatus": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "expectedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "confirmation": {
+            "type": "string"
           }
         }
       },
@@ -16774,6 +16834,9 @@
             "format": "uuid"
           },
           "resolution": {
+            "type": "string"
+          },
+          "scope": {
             "type": "string"
           },
           "requested": {
@@ -16792,11 +16855,42 @@
           }
         }
       },
+      "ImportConflictBulkResolutionPreviewResponse": {
+        "type": "object",
+        "properties": {
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "matched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJobRecordResponse"
+            }
+          }
+        }
+      },
       "ImportJobCompleteRequest": {
         "type": "object",
         "properties": {
           "acceptOpenConflicts": {
             "type": "boolean"
+          },
+          "openConflictConfirmation": {
+            "type": "string"
+          },
+          "openConflictReason": {
+            "type": "string"
           }
         }
       },
