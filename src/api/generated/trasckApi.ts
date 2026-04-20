@@ -416,6 +416,36 @@ export interface InvitationResponse {
   expiresAt?: string;
 }
 
+export interface ImportMappingTemplateRequest {
+  name?: string;
+  provider?: string;
+  sourceType?: string;
+  targetType?: string;
+  projectId?: string;
+  workItemTypeKey?: string;
+  statusKey?: string;
+  fieldMapping?: unknown;
+  defaults?: unknown;
+  enabled?: boolean;
+}
+
+export interface ImportMappingTemplateResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  name?: string;
+  provider?: string;
+  sourceType?: string;
+  targetType?: string;
+  workItemTypeKey?: string;
+  statusKey?: string;
+  fieldMapping?: unknown;
+  defaults?: unknown;
+  enabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ImportJobRequest {
   provider?: string;
   config?: unknown;
@@ -465,6 +495,39 @@ export interface FieldConfigurationResponse {
   hidden?: boolean;
   defaultValue?: unknown;
   validationConfig?: unknown;
+}
+
+export interface EmailDeliveryWorkerRequest {
+  limit?: number;
+  maxAttempts?: number;
+  dryRun?: boolean;
+}
+
+export interface EmailDeliveryResponse {
+  id?: string;
+  workspaceId?: string;
+  automationJobId?: string;
+  actionId?: string;
+  provider?: string;
+  fromEmail?: string;
+  recipientEmail?: string;
+  subject?: string;
+  body?: string;
+  status?: string;
+  attemptCount?: number;
+  responseBody?: string;
+  nextRetryAt?: string;
+  createdAt?: string;
+  sentAt?: string;
+}
+
+export interface EmailDeliveryWorkerResponse {
+  workspaceId?: string;
+  processed?: number;
+  sent?: number;
+  failed?: number;
+  deadLettered?: number;
+  deliveries?: EmailDeliveryResponse[];
 }
 
 export interface DomainEventReplayRequest {
@@ -1339,6 +1402,24 @@ export interface ImportParseResponse {
   records?: ImportJobRecordResponse[];
 }
 
+export interface ImportMaterializeRequest {
+  mappingTemplateId?: string;
+  projectId?: string;
+  limit?: number;
+  updateExisting?: boolean;
+}
+
+export interface ImportMaterializeResponse {
+  importJobId?: string;
+  mappingTemplateId?: string;
+  projectId?: string;
+  recordsProcessed?: number;
+  created?: number;
+  updated?: number;
+  failed?: number;
+  records?: ImportJobRecordResponse[];
+}
+
 export interface DashboardWidgetRequest {
   widgetType?: string;
   title?: string;
@@ -1474,6 +1555,34 @@ export interface AgentTaskCallbackRequest {
   resultPayload?: unknown;
   artifacts?: AgentTaskCallbackArtifactRequest[];
   messages?: AgentTaskCallbackMessageRequest[];
+}
+
+export interface AutomationWorkerSettingsRequest {
+  automationJobsEnabled?: boolean;
+  webhookDeliveriesEnabled?: boolean;
+  emailDeliveriesEnabled?: boolean;
+  automationLimit?: number;
+  webhookLimit?: number;
+  emailLimit?: number;
+  webhookMaxAttempts?: number;
+  emailMaxAttempts?: number;
+  webhookDryRun?: boolean;
+  emailDryRun?: boolean;
+}
+
+export interface AutomationWorkerSettingsResponse {
+  workspaceId?: string;
+  automationJobsEnabled?: boolean;
+  webhookDeliveriesEnabled?: boolean;
+  emailDeliveriesEnabled?: boolean;
+  automationLimit?: number;
+  webhookLimit?: number;
+  emailLimit?: number;
+  webhookMaxAttempts?: number;
+  emailMaxAttempts?: number;
+  webhookDryRun?: boolean;
+  emailDryRun?: boolean;
+  updatedAt?: string;
 }
 
 export interface WorkItemUpdateRequest {
@@ -1831,8 +1940,8 @@ export interface BoardWorkItemsResponse {
 }
 
 export interface CsrfToken {
-  parameterName?: string;
   token?: string;
+  parameterName?: string;
   headerName?: string;
 }
 
@@ -2210,6 +2319,24 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/import-mapping-templates": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: ImportMappingTemplateRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/import-jobs": {
     get: {
       path: {
@@ -2243,6 +2370,16 @@ export interface ApiPaths {
     };
       query: undefined;
       body: FieldConfigurationRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/email-deliveries/process": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: EmailDeliveryWorkerRequest;
       response: unknown;
     };
   };
@@ -2635,6 +2772,26 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/webhook-deliveries/{deliveryId}/retry": {
+    post: {
+      path: {
+      deliveryId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/webhook-deliveries/{deliveryId}/cancel": {
+    post: {
+      path: {
+      deliveryId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/teams/{teamId}/memberships": {
     get: {
       path: {
@@ -2954,6 +3111,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/materialize": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: ImportMaterializeRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/import-jobs/{importJobId}/fail": {
     post: {
       path: {
@@ -2978,6 +3145,26 @@ export interface ApiPaths {
     post: {
       path: {
       importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/email-deliveries/{deliveryId}/retry": {
+    post: {
+      path: {
+      deliveryId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/email-deliveries/{deliveryId}/cancel": {
+    post: {
+      path: {
+      deliveryId: string;
     };
       query: undefined;
       body: undefined;
@@ -3250,6 +3437,24 @@ export interface ApiPaths {
     };
       query: undefined;
       body: AgentTaskCallbackRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/automation-worker-settings": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: AutomationWorkerSettingsRequest;
       response: unknown;
     };
   };
@@ -3651,6 +3856,24 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/import-mapping-templates/{mappingTemplateId}": {
+    patch: {
+      path: {
+      mappingTemplateId: string;
+    };
+      query: undefined;
+      body: ImportMappingTemplateRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      mappingTemplateId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/field-configurations/{fieldConfigurationId}": {
     get: {
       path: {
@@ -3981,6 +4204,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/email-deliveries": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/audit-log": {
     get: {
       path: {
@@ -4045,6 +4278,16 @@ export interface ApiPaths {
     get: {
       path: {
       webhookId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/webhook-deliveries/{deliveryId}": {
+    get: {
+      path: {
+      deliveryId: string;
     };
       query: undefined;
       body: undefined;
@@ -4295,6 +4538,16 @@ export interface ApiPaths {
     get: {
       path: {
       importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/email-deliveries/{deliveryId}": {
+    get: {
+      path: {
+      deliveryId: string;
     };
       query: undefined;
       body: undefined;
@@ -4552,10 +4805,13 @@ export const apiOperations = {
   "listWorkspaceLabels": { method: "get", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "createWorkspaceLabel": { method: "post", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "invite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/invitations" },
+  "listMappingTemplates": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
+  "createMappingTemplate": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "listImportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
   "createImportJob": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
   "listFieldConfigurations": { method: "get", path: "/api/v1/workspaces/{workspaceId}/field-configurations" },
   "createFieldConfiguration": { method: "post", path: "/api/v1/workspaces/{workspaceId}/field-configurations" },
+  "processEmailDeliveries": { method: "post", path: "/api/v1/workspaces/{workspaceId}/email-deliveries/process" },
   "replay": { method: "post", path: "/api/v1/workspaces/{workspaceId}/domain-events/replay" },
   "list_2": { method: "get", path: "/api/v1/workspaces/{workspaceId}/dashboards" },
   "create_2": { method: "post", path: "/api/v1/workspaces/{workspaceId}/dashboards" },
@@ -4595,6 +4851,8 @@ export const apiOperations = {
   "uploadAttachment": { method: "post", path: "/api/v1/work-items/{workItemId}/attachments/files" },
   "assign": { method: "post", path: "/api/v1/work-items/{workItemId}/assign" },
   "assignAgent": { method: "post", path: "/api/v1/work-items/{workItemId}/assign-agent" },
+  "retryWebhookDelivery": { method: "post", path: "/api/v1/webhook-deliveries/{deliveryId}/retry" },
+  "cancelWebhookDelivery": { method: "post", path: "/api/v1/webhook-deliveries/{deliveryId}/cancel" },
   "listMemberships": { method: "get", path: "/api/v1/teams/{teamId}/memberships" },
   "upsertMembership": { method: "post", path: "/api/v1/teams/{teamId}/memberships" },
   "createInitialSetup": { method: "post", path: "/api/v1/setup" },
@@ -4627,9 +4885,12 @@ export const apiOperations = {
   "listRecords": { method: "get", path: "/api/v1/import-jobs/{importJobId}/records" },
   "createRecord": { method: "post", path: "/api/v1/import-jobs/{importJobId}/records" },
   "parseImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/parse" },
+  "materializeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/materialize" },
   "failImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/fail" },
   "completeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/complete" },
   "cancelImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/cancel" },
+  "retryEmailDelivery": { method: "post", path: "/api/v1/email-deliveries/{deliveryId}/retry" },
+  "cancelEmailDelivery": { method: "post", path: "/api/v1/email-deliveries/{deliveryId}/cancel" },
   "createWidget": { method: "post", path: "/api/v1/dashboards/{dashboardId}/widgets" },
   "listContexts": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/contexts" },
   "createContext": { method: "post", path: "/api/v1/custom-fields/{customFieldId}/contexts" },
@@ -4659,6 +4920,8 @@ export const apiOperations = {
   "reencryptCredentials": { method: "post", path: "/api/v1/agent-providers/{providerId}/credentials/reencrypt" },
   "rotateCallbackKey": { method: "post", path: "/api/v1/agent-providers/{providerId}/callback-keys/rotate" },
   "callback": { method: "post", path: "/api/v1/agent-callbacks/{providerKey}" },
+  "getWorkerSettings": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-worker-settings" },
+  "updateWorkerSettings": { method: "patch", path: "/api/v1/workspaces/{workspaceId}/automation-worker-settings" },
   "get": { method: "get", path: "/api/v1/work-items/{workItemId}" },
   "update": { method: "patch", path: "/api/v1/work-items/{workItemId}" },
   "archive": { method: "delete", path: "/api/v1/work-items/{workItemId}" },
@@ -4703,6 +4966,8 @@ export const apiOperations = {
   "getIteration": { method: "get", path: "/api/v1/iterations/{iterationId}" },
   "updateIteration": { method: "patch", path: "/api/v1/iterations/{iterationId}" },
   "cancelIteration": { method: "delete", path: "/api/v1/iterations/{iterationId}" },
+  "updateMappingTemplate": { method: "patch", path: "/api/v1/import-mapping-templates/{mappingTemplateId}" },
+  "deleteMappingTemplate": { method: "delete", path: "/api/v1/import-mapping-templates/{mappingTemplateId}" },
   "getFieldConfiguration": { method: "get", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
   "updateFieldConfiguration": { method: "patch", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
   "deleteFieldConfiguration": { method: "delete", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
@@ -4737,12 +5002,14 @@ export const apiOperations = {
   "listExportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs" },
   "getExportJob": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}" },
   "downloadExportJob": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}/download" },
+  "listEmailDeliveries": { method: "get", path: "/api/v1/workspaces/{workspaceId}/email-deliveries" },
   "listAuditLog": { method: "get", path: "/api/v1/workspaces/{workspaceId}/audit-log" },
   "workspaceActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/activity" },
   "listValues": { method: "get", path: "/api/v1/work-items/{workItemId}/custom-fields" },
   "downloadAttachment": { method: "get", path: "/api/v1/work-items/{workItemId}/attachments/{attachmentId}/download" },
   "workItemActivity": { method: "get", path: "/api/v1/work-items/{workItemId}/activity" },
   "listWebhookDeliveries": { method: "get", path: "/api/v1/webhooks/{webhookId}/deliveries" },
+  "getWebhookDelivery": { method: "get", path: "/api/v1/webhook-deliveries/{deliveryId}" },
   "listByTeam": { method: "get", path: "/api/v1/teams/{teamId}/saved-filters" },
   "listByTeam_1": { method: "get", path: "/api/v1/teams/{teamId}/report-query-catalog" },
   "listTeamViews": { method: "get", path: "/api/v1/teams/{teamId}/personalization/views" },
@@ -4766,6 +5033,7 @@ export const apiOperations = {
   "listProjectViews": { method: "get", path: "/api/v1/projects/{projectId}/personalization/views" },
   "listByProject_3": { method: "get", path: "/api/v1/projects/{projectId}/dashboards" },
   "getImportJob": { method: "get", path: "/api/v1/import-jobs/{importJobId}" },
+  "getEmailDelivery": { method: "get", path: "/api/v1/email-deliveries/{deliveryId}" },
   "render": { method: "get", path: "/api/v1/dashboards/{dashboardId}/render" },
   "listFieldConfigurationsForField": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/field-configurations" },
   "listBoardWorkItems": { method: "get", path: "/api/v1/boards/{boardId}/work-items" },

@@ -97,6 +97,19 @@ export const createAutomationService = (api) => ({
     });
   },
 
+  getWorkerSettings(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/automation-worker-settings', {
+      path: { workspaceId },
+    });
+  },
+
+  updateWorkerSettings(workspaceId, request) {
+    return api.request('patch', '/api/v1/workspaces/{workspaceId}/automation-worker-settings', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
   listWebhooks(workspaceId) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/webhooks', {
       path: { workspaceId },
@@ -116,8 +129,57 @@ export const createAutomationService = (api) => ({
     });
   },
 
+  getWebhookDelivery(deliveryId) {
+    return api.request('get', '/api/v1/webhook-deliveries/{deliveryId}', {
+      path: { deliveryId },
+    });
+  },
+
+  retryWebhookDelivery(deliveryId) {
+    return api.request('post', '/api/v1/webhook-deliveries/{deliveryId}/retry', {
+      path: { deliveryId },
+    });
+  },
+
+  cancelWebhookDelivery(deliveryId) {
+    return api.request('post', '/api/v1/webhook-deliveries/{deliveryId}/cancel', {
+      path: { deliveryId },
+    });
+  },
+
   processWebhookDeliveries(workspaceId, request) {
     return api.request('post', '/api/v1/workspaces/{workspaceId}/webhook-deliveries/process', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
+  listEmailDeliveries(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/email-deliveries', {
+      path: { workspaceId },
+    });
+  },
+
+  getEmailDelivery(deliveryId) {
+    return api.request('get', '/api/v1/email-deliveries/{deliveryId}', {
+      path: { deliveryId },
+    });
+  },
+
+  retryEmailDelivery(deliveryId) {
+    return api.request('post', '/api/v1/email-deliveries/{deliveryId}/retry', {
+      path: { deliveryId },
+    });
+  },
+
+  cancelEmailDelivery(deliveryId) {
+    return api.request('post', '/api/v1/email-deliveries/{deliveryId}/cancel', {
+      path: { deliveryId },
+    });
+  },
+
+  processEmailDeliveries(workspaceId, request) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/email-deliveries/process', {
       path: { workspaceId },
       body: request,
     });
