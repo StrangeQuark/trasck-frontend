@@ -531,6 +531,11 @@ export interface ImportJobResponse {
   config?: unknown;
   startedAt?: string;
   finishedAt?: string;
+  openConflictCompletionAccepted?: boolean;
+  openConflictCompletionCount?: number;
+  openConflictCompletedById?: string;
+  openConflictCompletedAt?: string;
+  openConflictCompletionReason?: string;
   records?: ImportJobRecordResponse[];
 }
 
@@ -1619,6 +1624,8 @@ export interface ImportConflictBulkResolutionRequest {
   status?: string;
   conflictStatus?: string;
   sourceType?: string;
+  page?: number;
+  pageSize?: number;
   expectedCount?: number;
   confirmation?: string;
 }
@@ -1637,6 +1644,11 @@ export interface ImportConflictBulkResolutionPreviewResponse {
   resolution?: string;
   scope?: string;
   matched?: number;
+  returned?: number;
+  page?: number;
+  pageSize?: number;
+  hasMore?: boolean;
+  maxResolutionBatchSize?: number;
   records?: ImportJobRecordResponse[];
 }
 
@@ -2238,6 +2250,25 @@ export interface ImportJobRecordVersionResponse {
   changedById?: string;
   snapshot?: unknown;
   createdAt?: string;
+}
+
+export interface ImportJobRecordFieldDiffResponse {
+  path?: string;
+  changeType?: string;
+  previousValue?: unknown;
+  value?: unknown;
+}
+
+export interface ImportJobRecordVersionDiffResponse {
+  versionId?: string;
+  importJobRecordId?: string;
+  importJobId?: string;
+  version?: number;
+  comparedToVersion?: number;
+  changeType?: string;
+  changedById?: string;
+  createdAt?: string;
+  fields?: ImportJobRecordFieldDiffResponse[];
 }
 
 export interface DashboardRenderResponse {
@@ -5259,6 +5290,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-job-records/{recordId}/version-diffs": {
+    get: {
+      path: {
+      recordId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/email-deliveries/{deliveryId}": {
     get: {
       path: {
@@ -5786,6 +5827,7 @@ export const apiOperations = {
   "listMaterializationRuns": { method: "get", path: "/api/v1/import-jobs/{importJobId}/materialization-runs" },
   "listConflicts": { method: "get", path: "/api/v1/import-jobs/{importJobId}/conflicts" },
   "listRecordVersions": { method: "get", path: "/api/v1/import-job-records/{recordId}/versions" },
+  "listRecordVersionDiffs": { method: "get", path: "/api/v1/import-job-records/{recordId}/version-diffs" },
   "getEmailDelivery": { method: "get", path: "/api/v1/email-deliveries/{deliveryId}" },
   "render": { method: "get", path: "/api/v1/dashboards/{dashboardId}/render" },
   "listFieldConfigurationsForField": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/field-configurations" },

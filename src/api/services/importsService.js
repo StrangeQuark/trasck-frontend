@@ -262,6 +262,12 @@ export const createImportsService = (api) => ({
     });
   },
 
+  listRecordVersionDiffs(recordId) {
+    return api.request('get', '/api/v1/import-job-records/{recordId}/version-diffs', {
+      path: { recordId },
+    });
+  },
+
   start(importJobId) {
     return api.request('post', '/api/v1/import-jobs/{importJobId}/start', {
       path: { importJobId },

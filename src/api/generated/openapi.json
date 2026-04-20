@@ -11483,6 +11483,40 @@
         }
       }
     },
+    "/api/v1/import-job-records/{recordId}/version-diffs": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listRecordVersionDiffs",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportJobRecordVersionDiffResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/email-deliveries/{deliveryId}": {
       "get": {
         "tags": [
@@ -13626,6 +13660,24 @@
           "finishedAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "openConflictCompletionAccepted": {
+            "type": "boolean"
+          },
+          "openConflictCompletionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "openConflictCompletedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "openConflictCompletedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "openConflictCompletionReason": {
+            "type": "string"
           },
           "records": {
             "type": "array",
@@ -16817,6 +16869,14 @@
           "sourceType": {
             "type": "string"
           },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
           "expectedCount": {
             "type": "integer",
             "format": "int32"
@@ -16869,6 +16929,25 @@
             "type": "string"
           },
           "matched": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "returned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "page": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "pageSize": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "hasMore": {
+            "type": "boolean"
+          },
+          "maxResolutionBatchSize": {
             "type": "integer",
             "format": "int32"
           },
@@ -18655,6 +18734,61 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "ImportJobRecordFieldDiffResponse": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "changeType": {
+            "type": "string"
+          },
+          "previousValue": {},
+          "value": {}
+        }
+      },
+      "ImportJobRecordVersionDiffResponse": {
+        "type": "object",
+        "properties": {
+          "versionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "importJobRecordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comparedToVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "changeType": {
+            "type": "string"
+          },
+          "changedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJobRecordFieldDiffResponse"
+            }
           }
         }
       },
