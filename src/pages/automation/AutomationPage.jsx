@@ -41,9 +41,11 @@ export const AutomationPage = ({ context }) => {
     automationJobsEnabled: 'false',
     webhookDeliveriesEnabled: 'false',
     emailDeliveriesEnabled: 'false',
+    importConflictResolutionEnabled: 'false',
     automationLimit: '25',
     webhookLimit: '25',
     emailLimit: '25',
+    importConflictResolutionLimit: '10',
     webhookMaxAttempts: '3',
     emailMaxAttempts: '3',
     webhookDryRun: 'true',
@@ -258,9 +260,11 @@ export const AutomationPage = ({ context }) => {
       automationJobsEnabled: workerSettingsForm.automationJobsEnabled === 'true',
       webhookDeliveriesEnabled: workerSettingsForm.webhookDeliveriesEnabled === 'true',
       emailDeliveriesEnabled: workerSettingsForm.emailDeliveriesEnabled === 'true',
+      importConflictResolutionEnabled: workerSettingsForm.importConflictResolutionEnabled === 'true',
       automationLimit: numberOrUndefined(workerSettingsForm.automationLimit),
       webhookLimit: numberOrUndefined(workerSettingsForm.webhookLimit),
       emailLimit: numberOrUndefined(workerSettingsForm.emailLimit),
+      importConflictResolutionLimit: numberOrUndefined(workerSettingsForm.importConflictResolutionLimit),
       webhookMaxAttempts: numberOrUndefined(workerSettingsForm.webhookMaxAttempts),
       emailMaxAttempts: numberOrUndefined(workerSettingsForm.emailMaxAttempts),
       webhookDryRun: workerSettingsForm.webhookDryRun === 'true',
@@ -420,9 +424,11 @@ export const AutomationPage = ({ context }) => {
               <SelectField label="Job schedule" value={workerSettingsForm.automationJobsEnabled} onChange={(automationJobsEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, automationJobsEnabled })} options={['false', 'true']} />
               <SelectField label="Webhook schedule" value={workerSettingsForm.webhookDeliveriesEnabled} onChange={(webhookDeliveriesEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, webhookDeliveriesEnabled })} options={['false', 'true']} />
               <SelectField label="Email schedule" value={workerSettingsForm.emailDeliveriesEnabled} onChange={(emailDeliveriesEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, emailDeliveriesEnabled })} options={['false', 'true']} />
+              <SelectField label="Import schedule" value={workerSettingsForm.importConflictResolutionEnabled} onChange={(importConflictResolutionEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, importConflictResolutionEnabled })} options={['false', 'true']} />
               <TextField label="Job limit" type="number" value={workerSettingsForm.automationLimit} onChange={(automationLimit) => setWorkerSettingsForm({ ...workerSettingsForm, automationLimit })} />
               <TextField label="Webhook limit" type="number" value={workerSettingsForm.webhookLimit} onChange={(webhookLimit) => setWorkerSettingsForm({ ...workerSettingsForm, webhookLimit })} />
               <TextField label="Email limit" type="number" value={workerSettingsForm.emailLimit} onChange={(emailLimit) => setWorkerSettingsForm({ ...workerSettingsForm, emailLimit })} />
+              <TextField label="Import limit" type="number" value={workerSettingsForm.importConflictResolutionLimit} onChange={(importConflictResolutionLimit) => setWorkerSettingsForm({ ...workerSettingsForm, importConflictResolutionLimit })} />
               <TextField label="Webhook attempts" type="number" value={workerSettingsForm.webhookMaxAttempts} onChange={(webhookMaxAttempts) => setWorkerSettingsForm({ ...workerSettingsForm, webhookMaxAttempts })} />
               <TextField label="Email attempts" type="number" value={workerSettingsForm.emailMaxAttempts} onChange={(emailMaxAttempts) => setWorkerSettingsForm({ ...workerSettingsForm, emailMaxAttempts })} />
               <SelectField label="Webhook dry" value={workerSettingsForm.webhookDryRun} onChange={(webhookDryRun) => setWorkerSettingsForm({ ...workerSettingsForm, webhookDryRun })} options={['true', 'false']} />

@@ -13,6 +13,11 @@ import { useApiAction } from '../../hooks/useApiAction';
 import { firstId, numberOrUndefined, parseJsonOrThrow, toJsonText } from '../../utils/forms';
 import { ImportConflictDetails } from './ImportConflictDetails';
 import { ImportRecordEditor } from './ImportRecordEditor';
+import {
+  ImportConflictResolutionJobsTable,
+  ImportExportJobsTable,
+  ImportJobVersionDiffTable,
+} from './ImportReviewTables';
 import { TransformPipelineEditor } from './TransformPipelineEditor';
 import { importRecordFormToRequest, importRecordToForm } from './importRecordForms';
 
@@ -32,6 +37,7 @@ export const ImportJobDetailPage = ({ context }) => {
   const [jobVersionDiffs, setJobVersionDiffs] = useState(null);
   const [jobVersionDiffExport, setJobVersionDiffExport] = useState(null);
   const [jobVersionDiffExportJob, setJobVersionDiffExportJob] = useState(null);
+  const [exportJobs, setExportJobs] = useState([]);
   const [conflictResolutionWorkerResult, setConflictResolutionWorkerResult] = useState(null);
   const [materializeResult, setMaterializeResult] = useState(null);
   const [recordEditForm, setRecordEditForm] = useState(importRecordToForm());
@@ -66,9 +72,10 @@ export const ImportJobDetailPage = ({ context }) => {
       context.services.imports.listConflictResolutionJobs(importJobId),
       context.services.imports.listJobVersionDiffs(importJobId),
       context.services.imports.listMaterializationRuns(importJobId),
+      context.workspaceId ? context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }) : Promise.resolve({ items: [] }),
     ]));
     if (result) {
-      const [jobRow, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows] = result;
+      const [jobRow, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, exportJobPage] = result;
       setJob(jobRow);
       setRecords(recordRows || []);
       setConflicts(conflictRows || []);
@@ -76,6 +83,7 @@ export const ImportJobDetailPage = ({ context }) => {
       setJobVersionDiffs(jobDiffRows || null);
       setJobVersionDiffExport(null);
       setJobVersionDiffExportJob(null);
+      setExportJobs(exportJobPage?.items || exportJobPage || []);
       setMaterializationRuns(runRows || []);
       await syncRecordEditForm(recordRows);
       setConflictForm((current) => ({ ...current, recordId: firstId(conflictRows) }));
@@ -186,6 +194,26 @@ export const ImportJobDetailPage = ({ context }) => {
     const exportJob = await action.run(() => context.services.imports.createJobVersionDiffExportJob(importJobId), 'Job diff export artifact created');
     if (exportJob) {
       setJobVersionDiffExportJob(exportJob);
+      if (context.workspaceId) {
+        const exportJobPage = await action.run(() => context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }));
+        setExportJobs(exportJobPage?.items || exportJobPage || []);
+      }
+    }
+  };
+
+  const downloadExportJob = async (exportJob) => {
+    if (!context.workspaceId || !exportJob?.id) {
+      action.setError('Export job is required');
+      return;
+    }
+    const blob = await action.run(() => context.services.imports.downloadExportJob(context.workspaceId, exportJob.id), 'Export artifact downloaded');
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = exportJob.filename || 'trasck-export.json';
+      link.click();
+      URL.revokeObjectURL(url);
     }
   };
 
@@ -251,7 +279,7 @@ export const ImportJobDetailPage = ({ context }) => {
           <button className="icon-button danger" disabled={action.pending || !conflictResolutionJobId} onClick={cancelConflictResolutionJob} title="Cancel conflict resolution job" type="button"><FiX /></button>
         </div>
         <JsonPreview title="Worker Result" value={conflictResolutionWorkerResult} />
-        <JsonPreview title="Resolution Jobs" value={conflictResolutionJobs} />
+        <ImportConflictResolutionJobsTable jobs={conflictResolutionJobs} />
       </Panel>
       <Panel title="Rerun Snapshot" icon={<FiRefreshCw />}>
         <form className="stack" onSubmit={rerunMaterialization}>
@@ -281,8 +309,9 @@ export const ImportJobDetailPage = ({ context }) => {
         </div>
         <JsonPreview title="Job" value={job} />
         <JsonPreview title="Open Conflicts" value={conflicts} />
-        <JsonPreview title="Conflict Resolution Jobs" value={conflictResolutionJobs} />
-        <JsonPreview title="Job Version Diffs" value={jobVersionDiffs} />
+        <ImportConflictResolutionJobsTable jobs={conflictResolutionJobs} />
+        <ImportJobVersionDiffTable diffs={jobVersionDiffs} />
+        <ImportExportJobsTable jobs={exportJobs} onDownload={downloadExportJob} />
         <JsonPreview title="Job Version Diff Export" value={jobVersionDiffExport} />
         <JsonPreview title="Job Version Diff Export Artifact" value={jobVersionDiffExportJob} />
         <JsonPreview title="Materialization Runs" value={materializationRuns} />

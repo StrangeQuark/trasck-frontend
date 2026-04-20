@@ -1605,6 +1605,54 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/import-samples/{sampleKey}/jobs": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "createSampleImportJob",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "sampleKey",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportSampleJobRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportSampleJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/import-mapping-templates": {
       "get": {
         "tags": [
@@ -10155,6 +10203,40 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/import-samples": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listImportSamples",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportSampleResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs": {
       "get": {
         "tags": [
@@ -13969,106 +14051,16 @@
           }
         }
       },
-      "ImportMappingTemplateRequest": {
+      "ImportSampleJobRequest": {
         "type": "object",
         "properties": {
-          "name": {
-            "type": "string"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "sourceType": {
-            "type": "string"
-          },
-          "targetType": {
-            "type": "string"
-          },
           "projectId": {
             "type": "string",
             "format": "uuid"
           },
-          "workItemTypeKey": {
-            "type": "string"
-          },
-          "statusKey": {
-            "type": "string"
-          },
-          "transformPresetId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "clearTransformPreset": {
-            "type": "boolean"
-          },
-          "fieldMapping": {},
-          "defaults": {},
-          "transformationConfig": {},
-          "enabled": {
+          "createMappingTemplate": {
             "type": "boolean"
           }
-        }
-      },
-      "ImportMappingTemplateResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workspaceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "projectId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "name": {
-            "type": "string"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "sourceType": {
-            "type": "string"
-          },
-          "targetType": {
-            "type": "string"
-          },
-          "workItemTypeKey": {
-            "type": "string"
-          },
-          "statusKey": {
-            "type": "string"
-          },
-          "transformPresetId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "fieldMapping": {},
-          "defaults": {},
-          "transformationConfig": {},
-          "enabled": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ImportJobRequest": {
-        "type": "object",
-        "properties": {
-          "provider": {
-            "type": "string"
-          },
-          "config": {}
         }
       },
       "ImportJobRecordResponse": {
@@ -14183,6 +14175,170 @@
               "$ref": "#/components/schemas/ImportJobRecordResponse"
             }
           }
+        }
+      },
+      "ImportMappingTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "workItemTypeKey": {
+            "type": "string"
+          },
+          "statusKey": {
+            "type": "string"
+          },
+          "transformPresetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fieldMapping": {},
+          "defaults": {},
+          "transformationConfig": {},
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ImportParseResponse": {
+        "type": "object",
+        "properties": {
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "recordsParsed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJobRecordResponse"
+            }
+          }
+        }
+      },
+      "ImportSampleJobResponse": {
+        "type": "object",
+        "properties": {
+          "sample": {
+            "$ref": "#/components/schemas/ImportSampleResponse"
+          },
+          "importJob": {
+            "$ref": "#/components/schemas/ImportJobResponse"
+          },
+          "parse": {
+            "$ref": "#/components/schemas/ImportParseResponse"
+          },
+          "transformPreset": {
+            "$ref": "#/components/schemas/ImportTransformPresetResponse"
+          },
+          "mappingTemplate": {
+            "$ref": "#/components/schemas/ImportMappingTemplateResponse"
+          }
+        }
+      },
+      "ImportSampleResponse": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "label": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportMappingTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workItemTypeKey": {
+            "type": "string"
+          },
+          "statusKey": {
+            "type": "string"
+          },
+          "transformPresetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clearTransformPreset": {
+            "type": "boolean"
+          },
+          "fieldMapping": {},
+          "defaults": {},
+          "transformationConfig": {},
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImportJobRequest": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "config": {}
         }
       },
       "ImportConflictResolutionJobResponse": {
@@ -17445,28 +17601,6 @@
           }
         }
       },
-      "ImportParseResponse": {
-        "type": "object",
-        "properties": {
-          "importJobId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "provider": {
-            "type": "string"
-          },
-          "recordsParsed": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "records": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ImportJobRecordResponse"
-            }
-          }
-        }
-      },
       "ImportMaterializeRequest": {
         "type": "object",
         "properties": {
@@ -18036,6 +18170,9 @@
           "emailDeliveriesEnabled": {
             "type": "boolean"
           },
+          "importConflictResolutionEnabled": {
+            "type": "boolean"
+          },
           "automationLimit": {
             "type": "integer",
             "format": "int32"
@@ -18045,6 +18182,10 @@
             "format": "int32"
           },
           "emailLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "importConflictResolutionLimit": {
             "type": "integer",
             "format": "int32"
           },
@@ -18103,6 +18244,9 @@
           "emailDeliveriesEnabled": {
             "type": "boolean"
           },
+          "importConflictResolutionEnabled": {
+            "type": "boolean"
+          },
           "automationLimit": {
             "type": "integer",
             "format": "int32"
@@ -18112,6 +18256,10 @@
             "format": "int32"
           },
           "emailLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "importConflictResolutionLimit": {
             "type": "integer",
             "format": "int32"
           },

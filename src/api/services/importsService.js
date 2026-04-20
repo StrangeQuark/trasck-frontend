@@ -12,6 +12,19 @@ export const createImportsService = (api) => ({
     });
   },
 
+  listSamples(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/import-samples', {
+      path: { workspaceId },
+    });
+  },
+
+  createSampleJob(workspaceId, sampleKey, request) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/import-samples/{sampleKey}/jobs', {
+      path: { workspaceId, sampleKey },
+      body: request,
+    });
+  },
+
   listTransformPresets(workspaceId) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/import-transform-presets', {
       path: { workspaceId },
@@ -341,6 +354,13 @@ export const createImportsService = (api) => ({
     return api.request('get', '/api/v1/workspaces/{workspaceId}/export-jobs', {
       path: { workspaceId },
       query,
+    });
+  },
+
+  downloadExportJob(workspaceId, exportJobId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}/download', {
+      path: { workspaceId, exportJobId },
+      responseType: 'blob',
     });
   },
 
