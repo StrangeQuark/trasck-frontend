@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:37199",
+      "url": "http://localhost:6100",
       "description": "Generated server url"
     }
   ],
@@ -17,6 +17,76 @@
     }
   ],
   "paths": {
+    "/api/v1/workspaces/{workspaceId}/email-provider-settings": {
+      "get": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "getEmailProviderSettings",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailProviderSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "updateEmailProviderSettings",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailProviderSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailProviderSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/audit-retention-policy": {
       "get": {
         "tags": [
@@ -1462,6 +1532,79 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/import-transform-presets": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listTransformPresets",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportTransformPresetResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "createTransformPreset",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportTransformPresetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTransformPresetResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/import-mapping-templates": {
       "get": {
         "tags": [
@@ -1909,6 +2052,77 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/CustomFieldResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/automation-worker-runs/prune": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "pruneWorkerRuns",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationWorkerRunRetentionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/automation-worker-runs/export": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "exportWorkerRuns",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationWorkerRunRetentionResponse"
                 }
               }
             }
@@ -5277,6 +5491,106 @@
         }
       }
     },
+    "/api/v1/boards/{boardId}/work-items/{workItemId}/transition": {
+      "post": {
+        "tags": [
+          "board-controller"
+        ],
+        "operationId": "transitionBoardWorkItem",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "workItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoardWorkItemTransitionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/boards/{boardId}/work-items/{workItemId}/rank": {
+      "post": {
+        "tags": [
+          "board-controller"
+        ],
+        "operationId": "rankBoardWorkItem",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "workItemId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BoardWorkItemRankRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkItemResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/boards/{boardId}/swimlanes": {
       "get": {
         "tags": [
@@ -7678,6 +7992,98 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/IterationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-transform-presets/{presetId}": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "getTransformPreset",
+        "parameters": [
+          {
+            "name": "presetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTransformPresetResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "deleteTransformPreset",
+        "parameters": [
+          {
+            "name": "presetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "updateTransformPreset",
+        "parameters": [
+          {
+            "name": "presetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportTransformPresetRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportTransformPresetResponse"
                 }
               }
             }
@@ -11164,6 +11570,87 @@
   },
   "components": {
     "schemas": {
+      "EmailProviderSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "provider": {
+            "type": "string"
+          },
+          "fromEmail": {
+            "type": "string"
+          },
+          "smtpHost": {
+            "type": "string"
+          },
+          "smtpPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "smtpUsername": {
+            "type": "string"
+          },
+          "smtpPassword": {
+            "type": "string"
+          },
+          "clearSmtpPassword": {
+            "type": "boolean"
+          },
+          "smtpStartTlsEnabled": {
+            "type": "boolean"
+          },
+          "smtpAuthEnabled": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EmailProviderSettingsResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "fromEmail": {
+            "type": "string"
+          },
+          "smtpHost": {
+            "type": "string"
+          },
+          "smtpPort": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "smtpUsername": {
+            "type": "string"
+          },
+          "smtpPasswordConfigured": {
+            "type": "boolean"
+          },
+          "smtpStartTlsEnabled": {
+            "type": "boolean"
+          },
+          "smtpAuthEnabled": {
+            "type": "boolean"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AuditRetentionPolicyRequest": {
         "type": "object",
         "properties": {
@@ -12330,6 +12817,52 @@
           }
         }
       },
+      "ImportTransformPresetRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "transformationConfig": {},
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImportTransformPresetResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "transformationConfig": {},
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ImportMappingTemplateRequest": {
         "type": "object",
         "properties": {
@@ -12354,6 +12887,13 @@
           },
           "statusKey": {
             "type": "string"
+          },
+          "transformPresetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "clearTransformPreset": {
+            "type": "boolean"
           },
           "fieldMapping": {},
           "defaults": {},
@@ -12395,6 +12935,10 @@
           },
           "statusKey": {
             "type": "string"
+          },
+          "transformPresetId": {
+            "type": "string",
+            "format": "uuid"
           },
           "fieldMapping": {},
           "defaults": {},
@@ -12871,6 +13415,116 @@
           "version": {
             "type": "integer",
             "format": "int64"
+          }
+        }
+      },
+      "AutomationWorkerRunHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workerType": {
+            "type": "string"
+          },
+          "triggerType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "dryRun": {
+            "type": "boolean"
+          },
+          "requestedLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "processedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "successCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failureCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deadLetterCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "metadata": {},
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AutomationWorkerRunRetentionResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "retentionEnabled": {
+            "type": "boolean"
+          },
+          "retentionDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "exportBeforePrune": {
+            "type": "boolean"
+          },
+          "cutoff": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "runsEligible": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "runsIncluded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "runsPruned": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "exportJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "fileAttachmentId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "runs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationWorkerRunHistoryResponse"
+            }
           }
         }
       },
@@ -15476,6 +16130,35 @@
           "validationConfig": {}
         }
       },
+      "BoardWorkItemTransitionRequest": {
+        "type": "object",
+        "properties": {
+          "transitionKey": {
+            "type": "string"
+          },
+          "targetColumnId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "targetStatusId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "BoardWorkItemRankRequest": {
+        "type": "object",
+        "properties": {
+          "previousWorkItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "nextWorkItemId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
       "BoardSwimlaneRequest": {
         "type": "object",
         "properties": {
@@ -15781,6 +16464,19 @@
           },
           "emailDryRun": {
             "type": "boolean"
+          },
+          "workerRunRetentionEnabled": {
+            "type": "boolean"
+          },
+          "workerRunRetentionDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "workerRunExportBeforePrune": {
+            "type": "boolean"
+          },
+          "workerRunPruningAutomaticEnabled": {
+            "type": "boolean"
           }
         }
       },
@@ -15824,6 +16520,19 @@
             "type": "boolean"
           },
           "emailDryRun": {
+            "type": "boolean"
+          },
+          "workerRunRetentionEnabled": {
+            "type": "boolean"
+          },
+          "workerRunRetentionDays": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "workerRunExportBeforePrune": {
+            "type": "boolean"
+          },
+          "workerRunPruningAutomaticEnabled": {
             "type": "boolean"
           },
           "updatedAt": {
@@ -16056,67 +16765,6 @@
           "checksum": {
             "type": "string"
           },
-          "startedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "finishedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "AutomationWorkerRunHistoryResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workspaceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workerType": {
-            "type": "string"
-          },
-          "triggerType": {
-            "type": "string"
-          },
-          "status": {
-            "type": "string"
-          },
-          "dryRun": {
-            "type": "boolean"
-          },
-          "requestedLimit": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "maxAttempts": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "processedCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "successCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "failureCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "deadLetterCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "errorMessage": {
-            "type": "string"
-          },
-          "metadata": {},
           "startedAt": {
             "type": "string",
             "format": "date-time"
@@ -17016,6 +17664,27 @@
           }
         }
       },
+      "BoardSwimlaneWorkItemsResponse": {
+        "type": "object",
+        "properties": {
+          "swimlaneId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "swimlaneName": {
+            "type": "string"
+          },
+          "swimlaneType": {
+            "type": "string"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardColumnWorkItemsResponse"
+            }
+          }
+        }
+      },
       "BoardWorkItemsResponse": {
         "type": "object",
         "properties": {
@@ -17035,6 +17704,12 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/BoardColumnWorkItemsResponse"
+            }
+          },
+          "swimlanes": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardSwimlaneWorkItemsResponse"
             }
           }
         }

@@ -161,6 +161,19 @@ export const createAutomationService = (api) => ({
     });
   },
 
+  exportWorkerRuns(workspaceId, query = {}) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/automation-worker-runs/export', {
+      path: { workspaceId },
+      query,
+    });
+  },
+
+  pruneWorkerRuns(workspaceId) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/automation-worker-runs/prune', {
+      path: { workspaceId },
+    });
+  },
+
   listWorkerHealth(workspaceId) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/automation-worker-health', {
       path: { workspaceId },

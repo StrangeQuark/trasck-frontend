@@ -7,6 +7,34 @@ export type ISODate = string;
 export type ISODateTime = string;
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
+export interface EmailProviderSettingsRequest {
+  provider?: string;
+  fromEmail?: string;
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpUsername?: string;
+  smtpPassword?: string;
+  clearSmtpPassword?: boolean;
+  smtpStartTlsEnabled?: boolean;
+  smtpAuthEnabled?: boolean;
+  active?: boolean;
+}
+
+export interface EmailProviderSettingsResponse {
+  workspaceId?: string;
+  provider?: string;
+  fromEmail?: string;
+  smtpHost?: string;
+  smtpPort?: number;
+  smtpUsername?: string;
+  smtpPasswordConfigured?: boolean;
+  smtpStartTlsEnabled?: boolean;
+  smtpAuthEnabled?: boolean;
+  active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface AuditRetentionPolicyRequest {
   retentionEnabled?: boolean;
   retentionDays?: number;
@@ -416,6 +444,24 @@ export interface InvitationResponse {
   expiresAt?: string;
 }
 
+export interface ImportTransformPresetRequest {
+  name?: string;
+  description?: string;
+  transformationConfig?: unknown;
+  enabled?: boolean;
+}
+
+export interface ImportTransformPresetResponse {
+  id?: string;
+  workspaceId?: string;
+  name?: string;
+  description?: string;
+  transformationConfig?: unknown;
+  enabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ImportMappingTemplateRequest {
   name?: string;
   provider?: string;
@@ -424,6 +470,8 @@ export interface ImportMappingTemplateRequest {
   projectId?: string;
   workItemTypeKey?: string;
   statusKey?: string;
+  transformPresetId?: string;
+  clearTransformPreset?: boolean;
   fieldMapping?: unknown;
   defaults?: unknown;
   transformationConfig?: unknown;
@@ -440,6 +488,7 @@ export interface ImportMappingTemplateResponse {
   targetType?: string;
   workItemTypeKey?: string;
   statusKey?: string;
+  transformPresetId?: string;
   fieldMapping?: unknown;
   defaults?: unknown;
   transformationConfig?: unknown;
@@ -603,6 +652,39 @@ export interface CustomFieldResponse {
   createdAt?: string;
   updatedAt?: string;
   version?: number;
+}
+
+export interface AutomationWorkerRunHistoryResponse {
+  id?: string;
+  workspaceId?: string;
+  workerType?: string;
+  triggerType?: string;
+  status?: string;
+  dryRun?: boolean;
+  requestedLimit?: number;
+  maxAttempts?: number;
+  processedCount?: number;
+  successCount?: number;
+  failureCount?: number;
+  deadLetterCount?: number;
+  errorMessage?: string;
+  metadata?: unknown;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
+export interface AutomationWorkerRunRetentionResponse {
+  workspaceId?: string;
+  retentionEnabled?: boolean;
+  retentionDays?: number;
+  exportBeforePrune?: boolean;
+  cutoff?: string;
+  runsEligible?: number;
+  runsIncluded?: number;
+  runsPruned?: number;
+  exportJobId?: string;
+  fileAttachmentId?: string;
+  runs?: AutomationWorkerRunHistoryResponse[];
 }
 
 export interface AutomationRuleRequest {
@@ -1504,6 +1586,17 @@ export interface CustomFieldContextResponse {
   validationConfig?: unknown;
 }
 
+export interface BoardWorkItemTransitionRequest {
+  transitionKey?: string;
+  targetColumnId?: string;
+  targetStatusId?: string;
+}
+
+export interface BoardWorkItemRankRequest {
+  previousWorkItemId?: string;
+  nextWorkItemId?: string;
+}
+
 export interface BoardSwimlaneRequest {
   name?: string;
   swimlaneType?: string;
@@ -1624,6 +1717,10 @@ export interface AutomationWorkerSettingsRequest {
   emailMaxAttempts?: number;
   webhookDryRun?: boolean;
   emailDryRun?: boolean;
+  workerRunRetentionEnabled?: boolean;
+  workerRunRetentionDays?: number;
+  workerRunExportBeforePrune?: boolean;
+  workerRunPruningAutomaticEnabled?: boolean;
 }
 
 export interface AutomationWorkerSettingsResponse {
@@ -1638,6 +1735,10 @@ export interface AutomationWorkerSettingsResponse {
   emailMaxAttempts?: number;
   webhookDryRun?: boolean;
   emailDryRun?: boolean;
+  workerRunRetentionEnabled?: boolean;
+  workerRunRetentionDays?: number;
+  workerRunExportBeforePrune?: boolean;
+  workerRunPruningAutomaticEnabled?: boolean;
   updatedAt?: string;
 }
 
@@ -1713,25 +1814,6 @@ export interface ExportJobResponse {
   contentType?: string;
   sizeBytes?: number;
   checksum?: string;
-  startedAt?: string;
-  finishedAt?: string;
-}
-
-export interface AutomationWorkerRunHistoryResponse {
-  id?: string;
-  workspaceId?: string;
-  workerType?: string;
-  triggerType?: string;
-  status?: string;
-  dryRun?: boolean;
-  requestedLimit?: number;
-  maxAttempts?: number;
-  processedCount?: number;
-  successCount?: number;
-  failureCount?: number;
-  deadLetterCount?: number;
-  errorMessage?: string;
-  metadata?: unknown;
   startedAt?: string;
   finishedAt?: string;
 }
@@ -2019,11 +2101,19 @@ export interface BoardColumnWorkItemsResponse {
   workItems?: WorkItemResponse[];
 }
 
+export interface BoardSwimlaneWorkItemsResponse {
+  swimlaneId?: string;
+  swimlaneName?: string;
+  swimlaneType?: string;
+  columns?: BoardColumnWorkItemsResponse[];
+}
+
 export interface BoardWorkItemsResponse {
   boardId?: string;
   projectId?: string;
   limitPerColumn?: number;
   columns?: BoardColumnWorkItemsResponse[];
+  swimlanes?: BoardSwimlaneWorkItemsResponse[];
 }
 
 export interface CsrfToken {
@@ -2048,6 +2138,24 @@ export interface CursorPage<T> {
 }
 
 export interface ApiPaths {
+  "/api/v1/workspaces/{workspaceId}/email-provider-settings": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    put: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: EmailProviderSettingsRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/audit-retention-policy": {
     get: {
       path: {
@@ -2406,6 +2514,24 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/import-transform-presets": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: ImportTransformPresetRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/import-mapping-templates": {
     get: {
       path: {
@@ -2515,6 +2641,28 @@ export interface ApiPaths {
     };
       query: undefined;
       body: CustomFieldRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/automation-worker-runs/prune": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/automation-worker-runs/export": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: {
+      limit?: number;
+    };
+      body: undefined;
       response: unknown;
     };
   };
@@ -3340,6 +3488,28 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/boards/{boardId}/work-items/{workItemId}/transition": {
+    post: {
+      path: {
+      boardId: string;
+      workItemId: string;
+    };
+      query: undefined;
+      body: BoardWorkItemTransitionRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/boards/{boardId}/work-items/{workItemId}/rank": {
+    post: {
+      path: {
+      boardId: string;
+      workItemId: string;
+    };
+      query: undefined;
+      body: BoardWorkItemRankRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/boards/{boardId}/swimlanes": {
     get: {
       path: {
@@ -3991,6 +4161,32 @@ export interface ApiPaths {
     delete: {
       path: {
       iterationId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/import-transform-presets/{presetId}": {
+    get: {
+      path: {
+      presetId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      presetId: string;
+    };
+      query: undefined;
+      body: ImportTransformPresetRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      presetId: string;
     };
       query: undefined;
       body: undefined;
@@ -4987,6 +5183,8 @@ export interface ApiPaths {
 }
 
 export const apiOperations = {
+  "getEmailProviderSettings": { method: "get", path: "/api/v1/workspaces/{workspaceId}/email-provider-settings" },
+  "updateEmailProviderSettings": { method: "put", path: "/api/v1/workspaces/{workspaceId}/email-provider-settings" },
   "getRetentionPolicy": { method: "get", path: "/api/v1/workspaces/{workspaceId}/audit-retention-policy" },
   "updateRetentionPolicy": { method: "put", path: "/api/v1/workspaces/{workspaceId}/audit-retention-policy" },
   "setValue": { method: "put", path: "/api/v1/work-items/{workItemId}/custom-fields/{customFieldId}" },
@@ -5026,6 +5224,8 @@ export const apiOperations = {
   "listWorkspaceLabels": { method: "get", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "createWorkspaceLabel": { method: "post", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "invite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/invitations" },
+  "listTransformPresets": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
+  "createTransformPreset": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
   "listMappingTemplates": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "createMappingTemplate": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "listImportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
@@ -5038,6 +5238,8 @@ export const apiOperations = {
   "create_2": { method: "post", path: "/api/v1/workspaces/{workspaceId}/dashboards" },
   "listCustomFields": { method: "get", path: "/api/v1/workspaces/{workspaceId}/custom-fields" },
   "createCustomField": { method: "post", path: "/api/v1/workspaces/{workspaceId}/custom-fields" },
+  "pruneWorkerRuns": { method: "post", path: "/api/v1/workspaces/{workspaceId}/automation-worker-runs/prune" },
+  "exportWorkerRuns": { method: "post", path: "/api/v1/workspaces/{workspaceId}/automation-worker-runs/export" },
   "listRules": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-rules" },
   "createRule": { method: "post", path: "/api/v1/workspaces/{workspaceId}/automation-rules" },
   "runQueuedJobs": { method: "post", path: "/api/v1/workspaces/{workspaceId}/automation-jobs/run-queued" },
@@ -5121,6 +5323,8 @@ export const apiOperations = {
   "createWidget": { method: "post", path: "/api/v1/dashboards/{dashboardId}/widgets" },
   "listContexts": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/contexts" },
   "createContext": { method: "post", path: "/api/v1/custom-fields/{customFieldId}/contexts" },
+  "transitionBoardWorkItem": { method: "post", path: "/api/v1/boards/{boardId}/work-items/{workItemId}/transition" },
+  "rankBoardWorkItem": { method: "post", path: "/api/v1/boards/{boardId}/work-items/{workItemId}/rank" },
   "listSwimlanes": { method: "get", path: "/api/v1/boards/{boardId}/swimlanes" },
   "createSwimlane": { method: "post", path: "/api/v1/boards/{boardId}/swimlanes" },
   "listColumns": { method: "get", path: "/api/v1/boards/{boardId}/columns" },
@@ -5193,6 +5397,9 @@ export const apiOperations = {
   "getIteration": { method: "get", path: "/api/v1/iterations/{iterationId}" },
   "updateIteration": { method: "patch", path: "/api/v1/iterations/{iterationId}" },
   "cancelIteration": { method: "delete", path: "/api/v1/iterations/{iterationId}" },
+  "getTransformPreset": { method: "get", path: "/api/v1/import-transform-presets/{presetId}" },
+  "updateTransformPreset": { method: "patch", path: "/api/v1/import-transform-presets/{presetId}" },
+  "deleteTransformPreset": { method: "delete", path: "/api/v1/import-transform-presets/{presetId}" },
   "updateMappingTemplate": { method: "patch", path: "/api/v1/import-mapping-templates/{mappingTemplateId}" },
   "deleteMappingTemplate": { method: "delete", path: "/api/v1/import-mapping-templates/{mappingTemplateId}" },
   "updateValueLookup": { method: "patch", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups/{lookupId}" },
