@@ -155,9 +155,10 @@ export const createAutomationService = (api) => ({
     });
   },
 
-  listWorkerRuns(workspaceId) {
+  listWorkerRuns(workspaceId, query = {}) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/automation-worker-runs', {
       path: { workspaceId },
+      query,
     });
   },
 
@@ -174,9 +175,10 @@ export const createAutomationService = (api) => ({
     });
   },
 
-  listWorkerHealth(workspaceId) {
+  listWorkerHealth(workspaceId, query = {}) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/automation-worker-health', {
       path: { workspaceId },
+      query,
     });
   },
 

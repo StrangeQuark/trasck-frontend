@@ -11,6 +11,8 @@ import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
 import { firstId, numberOrUndefined, parseJsonOrThrow, settingsToForm } from '../../utils/forms';
 
+const workerTypeOptions = ['all', 'automation', 'webhook', 'email', 'import_conflict_resolution'];
+
 export const AutomationPage = ({ context }) => {
   const [notifications, setNotifications] = useState(null);
   const [preferences, setPreferences] = useState([]);
@@ -24,6 +26,7 @@ export const AutomationPage = ({ context }) => {
   const [workerSettings, setWorkerSettings] = useState(null);
   const [workerRuns, setWorkerRuns] = useState([]);
   const [workerHealth, setWorkerHealth] = useState([]);
+  const [workerTypeFilter, setWorkerTypeFilter] = useState('all');
   const [rules, setRules] = useState([]);
   const [ruleId, setRuleId] = useState('');
   const [jobs, setJobs] = useState([]);
@@ -66,6 +69,7 @@ export const AutomationPage = ({ context }) => {
       return;
     }
     const result = await action.run(async () => {
+      const workerQuery = workerTypeFilter === 'all' ? {} : { workerType: workerTypeFilter };
       const [notificationPage, preferenceRows, defaultRows, webhookRows, ruleRows, workItemPage, settings, workerRunRows, workerHealthRows, emailRows] = await Promise.all([
         context.services.automation.listNotifications(context.workspaceId, { limit: 25 }),
         context.services.automation.listPreferences(context.workspaceId),
@@ -74,8 +78,8 @@ export const AutomationPage = ({ context }) => {
         context.services.automation.listRules(context.workspaceId),
         context.projectId ? context.services.workItems.listByProject(context.projectId, { limit: 50 }) : Promise.resolve({ items: [] }),
         context.services.automation.getWorkerSettings(context.workspaceId),
-        context.services.automation.listWorkerRuns(context.workspaceId),
-        context.services.automation.listWorkerHealth(context.workspaceId),
+        context.services.automation.listWorkerRuns(context.workspaceId, workerQuery),
+        context.services.automation.listWorkerHealth(context.workspaceId, workerQuery),
         context.services.automation.listEmailDeliveries(context.workspaceId),
       ]);
       const nextWebhookId = webhookId || firstId(webhookRows);
@@ -459,6 +463,7 @@ export const AutomationPage = ({ context }) => {
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
           <button className="secondary-button" disabled={action.pending || !ruleId} onClick={loadRuleJobs} type="button">Rule jobs</button>
+          <SelectField label="Worker type" value={workerTypeFilter} onChange={setWorkerTypeFilter} options={workerTypeOptions} />
           <RecordSelect label="Webhook" records={webhooks} value={webhookId} onChange={setWebhookId} />
           <button className="secondary-button" disabled={action.pending || !webhookId} onClick={loadWebhookDeliveries} type="button">Deliveries</button>
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadEmailDeliveries} type="button">Emails</button>
@@ -473,8 +478,8 @@ export const AutomationPage = ({ context }) => {
           <JsonPreview title="Preferences" value={preferences} />
           <JsonPreview title="Defaults" value={defaultPreferences} />
           <JsonPreview title="Worker Settings" value={workerSettings} />
-          <JsonPreview title="Worker Runs" value={workerRuns} />
-          <JsonPreview title="Worker Health" value={workerHealth} />
+          <JsonPreview title={`Worker Runs (${workerTypeFilter})`} value={workerRuns} />
+          <JsonPreview title={`Worker Health (${workerTypeFilter})`} value={workerHealth} />
           <JsonPreview title="Webhooks" value={webhooks} />
           <JsonPreview title="Deliveries" value={webhookDeliveries} />
           <JsonPreview title="Emails" value={emailDeliveries} />

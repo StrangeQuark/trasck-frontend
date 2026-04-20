@@ -1643,6 +1643,12 @@ export interface ImportMappingStatusTranslationResponse {
   updatedAt?: string;
 }
 
+export interface ImportJobVersionDiffExportJobRequest {
+  format?: string;
+  filterColumn?: string;
+  filter?: string;
+}
+
 export interface ExportJobResponse {
   id?: string;
   workspaceId?: string;
@@ -1883,6 +1889,19 @@ export interface AgentTaskCallbackRequest {
   resultPayload?: unknown;
   artifacts?: AgentTaskCallbackArtifactRequest[];
   messages?: AgentTaskCallbackMessageRequest[];
+}
+
+export interface ImportWorkspaceSettingsRequest {
+  sampleJobsEnabled?: boolean;
+}
+
+export interface ImportWorkspaceSettingsResponse {
+  workspaceId?: string;
+  sampleJobsEnabled?: boolean;
+  deploymentSampleJobsEnabled?: boolean;
+  sampleJobsAvailable?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface AutomationWorkerSettingsRequest {
@@ -3714,7 +3733,7 @@ export interface ApiPaths {
       importJobId: string;
     };
       query: undefined;
-      body: undefined;
+      body: ImportJobVersionDiffExportJobRequest;
       response: unknown;
     };
   };
@@ -4189,6 +4208,24 @@ export interface ApiPaths {
     };
       query: undefined;
       body: AgentTaskCallbackRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/import-settings": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: ImportWorkspaceSettingsRequest;
       response: unknown;
     };
   };
@@ -5089,7 +5126,9 @@ export interface ApiPaths {
       path: {
       workspaceId: string;
     };
-      query: undefined;
+      query: {
+      workerType?: string;
+    };
       body: undefined;
       response: unknown;
     };
@@ -5099,7 +5138,9 @@ export interface ApiPaths {
       path: {
       workspaceId: string;
     };
-      query: undefined;
+      query: {
+      workerType?: string;
+    };
       body: undefined;
       response: unknown;
     };
@@ -5958,6 +5999,8 @@ export const apiOperations = {
   "reencryptCredentials": { method: "post", path: "/api/v1/agent-providers/{providerId}/credentials/reencrypt" },
   "rotateCallbackKey": { method: "post", path: "/api/v1/agent-providers/{providerId}/callback-keys/rotate" },
   "callback": { method: "post", path: "/api/v1/agent-callbacks/{providerKey}" },
+  "getImportSettings": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-settings" },
+  "updateImportSettings": { method: "patch", path: "/api/v1/workspaces/{workspaceId}/import-settings" },
   "getWorkerSettings": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-worker-settings" },
   "updateWorkerSettings": { method: "patch", path: "/api/v1/workspaces/{workspaceId}/automation-worker-settings" },
   "get": { method: "get", path: "/api/v1/work-items/{workItemId}" },
