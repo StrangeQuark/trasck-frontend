@@ -59,7 +59,7 @@ const downloadCsv = (filename, columns, rows) => {
   URL.revokeObjectURL(url);
 };
 
-const TableControls = ({ columns, csvFilename, filter, filterColumn, rows, setFilter, setFilterColumn }) => (
+const TableControls = ({ columns, csvFilename, filter, filterColumn, onCsvExport, rows, setFilter, setFilterColumn }) => (
   <div className="table-actions">
     <label className="table-filter">
       <span>Column</span>
@@ -74,7 +74,7 @@ const TableControls = ({ columns, csvFilename, filter, filterColumn, rows, setFi
       <span>Filter</span>
       <input value={filter} onChange={(event) => setFilter(event.target.value)} />
     </label>
-    <button className="secondary-button" disabled={rows.length === 0} onClick={() => downloadCsv(csvFilename, columns, rows)} type="button">
+    <button className="secondary-button" disabled={rows.length === 0} onClick={() => (onCsvExport ? onCsvExport({ filter, filterColumn }) : downloadCsv(csvFilename, columns, rows))} type="button">
       <FiDownload />CSV
     </button>
   </div>
@@ -153,7 +153,7 @@ export const ImportRecordVersionDiffTable = ({ diffs = [] }) => {
   );
 };
 
-export const ImportJobVersionDiffTable = ({ diffs }) => {
+export const ImportJobVersionDiffTable = ({ diffs, onCsvExport }) => {
   const records = diffs?.records || [];
   const rows = records.flatMap((record) => (record.diffs || []).flatMap((diff) => (diff.fields || []).map((field) => ({
     key: `${record.recordId}-${diff.versionId || diff.version}-${field.path}`,
@@ -187,7 +187,7 @@ export const ImportJobVersionDiffTable = ({ diffs }) => {
         <div><dt>Versions</dt><dd>{diffs?.versionCount ?? 0}</dd></div>
         <div><dt>Diffs</dt><dd>{diffs?.diffCount ?? 0}</dd></div>
       </dl>
-      <TableControls columns={columns} csvFilename="import-job-version-diffs.csv" filter={filter} filterColumn={filterColumn} rows={filteredRows} setFilter={setFilter} setFilterColumn={setFilterColumn} />
+      <TableControls columns={columns} csvFilename="import-job-version-diffs.csv" filter={filter} filterColumn={filterColumn} onCsvExport={onCsvExport} rows={filteredRows} setFilter={setFilter} setFilterColumn={setFilterColumn} />
       {filteredRows.length === 0 ? <EmptyTableState message="No job field diffs match this filter" /> : (
         <div className="table-wrap">
           <table className="data-table">

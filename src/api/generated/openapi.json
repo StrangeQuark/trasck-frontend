@@ -5328,6 +5328,15 @@
             }
           }
         ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportJobVersionDiffExportJobRequest"
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",
@@ -7115,6 +7124,76 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/AgentTaskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/import-settings": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "getImportSettings",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportWorkspaceSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "updateImportSettings",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportWorkspaceSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportWorkspaceSettingsResponse"
                 }
               }
             }
@@ -10465,6 +10544,14 @@
               "type": "string",
               "format": "uuid"
             }
+          },
+          {
+            "name": "workerType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
           }
         ],
         "responses": {
@@ -10498,6 +10585,14 @@
             "schema": {
               "type": "string",
               "format": "uuid"
+            }
+          },
+          {
+            "name": "workerType",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
             }
           }
         ],
@@ -17513,6 +17608,20 @@
           }
         }
       },
+      "ImportJobVersionDiffExportJobRequest": {
+        "type": "object",
+        "properties": {
+          "format": {
+            "type": "string"
+          },
+          "filterColumn": {
+            "type": "string"
+          },
+          "filter": {
+            "type": "string"
+          }
+        }
+      },
       "ExportJobResponse": {
         "type": "object",
         "properties": {
@@ -18155,6 +18264,40 @@
             "items": {
               "$ref": "#/components/schemas/AgentTaskCallbackMessageRequest"
             }
+          }
+        }
+      },
+      "ImportWorkspaceSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "sampleJobsEnabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImportWorkspaceSettingsResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sampleJobsEnabled": {
+            "type": "boolean"
+          },
+          "deploymentSampleJobsEnabled": {
+            "type": "boolean"
+          },
+          "sampleJobsAvailable": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },

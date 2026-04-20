@@ -49,8 +49,10 @@ const filteredConflictResolutionPhrase = 'RESOLVE FILTERED CONFLICTS';
 export const ImportsPage = ({ context }) => {
   const [jobs, setJobs] = useState([]);
   const [importJobId, setImportJobId] = useState('');
+  const [importSettings, setImportSettings] = useState(null);
   const [samples, setSamples] = useState([]);
   const [sampleResult, setSampleResult] = useState(null);
+  const [sampleSettingsForm, setSampleSettingsForm] = useState({ sampleJobsEnabled: 'true' });
   const [sampleForm, setSampleForm] = useState({ sampleKey: 'csv', createMappingTemplate: 'true' });
   const [templates, setTemplates] = useState([]);
   const [mappingTemplateId, setMappingTemplateId] = useState('');
@@ -136,9 +138,10 @@ export const ImportsPage = ({ context }) => {
       return;
     }
     const result = await action.run(async () => {
-      const [jobRows, sampleRows, templateRows, presetRows] = await Promise.all([
+      const [jobRows, importSettingsRow, sampleRows, templateRows, presetRows] = await Promise.all([
         context.services.imports.listJobs(context.workspaceId),
-        context.services.imports.listSamples(context.workspaceId),
+        context.services.imports.getSettings(context.workspaceId),
+        context.services.imports.listSamples(context.workspaceId).catch(() => []),
         context.services.imports.listMappingTemplates(context.workspaceId),
         context.services.imports.listTransformPresets(context.workspaceId),
       ]);
@@ -158,10 +161,12 @@ export const ImportsPage = ({ context }) => {
         context.projectId ? context.services.dashboards.projectImportCompletions(context.projectId) : Promise.resolve(null),
         context.services.dashboards.workspaceImportCompletions(context.workspaceId),
       ]);
-      return { jobRows, sampleRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows, workspaceResolutionJobRows, exportJobPage, projectImportMetrics, workspaceImportMetrics };
+      return { jobRows, importSettingsRow, sampleRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows, workspaceResolutionJobRows, exportJobPage, projectImportMetrics, workspaceImportMetrics };
     });
     if (result) {
       setJobs(result.jobRows || []);
+      setImportSettings(result.importSettingsRow || null);
+      setSampleSettingsForm({ sampleJobsEnabled: String(result.importSettingsRow?.sampleJobsEnabled ?? true) });
       setSamples(result.sampleRows || []);
       setSampleForm((current) => ({ ...current, sampleKey: current.sampleKey || result.sampleRows?.[0]?.key || 'csv' }));
       setTemplates(result.templateRows || []);
@@ -227,6 +232,17 @@ export const ImportsPage = ({ context }) => {
         mappingTemplateId: result.mappingTemplate?.id || '',
         transformPresetId: result.transformPreset?.id || '',
       });
+    }
+  };
+
+  const saveImportSettings = async () => {
+    const settings = await action.run(() => context.services.imports.updateSettings(context.workspaceId, {
+      sampleJobsEnabled: sampleSettingsForm.sampleJobsEnabled === 'true',
+    }), 'Import settings saved');
+    if (settings) {
+      setImportSettings(settings);
+      setSampleSettingsForm({ sampleJobsEnabled: String(settings.sampleJobsEnabled ?? false) });
+      await load();
     }
   };
 
@@ -518,12 +534,12 @@ export const ImportsPage = ({ context }) => {
     }
   };
 
-  const createJobVersionDiffExportJob = async () => {
+  const createJobVersionDiffExportJob = async (request = { format: 'json' }) => {
     if (!importJobId) {
       action.setError('Import job is required');
       return;
     }
-    const exportJob = await action.run(() => context.services.imports.createJobVersionDiffExportJob(importJobId), 'Job diff export artifact created');
+    const exportJob = await action.run(() => context.services.imports.createJobVersionDiffExportJob(importJobId, request), 'Job diff export artifact created');
     if (exportJob) {
       setJobVersionDiffExportJob(exportJob);
       if (context.workspaceId) {
@@ -532,6 +548,12 @@ export const ImportsPage = ({ context }) => {
       }
     }
   };
+
+  const createJobVersionDiffCsvExportJob = ({ filter, filterColumn }) => createJobVersionDiffExportJob({
+    format: 'csv',
+    filter,
+    filterColumn,
+  });
 
   const downloadExportJob = async (exportJob) => {
     if (!context.workspaceId || !exportJob?.id) {
@@ -673,10 +695,20 @@ export const ImportsPage = ({ context }) => {
         </form>
       </Panel>
       <Panel title="Sample Walkthrough" icon={<FiDatabase />}>
+        <div className="stack nested-form">
+          <div className="two-column compact">
+            <SelectField label="Sample jobs" value={sampleSettingsForm.sampleJobsEnabled} onChange={(sampleJobsEnabled) => setSampleSettingsForm({ sampleJobsEnabled })} options={['true', 'false']} />
+            <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={saveImportSettings} type="button"><FiCheck />Save setting</button>
+          </div>
+          <dl className="summary-rows">
+            <div><dt>Deployment</dt><dd>{String(importSettings?.deploymentSampleJobsEnabled ?? false)}</dd></div>
+            <div><dt>Available</dt><dd>{String(importSettings?.sampleJobsAvailable ?? false)}</dd></div>
+          </dl>
+        </div>
         <form className="stack" onSubmit={createSampleJob}>
           <SelectField label="Sample" value={sampleForm.sampleKey} onChange={(sampleKey) => setSampleForm({ ...sampleForm, sampleKey })} options={(samples.length ? samples : [{ key: 'csv' }, { key: 'jira' }, { key: 'rally' }]).map((sample) => sample.key)} />
           <SelectField label="Create mapping" value={sampleForm.createMappingTemplate} onChange={(createMappingTemplate) => setSampleForm({ ...sampleForm, createMappingTemplate })} options={['true', 'false']} />
-          <button className="primary-button" disabled={action.pending || !context.workspaceId || (sampleForm.createMappingTemplate === 'true' && !context.projectId)} type="submit"><FiPlus />Create sample job</button>
+          <button className="primary-button" disabled={action.pending || !context.workspaceId || !importSettings?.sampleJobsAvailable || (sampleForm.createMappingTemplate === 'true' && !context.projectId)} type="submit"><FiPlus />Create sample job</button>
         </form>
         <dl className="summary-rows">
           {(samples || []).map((sample) => (
@@ -872,9 +904,9 @@ export const ImportsPage = ({ context }) => {
         />
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={loadJobVersionDiffExport} type="button"><FiEye />Load job diff export</button>
-          <button className="secondary-button" disabled={action.pending || !importJobId} onClick={createJobVersionDiffExportJob} type="button"><FiPlus />Create export artifact</button>
+          <button className="secondary-button" disabled={action.pending || !importJobId} onClick={() => createJobVersionDiffExportJob()} type="button"><FiPlus />Create export artifact</button>
         </div>
-        <ImportJobVersionDiffTable diffs={jobVersionDiffs} />
+        <ImportJobVersionDiffTable diffs={jobVersionDiffs} onCsvExport={createJobVersionDiffCsvExportJob} />
         <ImportExportJobsTable jobs={exportJobs} onDownload={downloadExportJob} />
         <div className="data-columns">
           <JsonPreview title="Jobs" value={jobs} />

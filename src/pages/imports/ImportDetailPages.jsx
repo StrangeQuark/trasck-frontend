@@ -190,8 +190,8 @@ export const ImportJobDetailPage = ({ context }) => {
     }
   };
 
-  const createJobVersionDiffExportJob = async () => {
-    const exportJob = await action.run(() => context.services.imports.createJobVersionDiffExportJob(importJobId), 'Job diff export artifact created');
+  const createJobVersionDiffExportJob = async (request = { format: 'json' }) => {
+    const exportJob = await action.run(() => context.services.imports.createJobVersionDiffExportJob(importJobId, request), 'Job diff export artifact created');
     if (exportJob) {
       setJobVersionDiffExportJob(exportJob);
       if (context.workspaceId) {
@@ -200,6 +200,12 @@ export const ImportJobDetailPage = ({ context }) => {
       }
     }
   };
+
+  const createJobVersionDiffCsvExportJob = ({ filter, filterColumn }) => createJobVersionDiffExportJob({
+    format: 'csv',
+    filter,
+    filterColumn,
+  });
 
   const downloadExportJob = async (exportJob) => {
     if (!context.workspaceId || !exportJob?.id) {
@@ -305,12 +311,12 @@ export const ImportJobDetailPage = ({ context }) => {
       <Panel title="Records" icon={<FiEye />} wide>
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending} onClick={loadJobVersionDiffExport} type="button"><FiEye />Load job diff export</button>
-          <button className="secondary-button" disabled={action.pending} onClick={createJobVersionDiffExportJob} type="button"><FiPlus />Create export artifact</button>
+          <button className="secondary-button" disabled={action.pending} onClick={() => createJobVersionDiffExportJob()} type="button"><FiPlus />Create export artifact</button>
         </div>
         <JsonPreview title="Job" value={job} />
         <JsonPreview title="Open Conflicts" value={conflicts} />
         <ImportConflictResolutionJobsTable jobs={conflictResolutionJobs} />
-        <ImportJobVersionDiffTable diffs={jobVersionDiffs} />
+        <ImportJobVersionDiffTable diffs={jobVersionDiffs} onCsvExport={createJobVersionDiffCsvExportJob} />
         <ImportExportJobsTable jobs={exportJobs} onDownload={downloadExportJob} />
         <JsonPreview title="Job Version Diff Export" value={jobVersionDiffExport} />
         <JsonPreview title="Job Version Diff Export Artifact" value={jobVersionDiffExportJob} />

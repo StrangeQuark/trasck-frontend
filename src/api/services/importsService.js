@@ -12,6 +12,19 @@ export const createImportsService = (api) => ({
     });
   },
 
+  getSettings(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/import-settings', {
+      path: { workspaceId },
+    });
+  },
+
+  updateSettings(workspaceId, request) {
+    return api.request('patch', '/api/v1/workspaces/{workspaceId}/import-settings', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
   listSamples(workspaceId) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/import-samples', {
       path: { workspaceId },
@@ -344,9 +357,10 @@ export const createImportsService = (api) => ({
     });
   },
 
-  createJobVersionDiffExportJob(importJobId) {
+  createJobVersionDiffExportJob(importJobId, request) {
     return api.request('post', '/api/v1/import-jobs/{importJobId}/version-diffs/export-jobs', {
       path: { importJobId },
+      body: request,
     });
   },
 
