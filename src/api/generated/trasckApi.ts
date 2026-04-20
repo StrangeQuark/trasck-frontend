@@ -1480,6 +1480,7 @@ export interface ImportTransformPresetCloneRequest {
 
 export interface ImportMaterializationRerunRequest {
   limit?: number;
+  updateExisting?: boolean;
 }
 
 export interface ImportMaterializeResponse {
@@ -1555,6 +1556,7 @@ export interface ImportJobRecordRequest {
   sourceId?: string;
   targetType?: string;
   targetId?: string;
+  clearTarget?: boolean;
   status?: string;
   errorMessage?: string;
   rawPayload?: unknown;
@@ -4396,6 +4398,16 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/import-job-records/{recordId}": {
+    patch: {
+      path: {
+      recordId: string;
+    };
+      query: undefined;
+      body: ImportJobRecordRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/field-configurations/{fieldConfigurationId}": {
     get: {
       path: {
@@ -5567,6 +5579,7 @@ export const apiOperations = {
   "deleteTypeTranslation": { method: "delete", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations/{translationId}" },
   "updateStatusTranslation": { method: "patch", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations/{translationId}" },
   "deleteStatusTranslation": { method: "delete", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations/{translationId}" },
+  "updateRecord": { method: "patch", path: "/api/v1/import-job-records/{recordId}" },
   "getFieldConfiguration": { method: "get", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
   "updateFieldConfiguration": { method: "patch", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
   "deleteFieldConfiguration": { method: "delete", path: "/api/v1/field-configurations/{fieldConfigurationId}" },

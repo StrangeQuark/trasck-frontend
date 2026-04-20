@@ -8577,6 +8577,47 @@
         }
       }
     },
+    "/api/v1/import-job-records/{recordId}": {
+      "patch": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "updateRecord",
+        "parameters": [
+          {
+            "name": "recordId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportJobRecordRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/field-configurations/{fieldConfigurationId}": {
       "get": {
         "tags": [
@@ -16127,6 +16168,9 @@
           "limit": {
             "type": "integer",
             "format": "int32"
+          },
+          "updateExisting": {
+            "type": "boolean"
           }
         }
       },
@@ -16344,6 +16388,9 @@
           "targetId": {
             "type": "string",
             "format": "uuid"
+          },
+          "clearTarget": {
+            "type": "boolean"
           },
           "status": {
             "type": "string"

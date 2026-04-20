@@ -53,5 +53,6 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: 'Import Job' })).toBeInTheDocument();
     expect(screen.getAllByRole('heading', { name: 'Conflict Review' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('heading', { name: 'Rerun Snapshot' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('heading', { name: 'Record Review' }).length).toBeGreaterThan(0);
   });
 });

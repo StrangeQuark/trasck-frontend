@@ -220,6 +220,13 @@ export const createImportsService = (api) => ({
     });
   },
 
+  updateRecord(recordId, request) {
+    return api.request('patch', '/api/v1/import-job-records/{recordId}', {
+      path: { recordId },
+      body: request,
+    });
+  },
+
   start(importJobId) {
     return api.request('post', '/api/v1/import-jobs/{importJobId}/start', {
       path: { importJobId },
