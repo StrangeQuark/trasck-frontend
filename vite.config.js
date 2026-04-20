@@ -13,10 +13,9 @@ export default defineConfig({
     include: ['react', 'react-dom'],
     force: true
   },
-//   test: {
-//     globals: true,
-//     environment: "jsdom",
-//     setupFiles: "./src/test/setupTests.js",
-//     include: ["src/test/**/*.{test,spec}.{js,jsx}"]
-//   },
+  test: {
+    environment: 'jsdom',
+    setupFiles: './src/test/setupTests.js',
+    include: ['src/**/*.{test,spec}.{js,jsx}']
+  },
 })

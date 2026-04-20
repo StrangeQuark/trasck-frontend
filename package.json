@@ -6,7 +6,8 @@
     "dev": "vite",
     "build": "vite build",
     "generate:api": "node scripts/generate-api-client.mjs",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test": "vitest run"
   },
   "dependencies": {
     "react": "^19.2.5",
