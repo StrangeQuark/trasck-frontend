@@ -19,6 +19,7 @@ export const ImportsPage = ({ context }) => {
   const [mappingTemplateId, setMappingTemplateId] = useState('');
   const [transformPresets, setTransformPresets] = useState([]);
   const [transformPresetId, setTransformPresetId] = useState('');
+  const [transformPresetVersions, setTransformPresetVersions] = useState([]);
   const [records, setRecords] = useState([]);
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -64,12 +65,13 @@ export const ImportsPage = ({ context }) => {
       const nextJobId = importJobId || firstId(jobRows);
       const nextTemplateId = mappingTemplateId || firstId(templateRows);
       const nextPresetId = transformPresetId || firstId(presetRows);
-      const [job, recordRows, runRows] = await Promise.all([
+      const [job, recordRows, runRows, versionRows] = await Promise.all([
         nextJobId ? context.services.imports.getJob(nextJobId) : Promise.resolve(null),
         nextJobId ? context.services.imports.listRecords(nextJobId) : Promise.resolve([]),
         nextJobId ? context.services.imports.listMaterializationRuns(nextJobId) : Promise.resolve([]),
+        nextPresetId ? context.services.imports.listTransformPresetVersions(nextPresetId) : Promise.resolve([]),
       ]);
-      return { jobRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, runRows };
+      return { jobRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, runRows, versionRows };
     });
     if (result) {
       setJobs(result.jobRows || []);
@@ -81,6 +83,7 @@ export const ImportsPage = ({ context }) => {
       setSelectedJob(result.job || null);
       setRecords(result.recordRows || []);
       setMaterializationRuns(result.runRows || []);
+      setTransformPresetVersions(result.versionRows || []);
     }
   };
 
@@ -195,6 +198,18 @@ export const ImportsPage = ({ context }) => {
     }
   };
 
+  const loadPresetVersions = async (presetId = transformPresetId) => {
+    if (!presetId) {
+      setTransformPresetVersions([]);
+      return;
+    }
+    const versions = await action.run(() => context.services.imports.listTransformPresetVersions(presetId));
+    if (versions) {
+      setTransformPresetId(presetId);
+      setTransformPresetVersions(versions || []);
+    }
+  };
+
   const jobCommand = async (command, success) => {
     await action.run(() => command(importJobId), success);
     await loadRecords();
@@ -291,6 +306,10 @@ export const ImportsPage = ({ context }) => {
           <DetailLinkGrid title="Import Job Routes" items={jobs} basePath="/imports/jobs" />
           <DetailLinkGrid title="Template Routes" items={templates} basePath="/imports/templates" />
         </div>
+        <div className="stack">
+          <RecordSelect label="Version history preset" records={transformPresets} value={transformPresetId} onChange={(presetId) => loadPresetVersions(presetId)} includeBlank />
+          <button className="secondary-button" disabled={action.pending || !transformPresetId} onClick={() => loadPresetVersions()} type="button"><FiRefreshCw />Load versions</button>
+        </div>
         <JsonRecordEditor
           records={transformPresets}
           title="Transform Presets"
@@ -303,6 +322,7 @@ export const ImportsPage = ({ context }) => {
           <JsonPreview title="Jobs" value={jobs} />
           <JsonPreview title="Templates" value={templates} />
           <JsonPreview title="Transform Presets" value={transformPresets} />
+          <JsonPreview title="Transform Preset Versions" value={transformPresetVersions} />
           <JsonPreview title="Selected Job" value={selectedJob} />
           <JsonPreview title="Parse Result" value={parseResult} />
           <JsonPreview title="Materialize Result" value={materializeResult} />
