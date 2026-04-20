@@ -1558,6 +1558,8 @@ export interface ImportMaterializeResponse {
   created?: number;
   updated?: number;
   failed?: number;
+  skipped?: number;
+  conflicts?: number;
   records?: ImportJobRecordResponse[];
 }
 
@@ -2101,6 +2103,20 @@ export interface PublicProjectResponse {
   visibility?: string;
 }
 
+export interface ImportTransformPresetVersionResponse {
+  id?: string;
+  presetId?: string;
+  workspaceId?: string;
+  version?: number;
+  name?: string;
+  description?: string;
+  transformationConfig?: unknown;
+  enabled?: boolean;
+  changeType?: string;
+  createdById?: string;
+  createdAt?: string;
+}
+
 export interface ImportMaterializationRunResponse {
   id?: string;
   workspaceId?: string;
@@ -2119,6 +2135,8 @@ export interface ImportMaterializationRunResponse {
   recordsCreated?: number;
   recordsUpdated?: number;
   recordsFailed?: number;
+  recordsSkipped?: number;
+  recordsConflicted?: number;
   createdAt?: string;
   finishedAt?: string;
 }
@@ -5005,6 +5023,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-transform-presets/{presetId}/versions": {
+    get: {
+      path: {
+      presetId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/import-jobs/{importJobId}": {
     get: {
       path: {
@@ -5539,6 +5567,7 @@ export const apiOperations = {
   "listByProject_2": { method: "get", path: "/api/v1/projects/{projectId}/report-query-catalog" },
   "listProjectViews": { method: "get", path: "/api/v1/projects/{projectId}/personalization/views" },
   "listByProject_3": { method: "get", path: "/api/v1/projects/{projectId}/dashboards" },
+  "listTransformPresetVersions": { method: "get", path: "/api/v1/import-transform-presets/{presetId}/versions" },
   "getImportJob": { method: "get", path: "/api/v1/import-jobs/{importJobId}" },
   "listMaterializationRuns": { method: "get", path: "/api/v1/import-jobs/{importJobId}/materialization-runs" },
   "getEmailDelivery": { method: "get", path: "/api/v1/email-deliveries/{deliveryId}" },

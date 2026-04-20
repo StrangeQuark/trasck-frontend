@@ -10932,6 +10932,40 @@
         }
       }
     },
+    "/api/v1/import-transform-presets/{presetId}/versions": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listTransformPresetVersions",
+        "parameters": [
+          {
+            "name": "presetId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportTransformPresetVersionResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-jobs/{importJobId}": {
       "get": {
         "tags": [
@@ -16146,6 +16180,14 @@
             "type": "integer",
             "format": "int32"
           },
+          "skipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "conflicts": {
+            "type": "integer",
+            "format": "int32"
+          },
           "records": {
             "type": "array",
             "items": {
@@ -17756,6 +17798,48 @@
           }
         }
       },
+      "ImportTransformPresetVersionResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "presetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "name": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "transformationConfig": {},
+          "enabled": {
+            "type": "boolean"
+          },
+          "changeType": {
+            "type": "string"
+          },
+          "createdById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ImportMaterializationRunResponse": {
         "type": "object",
         "properties": {
@@ -17813,6 +17897,14 @@
             "format": "int32"
           },
           "recordsFailed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordsSkipped": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "recordsConflicted": {
             "type": "integer",
             "format": "int32"
           },

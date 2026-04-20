@@ -31,6 +31,12 @@ export const createImportsService = (api) => ({
     });
   },
 
+  listTransformPresetVersions(presetId) {
+    return api.request('get', '/api/v1/import-transform-presets/{presetId}/versions', {
+      path: { presetId },
+    });
+  },
+
   updateTransformPreset(presetId, request) {
     return api.request('patch', '/api/v1/import-transform-presets/{presetId}', {
       path: { presetId },
