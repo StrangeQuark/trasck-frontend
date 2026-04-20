@@ -513,6 +513,13 @@ export interface ImportJobRecordResponse {
   status?: string;
   errorMessage?: string;
   rawPayload?: unknown;
+  conflictStatus?: string;
+  conflictReason?: string;
+  conflictDetectedAt?: string;
+  conflictResolvedAt?: string;
+  conflictResolution?: string;
+  conflictResolvedById?: string;
+  conflictMaterializationRunId?: string;
 }
 
 export interface ImportJobResponse {
@@ -1465,6 +1472,30 @@ export interface IterationCloseRequest {
   carryOverIterationId?: string;
 }
 
+export interface ImportTransformPresetCloneRequest {
+  name?: string;
+  description?: string;
+  enabled?: boolean;
+}
+
+export interface ImportMaterializationRerunRequest {
+  limit?: number;
+}
+
+export interface ImportMaterializeResponse {
+  materializationRunId?: string;
+  importJobId?: string;
+  mappingTemplateId?: string;
+  projectId?: string;
+  recordsProcessed?: number;
+  created?: number;
+  updated?: number;
+  failed?: number;
+  skipped?: number;
+  conflicts?: number;
+  records?: ImportJobRecordResponse[];
+}
+
 export interface ImportMappingValueLookupRequest {
   sourceField?: string;
   sourceValue?: string;
@@ -1549,18 +1580,8 @@ export interface ImportMaterializeRequest {
   updateExisting?: boolean;
 }
 
-export interface ImportMaterializeResponse {
-  materializationRunId?: string;
-  importJobId?: string;
-  mappingTemplateId?: string;
-  projectId?: string;
-  recordsProcessed?: number;
-  created?: number;
-  updated?: number;
-  failed?: number;
-  skipped?: number;
-  conflicts?: number;
-  records?: ImportJobRecordResponse[];
+export interface ImportConflictResolutionRequest {
+  resolution?: string;
 }
 
 export interface DashboardWidgetRequest {
@@ -2130,6 +2151,7 @@ export interface ImportMaterializationRunResponse {
   mappingTemplateSnapshot?: unknown;
   transformPresetSnapshot?: unknown;
   transformationConfigSnapshot?: unknown;
+  mappingRulesSnapshot?: unknown;
   status?: string;
   recordsProcessed?: number;
   recordsCreated?: number;
@@ -3369,6 +3391,27 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/clone": {
+    post: {
+      path: {
+      presetId: string;
+      versionId: string;
+    };
+      query: undefined;
+      body: ImportTransformPresetCloneRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-materialization-runs/{materializationRunId}/rerun": {
+    post: {
+      path: {
+      materializationRunId: string;
+    };
+      query: undefined;
+      body: ImportMaterializationRerunRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups": {
     get: {
       path: {
@@ -3498,6 +3541,16 @@ export interface ApiPaths {
     };
       query: undefined;
       body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-job-records/{recordId}/resolve-conflict": {
+    post: {
+      path: {
+      recordId: string;
+    };
+      query: undefined;
+      body: ImportConflictResolutionRequest;
       response: unknown;
     };
   };
@@ -5053,6 +5106,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/conflicts": {
+    get: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/email-deliveries/{deliveryId}": {
     get: {
       path: {
@@ -5396,6 +5459,8 @@ export const apiOperations = {
   "addWorkItem": { method: "post", path: "/api/v1/iterations/{iterationId}/work-items" },
   "commitIteration": { method: "post", path: "/api/v1/iterations/{iterationId}/commit" },
   "closeIteration": { method: "post", path: "/api/v1/iterations/{iterationId}/close" },
+  "cloneTransformPresetVersion": { method: "post", path: "/api/v1/import-transform-presets/{presetId}/versions/{versionId}/clone" },
+  "rerunMaterialization": { method: "post", path: "/api/v1/import-materialization-runs/{materializationRunId}/rerun" },
   "listValueLookups": { method: "get", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups" },
   "createValueLookup": { method: "post", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups" },
   "listTypeTranslations": { method: "get", path: "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations" },
@@ -5410,6 +5475,7 @@ export const apiOperations = {
   "failImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/fail" },
   "completeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/complete" },
   "cancelImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/cancel" },
+  "resolveConflict": { method: "post", path: "/api/v1/import-job-records/{recordId}/resolve-conflict" },
   "retryEmailDelivery": { method: "post", path: "/api/v1/email-deliveries/{deliveryId}/retry" },
   "cancelEmailDelivery": { method: "post", path: "/api/v1/email-deliveries/{deliveryId}/cancel" },
   "createWidget": { method: "post", path: "/api/v1/dashboards/{dashboardId}/widgets" },
@@ -5570,6 +5636,7 @@ export const apiOperations = {
   "listTransformPresetVersions": { method: "get", path: "/api/v1/import-transform-presets/{presetId}/versions" },
   "getImportJob": { method: "get", path: "/api/v1/import-jobs/{importJobId}" },
   "listMaterializationRuns": { method: "get", path: "/api/v1/import-jobs/{importJobId}/materialization-runs" },
+  "listConflicts": { method: "get", path: "/api/v1/import-jobs/{importJobId}/conflicts" },
   "getEmailDelivery": { method: "get", path: "/api/v1/email-deliveries/{deliveryId}" },
   "render": { method: "get", path: "/api/v1/dashboards/{dashboardId}/render" },
   "listFieldConfigurationsForField": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/field-configurations" },

@@ -37,6 +37,13 @@ export const createImportsService = (api) => ({
     });
   },
 
+  cloneTransformPresetVersion(presetId, versionId, request) {
+    return api.request('post', '/api/v1/import-transform-presets/{presetId}/versions/{versionId}/clone', {
+      path: { presetId, versionId },
+      body: request,
+    });
+  },
+
   updateTransformPreset(presetId, request) {
     return api.request('patch', '/api/v1/import-transform-presets/{presetId}', {
       path: { presetId },
@@ -180,9 +187,29 @@ export const createImportsService = (api) => ({
     });
   },
 
+  rerunMaterialization(materializationRunId, request) {
+    return api.request('post', '/api/v1/import-materialization-runs/{materializationRunId}/rerun', {
+      path: { materializationRunId },
+      body: request,
+    });
+  },
+
   listRecords(importJobId) {
     return api.request('get', '/api/v1/import-jobs/{importJobId}/records', {
       path: { importJobId },
+    });
+  },
+
+  listConflicts(importJobId) {
+    return api.request('get', '/api/v1/import-jobs/{importJobId}/conflicts', {
+      path: { importJobId },
+    });
+  },
+
+  resolveConflict(recordId, request) {
+    return api.request('post', '/api/v1/import-job-records/{recordId}/resolve-conflict', {
+      path: { recordId },
+      body: request,
     });
   },
 

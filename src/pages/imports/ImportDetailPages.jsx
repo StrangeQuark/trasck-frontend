@@ -6,26 +6,38 @@ import { ErrorLine } from '../../components/ErrorLine';
 import { Field } from '../../components/Field';
 import { JsonPreview } from '../../components/JsonPreview';
 import { Panel } from '../../components/Panel';
+import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
-import { parseJsonOrThrow, toJsonText } from '../../utils/forms';
+import { firstId, numberOrUndefined, parseJsonOrThrow, toJsonText } from '../../utils/forms';
 
 export const ImportJobDetailPage = ({ context }) => {
   const { importJobId } = useParams();
   const action = useApiAction(context.addToast);
   const [job, setJob] = useState(null);
   const [records, setRecords] = useState([]);
+  const [conflicts, setConflicts] = useState([]);
+  const [materializationRuns, setMaterializationRuns] = useState([]);
+  const [materializeResult, setMaterializeResult] = useState(null);
+  const [conflictForm, setConflictForm] = useState({ recordId: '', resolution: 'create_new' });
+  const [rerunForm, setRerunForm] = useState({ materializationRunId: '', limit: '25' });
 
   const load = async () => {
     const result = await action.run(() => Promise.all([
       context.services.imports.getJob(importJobId),
       context.services.imports.listRecords(importJobId),
+      context.services.imports.listConflicts(importJobId),
+      context.services.imports.listMaterializationRuns(importJobId),
     ]));
     if (result) {
-      const [jobRow, recordRows] = result;
+      const [jobRow, recordRows, conflictRows, runRows] = result;
       setJob(jobRow);
       setRecords(recordRows || []);
+      setConflicts(conflictRows || []);
+      setMaterializationRuns(runRows || []);
+      setConflictForm((current) => ({ ...current, recordId: firstId(conflictRows) }));
+      setRerunForm((current) => ({ ...current, materializationRunId: firstId(runRows) }));
     }
   };
 
@@ -36,6 +48,25 @@ export const ImportJobDetailPage = ({ context }) => {
   const command = async (fn, success) => {
     await action.run(() => fn(importJobId), success);
     await load();
+  };
+
+  const resolveConflict = async (event) => {
+    event.preventDefault();
+    await action.run(() => context.services.imports.resolveConflict(conflictForm.recordId, {
+      resolution: conflictForm.resolution,
+    }), 'Import conflict resolved');
+    await load();
+  };
+
+  const rerunMaterialization = async (event) => {
+    event.preventDefault();
+    const result = await action.run(() => context.services.imports.rerunMaterialization(rerunForm.materializationRunId, {
+      limit: numberOrUndefined(rerunForm.limit),
+    }), 'Materialization rerun completed');
+    if (result) {
+      setMaterializeResult(result);
+      await load();
+    }
   };
 
   return (
@@ -50,8 +81,25 @@ export const ImportJobDetailPage = ({ context }) => {
         </div>
         <ErrorLine message={action.error} />
       </Panel>
+      <Panel title="Conflict Review" icon={<FiDatabase />}>
+        <form className="stack" onSubmit={resolveConflict}>
+          <RecordSelect label="Open conflict" records={conflicts} value={conflictForm.recordId} onChange={(recordId) => setConflictForm({ ...conflictForm, recordId })} />
+          <SelectField label="Resolution" value={conflictForm.resolution} onChange={(resolution) => setConflictForm({ ...conflictForm, resolution })} options={['create_new', 'update_existing', 'skip']} />
+          <button className="secondary-button" disabled={action.pending || !conflictForm.recordId} type="submit"><FiCheck />Resolve</button>
+        </form>
+      </Panel>
+      <Panel title="Rerun Snapshot" icon={<FiRefreshCw />}>
+        <form className="stack" onSubmit={rerunMaterialization}>
+          <RecordSelect label="Run" records={materializationRuns} value={rerunForm.materializationRunId} onChange={(materializationRunId) => setRerunForm({ ...rerunForm, materializationRunId })} />
+          <TextField label="Limit" type="number" value={rerunForm.limit} onChange={(limit) => setRerunForm({ ...rerunForm, limit })} />
+          <button className="secondary-button" disabled={action.pending || !rerunForm.materializationRunId} type="submit"><FiRefreshCw />Rerun</button>
+        </form>
+      </Panel>
       <Panel title="Records" icon={<FiEye />} wide>
         <JsonPreview title="Job" value={job} />
+        <JsonPreview title="Open Conflicts" value={conflicts} />
+        <JsonPreview title="Materialization Runs" value={materializationRuns} />
+        <JsonPreview title="Materialize Result" value={materializeResult} />
         <JsonPreview title="Records" value={records} />
       </Panel>
     </DetailLayout>
