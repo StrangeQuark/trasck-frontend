@@ -50,7 +50,11 @@ export const ImportsPage = ({ context }) => {
   const [recordVersions, setRecordVersions] = useState([]);
   const [recordVersionDiffs, setRecordVersionDiffs] = useState([]);
   const [conflicts, setConflicts] = useState([]);
+  const [conflictResolutionJobs, setConflictResolutionJobs] = useState([]);
+  const [conflictResolutionJobId, setConflictResolutionJobId] = useState('');
   const [materializationRuns, setMaterializationRuns] = useState([]);
+  const [jobVersionDiffs, setJobVersionDiffs] = useState(null);
+  const [jobVersionDiffExport, setJobVersionDiffExport] = useState(null);
   const [selectedJob, setSelectedJob] = useState(null);
   const [parseResult, setParseResult] = useState(null);
   const [materializeResult, setMaterializeResult] = useState(null);
@@ -122,14 +126,16 @@ export const ImportsPage = ({ context }) => {
       const nextJobId = importJobId || firstId(jobRows);
       const nextTemplateId = mappingTemplateId || firstId(templateRows);
       const nextPresetId = transformPresetId || firstId(presetRows);
-      const [job, recordRows, conflictRows, runRows, versionRows] = await Promise.all([
+      const [job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows] = await Promise.all([
         nextJobId ? context.services.imports.getJob(nextJobId) : Promise.resolve(null),
         nextJobId ? context.services.imports.listRecords(nextJobId, filterRequest(recordFilters)) : Promise.resolve([]),
         nextJobId ? context.services.imports.listConflicts(nextJobId) : Promise.resolve([]),
+        nextJobId ? context.services.imports.listConflictResolutionJobs(nextJobId) : Promise.resolve([]),
+        nextJobId ? context.services.imports.listJobVersionDiffs(nextJobId) : Promise.resolve(null),
         nextJobId ? context.services.imports.listMaterializationRuns(nextJobId) : Promise.resolve([]),
         nextPresetId ? context.services.imports.listTransformPresetVersions(nextPresetId) : Promise.resolve([]),
       ]);
-      return { jobRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, conflictRows, runRows, versionRows };
+      return { jobRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows };
     });
     if (result) {
       setJobs(result.jobRows || []);
@@ -141,10 +147,14 @@ export const ImportsPage = ({ context }) => {
       setSelectedJob(result.job || null);
       setRecords(result.recordRows || []);
       setConflicts(result.conflictRows || []);
+      setConflictResolutionJobs(result.resolutionJobRows || []);
+      setJobVersionDiffs(result.jobDiffRows || null);
+      setJobVersionDiffExport(null);
       setMaterializationRuns(result.runRows || []);
       setTransformPresetVersions(result.versionRows || []);
       await syncRecordEditForm(result.recordRows);
       setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(result.conflictRows, current.recordId) }));
+      setConflictResolutionJobId((current) => selectedIdOrFirst(result.resolutionJobRows, current));
       setBulkConflictIds((current) => current.filter((recordId) => (result.conflictRows || []).some((record) => record.id === recordId)));
       setRerunForm((current) => ({ ...current, materializationRunId: selectedIdOrFirst(result.runRows, current.materializationRunId) }));
       setCloneForm((current) => ({ ...current, versionId: selectedIdOrFirst(result.versionRows, current.versionId) }));
@@ -383,6 +393,48 @@ export const ImportsPage = ({ context }) => {
     await loadRecords();
   };
 
+  const queueFilteredConflictResolutionJob = async () => {
+    const preview = filteredConflictPreview || await previewFilteredConflicts();
+    if (!preview?.matched) {
+      action.setError('No filtered open conflicts are available to queue');
+      return;
+    }
+    const confirmation = window.prompt(`Type ${filteredConflictResolutionPhrase} to queue ${preview.matched} filtered open conflicts.`);
+    if (confirmation !== filteredConflictResolutionPhrase) {
+      action.setError('Filtered conflict resolution confirmation did not match');
+      return;
+    }
+    const job = await action.run(() => context.services.imports.createConflictResolutionJob(importJobId, {
+      ...filteredConflictRequest(),
+      expectedCount: preview.matched,
+      confirmation,
+    }), 'Conflict resolution job queued');
+    if (job?.id) {
+      setConflictResolutionJobId(job.id);
+      await loadRecords();
+    }
+  };
+
+  const runConflictResolutionJob = async () => {
+    if (!conflictResolutionJobId) {
+      action.setError('Conflict resolution job is required');
+      return;
+    }
+    await action.run(() => context.services.imports.runConflictResolutionJob(conflictResolutionJobId), 'Conflict resolution job ran');
+    await loadRecords();
+  };
+
+  const loadJobVersionDiffExport = async () => {
+    if (!importJobId) {
+      action.setError('Import job is required');
+      return;
+    }
+    const exported = await action.run(() => context.services.imports.exportJobVersionDiffs(importJobId), 'Job diff export loaded');
+    if (exported) {
+      setJobVersionDiffExport(exported);
+    }
+  };
+
   const rerunMaterialization = async (event) => {
     event.preventDefault();
     const result = await action.run(() => context.services.imports.rerunMaterialization(rerunForm.materializationRunId, {
@@ -404,16 +456,22 @@ export const ImportsPage = ({ context }) => {
       context.services.imports.getJob(importJobId),
       context.services.imports.listRecords(importJobId, filterRequest(recordFilters)),
       context.services.imports.listConflicts(importJobId),
+      context.services.imports.listConflictResolutionJobs(importJobId),
+      context.services.imports.listJobVersionDiffs(importJobId),
       context.services.imports.listMaterializationRuns(importJobId),
     ]));
     if (result) {
-      const [job, rows, conflictRows, runs] = result;
+      const [job, rows, conflictRows, resolutionJobRows, jobDiffRows, runs] = result;
       setSelectedJob(job || null);
       setRecords(rows || []);
       setConflicts(conflictRows || []);
+      setConflictResolutionJobs(resolutionJobRows || []);
+      setJobVersionDiffs(jobDiffRows || null);
+      setJobVersionDiffExport(null);
       setMaterializationRuns(runs || []);
       await syncRecordEditForm(rows, preferredRecordId);
       setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(conflictRows, current.recordId) }));
+      setConflictResolutionJobId((current) => selectedIdOrFirst(resolutionJobRows, current));
       setBulkConflictIds((current) => current.filter((recordId) => (conflictRows || []).some((record) => record.id === recordId)));
       setFilteredConflictPreview(null);
       setRerunForm((current) => ({ ...current, materializationRunId: selectedIdOrFirst(runs, current.materializationRunId) }));
@@ -608,7 +666,11 @@ export const ImportsPage = ({ context }) => {
             <button className="secondary-button" disabled={action.pending || bulkConflictIds.length === 0} onClick={resolveSelectedConflicts} type="button"><FiCheck />Resolve selected</button>
             <button className="secondary-button" disabled={action.pending || !importJobId} onClick={previewFilteredConflicts} type="button"><FiEye />Preview filtered</button>
             <button className="secondary-button" disabled={action.pending || !filteredConflictPreview?.matched} onClick={resolveFilteredConflicts} type="button"><FiCheck />Resolve filtered</button>
+            <button className="secondary-button" disabled={action.pending || !filteredConflictPreview?.matched} onClick={queueFilteredConflictResolutionJob} type="button"><FiPlus />Queue filtered</button>
+            <RecordSelect label="Resolution job" records={conflictResolutionJobs} value={conflictResolutionJobId} onChange={setConflictResolutionJobId} />
+            <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={runConflictResolutionJob} type="button"><FiActivity />Run job</button>
             <JsonPreview title="Filtered Conflict Preview" value={filteredConflictPreview} />
+            <JsonPreview title="Resolution Jobs" value={conflictResolutionJobs} />
           </form>
           <form className="stack" onSubmit={rerunMaterialization}>
             <h3>Rerun Snapshot</h3>
@@ -637,6 +699,9 @@ export const ImportsPage = ({ context }) => {
           onSuccess={load}
           action={action}
         />
+        <div className="button-row wrap">
+          <button className="secondary-button" disabled={action.pending || !importJobId} onClick={loadJobVersionDiffExport} type="button"><FiEye />Load job diff export</button>
+        </div>
         <div className="data-columns">
           <JsonPreview title="Jobs" value={jobs} />
           <JsonPreview title="Templates" value={templates} />
@@ -645,7 +710,10 @@ export const ImportsPage = ({ context }) => {
           <JsonPreview title="Selected Job" value={selectedJob} />
           <JsonPreview title="Parse Result" value={parseResult} />
           <JsonPreview title="Materialize Result" value={materializeResult} />
+          <JsonPreview title="Job Version Diffs" value={jobVersionDiffs} />
+          <JsonPreview title="Job Version Diff Export" value={jobVersionDiffExport} />
           <JsonPreview title="Materialization Runs" value={materializationRuns} />
+          <JsonPreview title="Conflict Resolution Jobs" value={conflictResolutionJobs} />
           <JsonPreview title="Open Conflicts" value={conflicts} />
           <JsonPreview title="Records" value={records} />
         </div>

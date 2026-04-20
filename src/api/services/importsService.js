@@ -242,6 +242,31 @@ export const createImportsService = (api) => ({
     });
   },
 
+  createConflictResolutionJob(importJobId, request) {
+    return api.request('post', '/api/v1/import-jobs/{importJobId}/conflicts/resolve-async', {
+      path: { importJobId },
+      body: request,
+    });
+  },
+
+  listConflictResolutionJobs(importJobId) {
+    return api.request('get', '/api/v1/import-jobs/{importJobId}/conflict-resolution-jobs', {
+      path: { importJobId },
+    });
+  },
+
+  getConflictResolutionJob(jobId) {
+    return api.request('get', '/api/v1/import-conflict-resolution-jobs/{jobId}', {
+      path: { jobId },
+    });
+  },
+
+  runConflictResolutionJob(jobId) {
+    return api.request('post', '/api/v1/import-conflict-resolution-jobs/{jobId}/run', {
+      path: { jobId },
+    });
+  },
+
   createRecord(importJobId, request) {
     return api.request('post', '/api/v1/import-jobs/{importJobId}/records', {
       path: { importJobId },
@@ -265,6 +290,18 @@ export const createImportsService = (api) => ({
   listRecordVersionDiffs(recordId) {
     return api.request('get', '/api/v1/import-job-records/{recordId}/version-diffs', {
       path: { recordId },
+    });
+  },
+
+  listJobVersionDiffs(importJobId) {
+    return api.request('get', '/api/v1/import-jobs/{importJobId}/version-diffs', {
+      path: { importJobId },
+    });
+  },
+
+  exportJobVersionDiffs(importJobId) {
+    return api.request('get', '/api/v1/import-jobs/{importJobId}/version-diffs/export', {
+      path: { importJobId },
     });
   },
 

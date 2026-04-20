@@ -1652,6 +1652,27 @@ export interface ImportConflictBulkResolutionPreviewResponse {
   records?: ImportJobRecordResponse[];
 }
 
+export interface ImportConflictResolutionJobResponse {
+  id?: string;
+  workspaceId?: string;
+  importJobId?: string;
+  requestedById?: string;
+  resolution?: string;
+  scope?: string;
+  status?: string;
+  statusFilter?: string;
+  conflictStatusFilter?: string;
+  sourceTypeFilter?: string;
+  expectedCount?: number;
+  matchedCount?: number;
+  resolvedCount?: number;
+  failedCount?: number;
+  errorMessage?: string;
+  requestedAt?: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
 export interface ImportJobCompleteRequest {
   acceptOpenConflicts?: boolean;
   openConflictConfirmation?: string;
@@ -1992,6 +2013,13 @@ export interface EstimateTimeMetricsResponse {
   workLogDeletedBehavior?: string;
 }
 
+export interface ImportCompletionMetricsResponse {
+  completedJobs?: number;
+  completedWithOpenConflicts?: number;
+  acceptedOpenConflictCount?: number;
+  lastOpenConflictCompletedAt?: string;
+}
+
 export interface PortfolioReportSummaryResponse {
   workspaceId?: string;
   scope?: PortfolioScopeResponse;
@@ -2001,6 +2029,7 @@ export interface PortfolioReportSummaryResponse {
   throughput?: ThroughputMetricsResponse;
   estimateAndTime?: EstimateTimeMetricsResponse;
   cycleTime?: CycleTimeMetricsResponse;
+  importCompletions?: ImportCompletionMetricsResponse;
   byProject?: DimensionCountResponse[];
   byTeam?: DimensionCountResponse[];
   byType?: DimensionCountResponse[];
@@ -2159,6 +2188,7 @@ export interface ProjectReportSummaryResponse {
   estimateAndTime?: EstimateTimeMetricsResponse;
   aging?: AgingMetricsResponse;
   cycleTime?: CycleTimeMetricsResponse;
+  importCompletions?: ImportCompletionMetricsResponse;
   byStatus?: DimensionCountResponse[];
   byType?: DimensionCountResponse[];
   byPriority?: DimensionCountResponse[];
@@ -2216,6 +2246,51 @@ export interface ImportTransformPresetVersionResponse {
   createdAt?: string;
 }
 
+export interface ImportJobRecordFieldDiffResponse {
+  path?: string;
+  changeType?: string;
+  previousValue?: unknown;
+  value?: unknown;
+}
+
+export interface ImportJobRecordVersionDiffGroupResponse {
+  recordId?: string;
+  sourceType?: string;
+  sourceId?: string;
+  targetType?: string;
+  targetId?: string;
+  status?: string;
+  conflictStatus?: string;
+  diffs?: ImportJobRecordVersionDiffResponse[];
+}
+
+export interface ImportJobRecordVersionDiffResponse {
+  versionId?: string;
+  importJobRecordId?: string;
+  importJobId?: string;
+  version?: number;
+  comparedToVersion?: number;
+  changeType?: string;
+  changedById?: string;
+  createdAt?: string;
+  fields?: ImportJobRecordFieldDiffResponse[];
+}
+
+export interface ImportJobVersionDiffResponse {
+  importJobId?: string;
+  workspaceId?: string;
+  recordCount?: number;
+  versionCount?: number;
+  diffCount?: number;
+  records?: ImportJobRecordVersionDiffGroupResponse[];
+}
+
+export interface ImportJobVersionDiffExportResponse {
+  generatedAt?: string;
+  importJob?: ImportJobResponse;
+  diffs?: ImportJobVersionDiffResponse;
+}
+
 export interface ImportMaterializationRunResponse {
   id?: string;
   workspaceId?: string;
@@ -2250,25 +2325,6 @@ export interface ImportJobRecordVersionResponse {
   changedById?: string;
   snapshot?: unknown;
   createdAt?: string;
-}
-
-export interface ImportJobRecordFieldDiffResponse {
-  path?: string;
-  changeType?: string;
-  previousValue?: unknown;
-  value?: unknown;
-}
-
-export interface ImportJobRecordVersionDiffResponse {
-  versionId?: string;
-  importJobRecordId?: string;
-  importJobId?: string;
-  version?: number;
-  comparedToVersion?: number;
-  changeType?: string;
-  changedById?: string;
-  createdAt?: string;
-  fields?: ImportJobRecordFieldDiffResponse[];
 }
 
 export interface DashboardRenderResponse {
@@ -3678,6 +3734,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/conflicts/resolve-async": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: ImportConflictBulkResolutionRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/import-jobs/{importJobId}/complete": {
     post: {
       path: {
@@ -3705,6 +3771,16 @@ export interface ApiPaths {
     };
       query: undefined;
       body: ImportConflictResolutionRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-conflict-resolution-jobs/{jobId}/run": {
+    post: {
+      path: {
+      jobId: string;
+    };
+      query: undefined;
+      body: undefined;
       response: unknown;
     };
   };
@@ -5260,6 +5336,26 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/version-diffs": {
+    get: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-jobs/{importJobId}/version-diffs/export": {
+    get: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/import-jobs/{importJobId}/materialization-runs": {
     get: {
       path: {
@@ -5271,6 +5367,16 @@ export interface ApiPaths {
     };
   };
   "/api/v1/import-jobs/{importJobId}/conflicts": {
+    get: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-jobs/{importJobId}/conflict-resolution-jobs": {
     get: {
       path: {
       importJobId: string;
@@ -5294,6 +5400,16 @@ export interface ApiPaths {
     get: {
       path: {
       recordId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-conflict-resolution-jobs/{jobId}": {
+    get: {
+      path: {
+      jobId: string;
     };
       query: undefined;
       body: undefined;
@@ -5661,9 +5777,11 @@ export const apiOperations = {
   "failImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/fail" },
   "resolveConflicts": { method: "post", path: "/api/v1/import-jobs/{importJobId}/conflicts/resolve" },
   "previewResolveConflicts": { method: "post", path: "/api/v1/import-jobs/{importJobId}/conflicts/resolve-preview" },
+  "createConflictResolutionJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/conflicts/resolve-async" },
   "completeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/complete" },
   "cancelImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/cancel" },
   "resolveConflict": { method: "post", path: "/api/v1/import-job-records/{recordId}/resolve-conflict" },
+  "runConflictResolutionJob": { method: "post", path: "/api/v1/import-conflict-resolution-jobs/{jobId}/run" },
   "retryEmailDelivery": { method: "post", path: "/api/v1/email-deliveries/{deliveryId}/retry" },
   "cancelEmailDelivery": { method: "post", path: "/api/v1/email-deliveries/{deliveryId}/cancel" },
   "createWidget": { method: "post", path: "/api/v1/dashboards/{dashboardId}/widgets" },
@@ -5824,10 +5942,14 @@ export const apiOperations = {
   "listByProject_3": { method: "get", path: "/api/v1/projects/{projectId}/dashboards" },
   "listTransformPresetVersions": { method: "get", path: "/api/v1/import-transform-presets/{presetId}/versions" },
   "getImportJob": { method: "get", path: "/api/v1/import-jobs/{importJobId}" },
+  "listJobVersionDiffs": { method: "get", path: "/api/v1/import-jobs/{importJobId}/version-diffs" },
+  "exportJobVersionDiffs": { method: "get", path: "/api/v1/import-jobs/{importJobId}/version-diffs/export" },
   "listMaterializationRuns": { method: "get", path: "/api/v1/import-jobs/{importJobId}/materialization-runs" },
   "listConflicts": { method: "get", path: "/api/v1/import-jobs/{importJobId}/conflicts" },
+  "listConflictResolutionJobs": { method: "get", path: "/api/v1/import-jobs/{importJobId}/conflict-resolution-jobs" },
   "listRecordVersions": { method: "get", path: "/api/v1/import-job-records/{recordId}/versions" },
   "listRecordVersionDiffs": { method: "get", path: "/api/v1/import-job-records/{recordId}/version-diffs" },
+  "getConflictResolutionJob": { method: "get", path: "/api/v1/import-conflict-resolution-jobs/{jobId}" },
   "getEmailDelivery": { method: "get", path: "/api/v1/email-deliveries/{deliveryId}" },
   "render": { method: "get", path: "/api/v1/dashboards/{dashboardId}/render" },
   "listFieldConfigurationsForField": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/field-configurations" },
