@@ -70,6 +70,24 @@ export interface ProjectTeamResponse {
   createdAt?: string;
 }
 
+export interface WebhookRequest {
+  name?: string;
+  url?: string;
+  secret?: string;
+  eventTypes?: unknown;
+  enabled?: boolean;
+}
+
+export interface WebhookResponse {
+  id?: string;
+  workspaceId?: string;
+  name?: string;
+  url?: string;
+  secretConfigured?: boolean;
+  eventTypes?: unknown;
+  enabled?: boolean;
+}
+
 export interface AdminCreateUserRequest {
   email?: string;
   username?: string;
@@ -189,6 +207,34 @@ export interface SavedFilterResponse {
   updatedAt?: string;
 }
 
+export interface RoadmapRequest {
+  projectId?: string;
+  name?: string;
+  config?: unknown;
+  visibility?: string;
+}
+
+export interface RoadmapItemResponse {
+  id?: string;
+  roadmapId?: string;
+  workItemId?: string;
+  startDate?: string;
+  endDate?: string;
+  position?: number;
+  displayConfig?: unknown;
+}
+
+export interface RoadmapResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  name?: string;
+  config?: unknown;
+  ownerId?: string;
+  visibility?: string;
+  items?: RoadmapItemResponse[];
+}
+
 export interface RepositoryConnectionRequest {
   projectId?: string;
   provider?: string;
@@ -292,6 +338,23 @@ export interface FavoriteResponse {
   createdAt?: string;
 }
 
+export interface NotificationPreferenceRequest {
+  channel?: string;
+  eventType?: string;
+  enabled?: boolean;
+  config?: unknown;
+}
+
+export interface NotificationPreferenceResponse {
+  id?: string;
+  userId?: string;
+  workspaceId?: string;
+  channel?: string;
+  eventType?: string;
+  enabled?: boolean;
+  config?: unknown;
+}
+
 export interface LabelRequest {
   name?: string;
   color?: string;
@@ -323,6 +386,57 @@ export interface InvitationResponse {
   token?: string;
   status?: string;
   expiresAt?: string;
+}
+
+export interface ImportJobRequest {
+  provider?: string;
+  config?: unknown;
+}
+
+export interface ImportJobRecordResponse {
+  id?: string;
+  importJobId?: string;
+  sourceType?: string;
+  sourceId?: string;
+  targetType?: string;
+  targetId?: string;
+  status?: string;
+  errorMessage?: string;
+  rawPayload?: unknown;
+}
+
+export interface ImportJobResponse {
+  id?: string;
+  workspaceId?: string;
+  requestedById?: string;
+  provider?: string;
+  status?: string;
+  config?: unknown;
+  startedAt?: string;
+  finishedAt?: string;
+  records?: ImportJobRecordResponse[];
+}
+
+export interface FieldConfigurationRequest {
+  customFieldId?: string;
+  projectId?: string;
+  workItemTypeId?: string;
+  required?: boolean;
+  hidden?: boolean;
+  defaultValue?: unknown;
+  validationConfig?: unknown;
+}
+
+export interface FieldConfigurationResponse {
+  id?: string;
+  workspaceId?: string;
+  customFieldId?: string;
+  projectId?: string;
+  workItemTypeId?: string;
+  required?: boolean;
+  hidden?: boolean;
+  defaultValue?: unknown;
+  validationConfig?: unknown;
 }
 
 export interface DomainEventReplayRequest {
@@ -396,6 +510,45 @@ export interface CustomFieldResponse {
   createdAt?: string;
   updatedAt?: string;
   version?: number;
+}
+
+export interface AutomationRuleRequest {
+  projectId?: string;
+  name?: string;
+  triggerType?: string;
+  triggerConfig?: unknown;
+  enabled?: boolean;
+}
+
+export interface AutomationActionResponse {
+  id?: string;
+  ruleId?: string;
+  actionType?: string;
+  executionMode?: string;
+  config?: unknown;
+  position?: number;
+}
+
+export interface AutomationConditionResponse {
+  id?: string;
+  ruleId?: string;
+  conditionType?: string;
+  config?: unknown;
+  position?: number;
+}
+
+export interface AutomationRuleResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  name?: string;
+  triggerType?: string;
+  triggerConfig?: unknown;
+  enabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  conditions?: AutomationConditionResponse[];
+  actions?: AutomationActionResponse[];
 }
 
 export interface AuditRetentionPruneResponse {
@@ -906,6 +1059,14 @@ export interface ScreenAssignmentRequest {
   priority?: number;
 }
 
+export interface RoadmapItemRequest {
+  workItemId?: string;
+  startDate?: string;
+  endDate?: string;
+  position?: number;
+  displayConfig?: unknown;
+}
+
 export interface ReportingSnapshotRunResponse {
   workspaceId?: string;
   snapshotDate?: string;
@@ -943,6 +1104,17 @@ export interface ReportingSnapshotBackfillResponse {
   runs?: ReportingSnapshotRunResponse[];
 }
 
+export interface ReleaseWorkItemRequest {
+  workItemId?: string;
+}
+
+export interface ReleaseWorkItemResponse {
+  releaseId?: string;
+  workItemId?: string;
+  addedById?: string;
+  addedAt?: string;
+}
+
 export interface WorkItemCreateRequest {
   typeId?: string;
   typeKey?: string;
@@ -964,6 +1136,26 @@ export interface WorkItemCreateRequest {
   startDate?: string;
   dueDate?: string;
   customFields?: unknown;
+}
+
+export interface ReleaseRequest {
+  name?: string;
+  version?: string;
+  startDate?: string;
+  releaseDate?: string;
+  status?: string;
+  description?: string;
+}
+
+export interface ReleaseResponse {
+  id?: string;
+  projectId?: string;
+  name?: string;
+  version?: string;
+  startDate?: string;
+  releaseDate?: string;
+  status?: string;
+  description?: string;
 }
 
 export interface IterationRequest {
@@ -989,6 +1181,50 @@ export interface IterationResponse {
   completedPoints?: number;
 }
 
+export interface BoardRequest {
+  name?: string;
+  type?: string;
+  teamId?: string;
+  filterConfig?: unknown;
+  active?: boolean;
+}
+
+export interface BoardColumnResponse {
+  id?: string;
+  boardId?: string;
+  name?: string;
+  statusIds?: unknown;
+  position?: number;
+  wipLimit?: number;
+  doneColumn?: boolean;
+}
+
+export interface BoardResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  teamId?: string;
+  name?: string;
+  type?: string;
+  filterConfig?: unknown;
+  active?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+  version?: number;
+  columns?: BoardColumnResponse[];
+  swimlanes?: BoardSwimlaneResponse[];
+}
+
+export interface BoardSwimlaneResponse {
+  id?: string;
+  boardId?: string;
+  name?: string;
+  swimlaneType?: string;
+  query?: unknown;
+  position?: number;
+  enabled?: boolean;
+}
+
 export interface IterationWorkItemRequest {
   workItemId?: string;
 }
@@ -1010,6 +1246,16 @@ export interface IterationCloseRequest {
   completedPoints?: number;
   carryOverIncomplete?: boolean;
   carryOverIterationId?: string;
+}
+
+export interface ImportJobRecordRequest {
+  sourceType?: string;
+  sourceId?: string;
+  targetType?: string;
+  targetId?: string;
+  status?: string;
+  errorMessage?: string;
+  rawPayload?: unknown;
 }
 
 export interface DashboardWidgetRequest {
@@ -1038,6 +1284,69 @@ export interface CustomFieldContextResponse {
   required?: boolean;
   defaultValue?: unknown;
   validationConfig?: unknown;
+}
+
+export interface BoardSwimlaneRequest {
+  name?: string;
+  swimlaneType?: string;
+  query?: unknown;
+  position?: number;
+  enabled?: boolean;
+}
+
+export interface BoardColumnRequest {
+  name?: string;
+  statusIds?: unknown;
+  position?: number;
+  wipLimit?: number;
+  doneColumn?: boolean;
+}
+
+export interface AutomationExecutionRequest {
+  sourceEntityType?: string;
+  sourceEntityId?: string;
+  payload?: unknown;
+}
+
+export interface AutomationExecutionJobResponse {
+  id?: string;
+  ruleId?: string;
+  workspaceId?: string;
+  sourceEntityType?: string;
+  sourceEntityId?: string;
+  status?: string;
+  payload?: unknown;
+  attempts?: number;
+  nextAttemptAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  failedAt?: string;
+  lastError?: string;
+  createdAt?: string;
+  logs?: AutomationExecutionLogResponse[];
+}
+
+export interface AutomationExecutionLogResponse {
+  id?: string;
+  jobId?: string;
+  actionId?: string;
+  status?: string;
+  message?: string;
+  metadata?: unknown;
+  createdAt?: string;
+}
+
+export interface AutomationConditionRequest {
+  conditionType?: string;
+  config?: unknown;
+  position?: number;
+}
+
+export interface AutomationActionRequest {
+  actionType?: string;
+  executionMode?: string;
+  config?: unknown;
+  position?: number;
 }
 
 export interface CreatePersonalTokenRequest {
@@ -1135,6 +1444,20 @@ export interface WorkItemUpdateRequest {
   customFields?: unknown;
 }
 
+export interface NotificationResponse {
+  id?: string;
+  userId?: string;
+  actorId?: string;
+  workspaceId?: string;
+  type?: string;
+  title?: string;
+  body?: string;
+  targetType?: string;
+  targetId?: string;
+  readAt?: string;
+  createdAt?: string;
+}
+
 export interface ActivityEventResponse {
   id?: string;
   domainEventId?: string;
@@ -1181,6 +1504,19 @@ export interface CursorPageResponseAuditLogEntryResponse {
   nextCursor?: string;
   hasMore?: boolean;
   limit?: number;
+}
+
+export interface WebhookDeliveryResponse {
+  id?: string;
+  webhookId?: string;
+  eventType?: string;
+  payload?: unknown;
+  status?: string;
+  responseCode?: number;
+  responseBody?: string;
+  attemptCount?: number;
+  nextRetryAt?: string;
+  createdAt?: string;
 }
 
 export interface CursorPageResponseWorkItemResponse {
@@ -1538,6 +1874,24 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/webhooks": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: WebhookRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/users": {
     post: {
       path: {
@@ -1617,6 +1971,24 @@ export interface ApiPaths {
     };
       query: undefined;
       body: SavedFilterRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/roadmaps": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: RoadmapRequest;
       response: unknown;
     };
   };
@@ -1710,6 +2082,24 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/notification-preferences": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: NotificationPreferenceRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/labels": {
     get: {
       path: {
@@ -1735,6 +2125,42 @@ export interface ApiPaths {
     };
       query: undefined;
       body: InviteUserRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/import-jobs": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: ImportJobRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/field-configurations": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: FieldConfigurationRequest;
       response: unknown;
     };
   };
@@ -1783,6 +2209,24 @@ export interface ApiPaths {
     };
       query: undefined;
       body: CustomFieldRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/automation-rules": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: AutomationRuleRequest;
       response: unknown;
     };
   };
@@ -2161,6 +2605,24 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/roadmaps/{roadmapId}/items": {
+    get: {
+      path: {
+      roadmapId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      roadmapId: string;
+    };
+      query: undefined;
+      body: RoadmapItemRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/reports/workspaces/{workspaceId}/snapshots/run": {
     post: {
       path: {
@@ -2227,6 +2689,24 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/releases/{releaseId}/work-items": {
+    get: {
+      path: {
+      releaseId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      releaseId: string;
+    };
+      query: undefined;
+      body: ReleaseWorkItemRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/projects/{projectId}/work-items": {
     get: {
       path: {
@@ -2252,6 +2732,24 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/projects/{projectId}/releases": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: ReleaseRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/projects/{projectId}/iterations": {
     get: {
       path: {
@@ -2267,6 +2765,24 @@ export interface ApiPaths {
     };
       query: undefined;
       body: IterationRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/projects/{projectId}/boards": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: BoardRequest;
       response: unknown;
     };
   };
@@ -2308,6 +2824,64 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/start": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-jobs/{importJobId}/records": {
+    get: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: ImportJobRecordRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-jobs/{importJobId}/fail": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-jobs/{importJobId}/complete": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/import-jobs/{importJobId}/cancel": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/dashboards/{dashboardId}/widgets": {
     post: {
       path: {
@@ -2333,6 +2907,72 @@ export interface ApiPaths {
     };
       query: undefined;
       body: CustomFieldContextRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/boards/{boardId}/swimlanes": {
+    get: {
+      path: {
+      boardId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      boardId: string;
+    };
+      query: undefined;
+      body: BoardSwimlaneRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/boards/{boardId}/columns": {
+    get: {
+      path: {
+      boardId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      boardId: string;
+    };
+      query: undefined;
+      body: BoardColumnRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/automation-rules/{ruleId}/execute": {
+    post: {
+      path: {
+      ruleId: string;
+    };
+      query: undefined;
+      body: AutomationExecutionRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/automation-rules/{ruleId}/conditions": {
+    post: {
+      path: {
+      ruleId: string;
+    };
+      query: undefined;
+      body: AutomationConditionRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/automation-rules/{ruleId}/actions": {
+    post: {
+      path: {
+      ruleId: string;
+    };
+      query: undefined;
+      body: AutomationActionRequest;
       response: unknown;
     };
   };
@@ -2567,6 +3207,24 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/webhooks/{webhookId}": {
+    patch: {
+      path: {
+      webhookId: string;
+    };
+      query: undefined;
+      body: WebhookRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      webhookId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/teams/{teamId}": {
     get: {
       path: {
@@ -2685,6 +3343,52 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/roadmaps/{roadmapId}": {
+    get: {
+      path: {
+      roadmapId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      roadmapId: string;
+    };
+      query: undefined;
+      body: RoadmapRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      roadmapId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/roadmaps/{roadmapId}/items/{roadmapItemId}": {
+    patch: {
+      path: {
+      roadmapId: string;
+      roadmapItemId: string;
+    };
+      query: undefined;
+      body: RoadmapItemRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      roadmapId: string;
+      roadmapItemId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/report-query-catalog/{queryId}": {
     get: {
       path: {
@@ -2705,6 +3409,32 @@ export interface ApiPaths {
     delete: {
       path: {
       queryId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/releases/{releaseId}": {
+    get: {
+      path: {
+      releaseId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      releaseId: string;
+    };
+      query: undefined;
+      body: ReleaseRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      releaseId: string;
     };
       query: undefined;
       body: undefined;
@@ -2737,6 +3467,34 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/notifications/{notificationId}/read": {
+    patch: {
+      path: {
+      notificationId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/notification-preferences/{preferenceId}": {
+    patch: {
+      path: {
+      preferenceId: string;
+    };
+      query: undefined;
+      body: NotificationPreferenceRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      preferenceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/iterations/{iterationId}": {
     get: {
       path: {
@@ -2757,6 +3515,32 @@ export interface ApiPaths {
     delete: {
       path: {
       iterationId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/field-configurations/{fieldConfigurationId}": {
+    get: {
+      path: {
+      fieldConfigurationId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      fieldConfigurationId: string;
+    };
+      query: undefined;
+      body: FieldConfigurationRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      fieldConfigurationId: string;
     };
       query: undefined;
       body: undefined;
@@ -2855,6 +3639,138 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/boards/{boardId}": {
+    get: {
+      path: {
+      boardId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      boardId: string;
+    };
+      query: undefined;
+      body: BoardRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      boardId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/boards/{boardId}/swimlanes/{swimlaneId}": {
+    patch: {
+      path: {
+      boardId: string;
+      swimlaneId: string;
+    };
+      query: undefined;
+      body: BoardSwimlaneRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      boardId: string;
+      swimlaneId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/boards/{boardId}/columns/{columnId}": {
+    patch: {
+      path: {
+      boardId: string;
+      columnId: string;
+    };
+      query: undefined;
+      body: BoardColumnRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      boardId: string;
+      columnId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/automation-rules/{ruleId}": {
+    get: {
+      path: {
+      ruleId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      ruleId: string;
+    };
+      query: undefined;
+      body: AutomationRuleRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      ruleId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/automation-rules/{ruleId}/conditions/{conditionId}": {
+    patch: {
+      path: {
+      ruleId: string;
+      conditionId: string;
+    };
+      query: undefined;
+      body: AutomationConditionRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      ruleId: string;
+      conditionId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/automation-rules/{ruleId}/actions/{actionId}": {
+    patch: {
+      path: {
+      ruleId: string;
+      actionId: string;
+    };
+      query: undefined;
+      body: AutomationActionRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      ruleId: string;
+      actionId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/agents/{profileId}": {
     patch: {
       path: {
@@ -2885,6 +3801,16 @@ export interface ApiPaths {
       limit?: number;
       cursor?: string;
     };
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/notifications": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
       body: undefined;
       response: unknown;
     };
@@ -2981,6 +3907,16 @@ export interface ApiPaths {
       limit?: number;
       cursor?: string;
     };
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/webhooks/{webhookId}/deliveries": {
+    get: {
+      path: {
+      webhookId: string;
+    };
+      query: undefined;
       body: undefined;
       response: unknown;
     };
@@ -3185,6 +4121,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/projects/{projectId}/roadmaps": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/projects/{projectId}/report-query-catalog": {
     get: {
       path: {
@@ -3215,6 +4161,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}": {
+    get: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/dashboards/{dashboardId}/render": {
     get: {
       path: {
@@ -3224,6 +4180,36 @@ export interface ApiPaths {
       from?: string;
       to?: string;
     };
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/custom-fields/{customFieldId}/field-configurations": {
+    get: {
+      path: {
+      customFieldId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/automation-rules/{ruleId}/jobs": {
+    get: {
+      path: {
+      ruleId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/automation-jobs/{jobId}": {
+    get: {
+      path: {
+      jobId: string;
+    };
+      query: undefined;
       body: undefined;
       response: unknown;
     };
@@ -3330,6 +4316,17 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/releases/{releaseId}/work-items/{workItemId}": {
+    delete: {
+      path: {
+      releaseId: string;
+      workItemId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/personalization/recent-items/{recentItemId}": {
     delete: {
       path: {
@@ -3382,6 +4379,8 @@ export const apiOperations = {
   "updateSnapshotRetentionPolicy": { method: "put", path: "/api/v1/reports/workspaces/{workspaceId}/snapshot-retention-policy" },
   "assignProjectTeam": { method: "put", path: "/api/v1/projects/{projectId}/teams/{teamId}" },
   "removeProjectTeam": { method: "delete", path: "/api/v1/projects/{projectId}/teams/{teamId}" },
+  "listWebhooks": { method: "get", path: "/api/v1/workspaces/{workspaceId}/webhooks" },
+  "createWebhook": { method: "post", path: "/api/v1/workspaces/{workspaceId}/webhooks" },
   "createUser": { method: "post", path: "/api/v1/workspaces/{workspaceId}/users" },
   "listTeams": { method: "get", path: "/api/v1/workspaces/{workspaceId}/teams" },
   "createTeam": { method: "post", path: "/api/v1/workspaces/{workspaceId}/teams" },
@@ -3391,6 +4390,8 @@ export const apiOperations = {
   "createScreen": { method: "post", path: "/api/v1/workspaces/{workspaceId}/screens" },
   "list": { method: "get", path: "/api/v1/workspaces/{workspaceId}/saved-filters" },
   "create": { method: "post", path: "/api/v1/workspaces/{workspaceId}/saved-filters" },
+  "listWorkspaceRoadmaps": { method: "get", path: "/api/v1/workspaces/{workspaceId}/roadmaps" },
+  "createRoadmap": { method: "post", path: "/api/v1/workspaces/{workspaceId}/roadmaps" },
   "listRepositoryConnections": { method: "get", path: "/api/v1/workspaces/{workspaceId}/repository-connections" },
   "createRepositoryConnection": { method: "post", path: "/api/v1/workspaces/{workspaceId}/repository-connections" },
   "list_1": { method: "get", path: "/api/v1/workspaces/{workspaceId}/report-query-catalog" },
@@ -3401,14 +4402,22 @@ export const apiOperations = {
   "recordRecentItem": { method: "post", path: "/api/v1/workspaces/{workspaceId}/personalization/recent-items" },
   "listFavorites": { method: "get", path: "/api/v1/workspaces/{workspaceId}/personalization/favorites" },
   "addFavorite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/personalization/favorites" },
+  "listPreferences": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notification-preferences" },
+  "upsertPreference": { method: "post", path: "/api/v1/workspaces/{workspaceId}/notification-preferences" },
   "listWorkspaceLabels": { method: "get", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "createWorkspaceLabel": { method: "post", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "invite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/invitations" },
+  "listImportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
+  "createImportJob": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
+  "listFieldConfigurations": { method: "get", path: "/api/v1/workspaces/{workspaceId}/field-configurations" },
+  "createFieldConfiguration": { method: "post", path: "/api/v1/workspaces/{workspaceId}/field-configurations" },
   "replay": { method: "post", path: "/api/v1/workspaces/{workspaceId}/domain-events/replay" },
   "list_2": { method: "get", path: "/api/v1/workspaces/{workspaceId}/dashboards" },
   "create_2": { method: "post", path: "/api/v1/workspaces/{workspaceId}/dashboards" },
   "listCustomFields": { method: "get", path: "/api/v1/workspaces/{workspaceId}/custom-fields" },
   "createCustomField": { method: "post", path: "/api/v1/workspaces/{workspaceId}/custom-fields" },
+  "listRules": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-rules" },
+  "createRule": { method: "post", path: "/api/v1/workspaces/{workspaceId}/automation-rules" },
   "pruneRetentionCandidates": { method: "post", path: "/api/v1/workspaces/{workspaceId}/audit-retention-policy/prune" },
   "exportRetentionCandidates": { method: "post", path: "/api/v1/workspaces/{workspaceId}/audit-retention-policy/export" },
   "listProfiles": { method: "get", path: "/api/v1/workspaces/{workspaceId}/agents" },
@@ -3447,22 +4456,43 @@ export const apiOperations = {
   "addScreenField": { method: "post", path: "/api/v1/screens/{screenId}/fields" },
   "listScreenAssignments": { method: "get", path: "/api/v1/screens/{screenId}/assignments" },
   "addScreenAssignment": { method: "post", path: "/api/v1/screens/{screenId}/assignments" },
+  "listRoadmapItems": { method: "get", path: "/api/v1/roadmaps/{roadmapId}/items" },
+  "createRoadmapItem": { method: "post", path: "/api/v1/roadmaps/{roadmapId}/items" },
   "runWorkspaceSnapshots": { method: "post", path: "/api/v1/reports/workspaces/{workspaceId}/snapshots/run" },
   "runWorkspaceRollups": { method: "post", path: "/api/v1/reports/workspaces/{workspaceId}/snapshots/rollups/run" },
   "backfillWorkspaceRollups": { method: "post", path: "/api/v1/reports/workspaces/{workspaceId}/snapshots/rollups/backfill" },
   "reconcileWorkspaceSnapshots": { method: "post", path: "/api/v1/reports/workspaces/{workspaceId}/snapshots/reconcile" },
   "backfillWorkspaceSnapshots": { method: "post", path: "/api/v1/reports/workspaces/{workspaceId}/snapshots/backfill" },
+  "listReleaseWorkItems": { method: "get", path: "/api/v1/releases/{releaseId}/work-items" },
+  "addReleaseWorkItem": { method: "post", path: "/api/v1/releases/{releaseId}/work-items" },
   "listByProject": { method: "get", path: "/api/v1/projects/{projectId}/work-items" },
   "create_3": { method: "post", path: "/api/v1/projects/{projectId}/work-items" },
+  "listReleases": { method: "get", path: "/api/v1/projects/{projectId}/releases" },
+  "createRelease": { method: "post", path: "/api/v1/projects/{projectId}/releases" },
   "listIterations": { method: "get", path: "/api/v1/projects/{projectId}/iterations" },
   "createIteration": { method: "post", path: "/api/v1/projects/{projectId}/iterations" },
+  "listProjectBoards": { method: "get", path: "/api/v1/projects/{projectId}/boards" },
+  "createBoard": { method: "post", path: "/api/v1/projects/{projectId}/boards" },
   "listIterationWorkItems": { method: "get", path: "/api/v1/iterations/{iterationId}/work-items" },
   "addWorkItem": { method: "post", path: "/api/v1/iterations/{iterationId}/work-items" },
   "commitIteration": { method: "post", path: "/api/v1/iterations/{iterationId}/commit" },
   "closeIteration": { method: "post", path: "/api/v1/iterations/{iterationId}/close" },
+  "startImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/start" },
+  "listRecords": { method: "get", path: "/api/v1/import-jobs/{importJobId}/records" },
+  "createRecord": { method: "post", path: "/api/v1/import-jobs/{importJobId}/records" },
+  "failImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/fail" },
+  "completeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/complete" },
+  "cancelImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/cancel" },
   "createWidget": { method: "post", path: "/api/v1/dashboards/{dashboardId}/widgets" },
   "listContexts": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/contexts" },
   "createContext": { method: "post", path: "/api/v1/custom-fields/{customFieldId}/contexts" },
+  "listSwimlanes": { method: "get", path: "/api/v1/boards/{boardId}/swimlanes" },
+  "createSwimlane": { method: "post", path: "/api/v1/boards/{boardId}/swimlanes" },
+  "listColumns": { method: "get", path: "/api/v1/boards/{boardId}/columns" },
+  "createColumn": { method: "post", path: "/api/v1/boards/{boardId}/columns" },
+  "executeRule": { method: "post", path: "/api/v1/automation-rules/{ruleId}/execute" },
+  "createCondition": { method: "post", path: "/api/v1/automation-rules/{ruleId}/conditions" },
+  "createAction": { method: "post", path: "/api/v1/automation-rules/{ruleId}/actions" },
   "listPersonalTokens": { method: "get", path: "/api/v1/auth/tokens/personal" },
   "createPersonalToken": { method: "post", path: "/api/v1/auth/tokens/personal" },
   "register": { method: "post", path: "/api/v1/auth/register" },
@@ -3488,6 +4518,8 @@ export const apiOperations = {
   "deleteWorkLog": { method: "delete", path: "/api/v1/work-items/{workItemId}/work-logs/{workLogId}" },
   "updateComment": { method: "patch", path: "/api/v1/work-items/{workItemId}/comments/{commentId}" },
   "deleteComment": { method: "delete", path: "/api/v1/work-items/{workItemId}/comments/{commentId}" },
+  "updateWebhook": { method: "patch", path: "/api/v1/webhooks/{webhookId}" },
+  "deleteWebhook": { method: "delete", path: "/api/v1/webhooks/{webhookId}" },
   "getTeam": { method: "get", path: "/api/v1/teams/{teamId}" },
   "updateTeam": { method: "patch", path: "/api/v1/teams/{teamId}" },
   "archiveTeam": { method: "delete", path: "/api/v1/teams/{teamId}" },
@@ -3501,15 +4533,29 @@ export const apiOperations = {
   "get_1": { method: "get", path: "/api/v1/saved-filters/{savedFilterId}" },
   "update_1": { method: "patch", path: "/api/v1/saved-filters/{savedFilterId}" },
   "delete": { method: "delete", path: "/api/v1/saved-filters/{savedFilterId}" },
+  "getRoadmap": { method: "get", path: "/api/v1/roadmaps/{roadmapId}" },
+  "updateRoadmap": { method: "patch", path: "/api/v1/roadmaps/{roadmapId}" },
+  "deleteRoadmap": { method: "delete", path: "/api/v1/roadmaps/{roadmapId}" },
+  "updateRoadmapItem": { method: "patch", path: "/api/v1/roadmaps/{roadmapId}/items/{roadmapItemId}" },
+  "deleteRoadmapItem": { method: "delete", path: "/api/v1/roadmaps/{roadmapId}/items/{roadmapItemId}" },
   "get_2": { method: "get", path: "/api/v1/report-query-catalog/{queryId}" },
   "update_2": { method: "patch", path: "/api/v1/report-query-catalog/{queryId}" },
   "delete_1": { method: "delete", path: "/api/v1/report-query-catalog/{queryId}" },
+  "getRelease": { method: "get", path: "/api/v1/releases/{releaseId}" },
+  "updateRelease": { method: "patch", path: "/api/v1/releases/{releaseId}" },
+  "deleteRelease": { method: "delete", path: "/api/v1/releases/{releaseId}" },
   "getView": { method: "get", path: "/api/v1/personalization/views/{viewId}" },
   "updateView": { method: "patch", path: "/api/v1/personalization/views/{viewId}" },
   "deleteView": { method: "delete", path: "/api/v1/personalization/views/{viewId}" },
+  "markRead": { method: "patch", path: "/api/v1/notifications/{notificationId}/read" },
+  "updatePreference": { method: "patch", path: "/api/v1/notification-preferences/{preferenceId}" },
+  "deletePreference": { method: "delete", path: "/api/v1/notification-preferences/{preferenceId}" },
   "getIteration": { method: "get", path: "/api/v1/iterations/{iterationId}" },
   "updateIteration": { method: "patch", path: "/api/v1/iterations/{iterationId}" },
   "cancelIteration": { method: "delete", path: "/api/v1/iterations/{iterationId}" },
+  "getFieldConfiguration": { method: "get", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
+  "updateFieldConfiguration": { method: "patch", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
+  "deleteFieldConfiguration": { method: "delete", path: "/api/v1/field-configurations/{fieldConfigurationId}" },
   "get_3": { method: "get", path: "/api/v1/dashboards/{dashboardId}" },
   "update_3": { method: "patch", path: "/api/v1/dashboards/{dashboardId}" },
   "delete_2": { method: "delete", path: "/api/v1/dashboards/{dashboardId}" },
@@ -3520,9 +4566,24 @@ export const apiOperations = {
   "archiveCustomField": { method: "delete", path: "/api/v1/custom-fields/{customFieldId}" },
   "updateContext": { method: "patch", path: "/api/v1/custom-fields/{customFieldId}/contexts/{contextId}" },
   "deleteContext": { method: "delete", path: "/api/v1/custom-fields/{customFieldId}/contexts/{contextId}" },
+  "getBoard": { method: "get", path: "/api/v1/boards/{boardId}" },
+  "updateBoard": { method: "patch", path: "/api/v1/boards/{boardId}" },
+  "archiveBoard": { method: "delete", path: "/api/v1/boards/{boardId}" },
+  "updateSwimlane": { method: "patch", path: "/api/v1/boards/{boardId}/swimlanes/{swimlaneId}" },
+  "deleteSwimlane": { method: "delete", path: "/api/v1/boards/{boardId}/swimlanes/{swimlaneId}" },
+  "updateColumn": { method: "patch", path: "/api/v1/boards/{boardId}/columns/{columnId}" },
+  "deleteColumn": { method: "delete", path: "/api/v1/boards/{boardId}/columns/{columnId}" },
+  "getRule": { method: "get", path: "/api/v1/automation-rules/{ruleId}" },
+  "updateRule": { method: "patch", path: "/api/v1/automation-rules/{ruleId}" },
+  "deleteRule": { method: "delete", path: "/api/v1/automation-rules/{ruleId}" },
+  "updateCondition": { method: "patch", path: "/api/v1/automation-rules/{ruleId}/conditions/{conditionId}" },
+  "deleteCondition": { method: "delete", path: "/api/v1/automation-rules/{ruleId}/conditions/{conditionId}" },
+  "updateAction": { method: "patch", path: "/api/v1/automation-rules/{ruleId}/actions/{actionId}" },
+  "deleteAction": { method: "delete", path: "/api/v1/automation-rules/{ruleId}/actions/{actionId}" },
   "updateProfile": { method: "patch", path: "/api/v1/agents/{profileId}" },
   "updateProvider": { method: "patch", path: "/api/v1/agent-providers/{providerId}" },
   "projectActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity" },
+  "listNotifications": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notifications" },
   "listExportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs" },
   "getExportJob": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}" },
   "downloadExportJob": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}/download" },
@@ -3531,6 +4592,7 @@ export const apiOperations = {
   "listValues": { method: "get", path: "/api/v1/work-items/{workItemId}/custom-fields" },
   "downloadAttachment": { method: "get", path: "/api/v1/work-items/{workItemId}/attachments/{attachmentId}/download" },
   "workItemActivity": { method: "get", path: "/api/v1/work-items/{workItemId}/activity" },
+  "listWebhookDeliveries": { method: "get", path: "/api/v1/webhooks/{webhookId}/deliveries" },
   "listByTeam": { method: "get", path: "/api/v1/teams/{teamId}/saved-filters" },
   "listByTeam_1": { method: "get", path: "/api/v1/teams/{teamId}/report-query-catalog" },
   "listTeamViews": { method: "get", path: "/api/v1/teams/{teamId}/personalization/views" },
@@ -3549,10 +4611,15 @@ export const apiOperations = {
   "getPublicProject": { method: "get", path: "/api/v1/public/projects/{projectId}" },
   "listProjectTeams": { method: "get", path: "/api/v1/projects/{projectId}/teams" },
   "listByProject_1": { method: "get", path: "/api/v1/projects/{projectId}/saved-filters" },
+  "listProjectRoadmaps": { method: "get", path: "/api/v1/projects/{projectId}/roadmaps" },
   "listByProject_2": { method: "get", path: "/api/v1/projects/{projectId}/report-query-catalog" },
   "listProjectViews": { method: "get", path: "/api/v1/projects/{projectId}/personalization/views" },
   "listByProject_3": { method: "get", path: "/api/v1/projects/{projectId}/dashboards" },
+  "getImportJob": { method: "get", path: "/api/v1/import-jobs/{importJobId}" },
   "render": { method: "get", path: "/api/v1/dashboards/{dashboardId}/render" },
+  "listFieldConfigurationsForField": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/field-configurations" },
+  "listJobs": { method: "get", path: "/api/v1/automation-rules/{ruleId}/jobs" },
+  "getJob": { method: "get", path: "/api/v1/automation-jobs/{jobId}" },
   "me": { method: "get", path: "/api/v1/auth/me" },
   "csrf": { method: "get", path: "/api/v1/auth/csrf" },
   "getTask": { method: "get", path: "/api/v1/agent-tasks/{taskId}" },
@@ -3563,6 +4630,7 @@ export const apiOperations = {
   "removeLabel": { method: "delete", path: "/api/v1/work-items/{workItemId}/labels/{labelId}" },
   "removeAttachment": { method: "delete", path: "/api/v1/work-items/{workItemId}/attachments/{attachmentId}" },
   "removeMembership": { method: "delete", path: "/api/v1/teams/{teamId}/memberships/{userId}" },
+  "removeReleaseWorkItem": { method: "delete", path: "/api/v1/releases/{releaseId}/work-items/{workItemId}" },
   "deleteRecentItem": { method: "delete", path: "/api/v1/personalization/recent-items/{recentItemId}" },
   "deleteFavorite": { method: "delete", path: "/api/v1/personalization/favorites/{favoriteId}" },
   "removeWorkItem": { method: "delete", path: "/api/v1/iterations/{iterationId}/work-items/{workItemId}" },
