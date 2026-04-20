@@ -463,44 +463,9 @@ export interface ImportTransformPresetResponse {
   updatedAt?: string;
 }
 
-export interface ImportMappingTemplateRequest {
-  name?: string;
-  provider?: string;
-  sourceType?: string;
-  targetType?: string;
+export interface ImportSampleJobRequest {
   projectId?: string;
-  workItemTypeKey?: string;
-  statusKey?: string;
-  transformPresetId?: string;
-  clearTransformPreset?: boolean;
-  fieldMapping?: unknown;
-  defaults?: unknown;
-  transformationConfig?: unknown;
-  enabled?: boolean;
-}
-
-export interface ImportMappingTemplateResponse {
-  id?: string;
-  workspaceId?: string;
-  projectId?: string;
-  name?: string;
-  provider?: string;
-  sourceType?: string;
-  targetType?: string;
-  workItemTypeKey?: string;
-  statusKey?: string;
-  transformPresetId?: string;
-  fieldMapping?: unknown;
-  defaults?: unknown;
-  transformationConfig?: unknown;
-  enabled?: boolean;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
-export interface ImportJobRequest {
-  provider?: string;
-  config?: unknown;
+  createMappingTemplate?: boolean;
 }
 
 export interface ImportJobRecordResponse {
@@ -537,6 +502,69 @@ export interface ImportJobResponse {
   openConflictCompletedAt?: string;
   openConflictCompletionReason?: string;
   records?: ImportJobRecordResponse[];
+}
+
+export interface ImportMappingTemplateResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  name?: string;
+  provider?: string;
+  sourceType?: string;
+  targetType?: string;
+  workItemTypeKey?: string;
+  statusKey?: string;
+  transformPresetId?: string;
+  fieldMapping?: unknown;
+  defaults?: unknown;
+  transformationConfig?: unknown;
+  enabled?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ImportParseResponse {
+  importJobId?: string;
+  provider?: string;
+  recordsParsed?: number;
+  records?: ImportJobRecordResponse[];
+}
+
+export interface ImportSampleJobResponse {
+  sample?: ImportSampleResponse;
+  importJob?: ImportJobResponse;
+  parse?: ImportParseResponse;
+  transformPreset?: ImportTransformPresetResponse;
+  mappingTemplate?: ImportMappingTemplateResponse;
+}
+
+export interface ImportSampleResponse {
+  key?: string;
+  label?: string;
+  provider?: string;
+  sourceType?: string;
+  description?: string;
+}
+
+export interface ImportMappingTemplateRequest {
+  name?: string;
+  provider?: string;
+  sourceType?: string;
+  targetType?: string;
+  projectId?: string;
+  workItemTypeKey?: string;
+  statusKey?: string;
+  transformPresetId?: string;
+  clearTransformPreset?: boolean;
+  fieldMapping?: unknown;
+  defaults?: unknown;
+  transformationConfig?: unknown;
+  enabled?: boolean;
+}
+
+export interface ImportJobRequest {
+  provider?: string;
+  config?: unknown;
 }
 
 export interface ImportConflictResolutionJobResponse {
@@ -1647,13 +1675,6 @@ export interface ImportParseRequest {
   sourceType?: string;
 }
 
-export interface ImportParseResponse {
-  importJobId?: string;
-  provider?: string;
-  recordsParsed?: number;
-  records?: ImportJobRecordResponse[];
-}
-
 export interface ImportMaterializeRequest {
   mappingTemplateId?: string;
   projectId?: string;
@@ -1868,9 +1889,11 @@ export interface AutomationWorkerSettingsRequest {
   automationJobsEnabled?: boolean;
   webhookDeliveriesEnabled?: boolean;
   emailDeliveriesEnabled?: boolean;
+  importConflictResolutionEnabled?: boolean;
   automationLimit?: number;
   webhookLimit?: number;
   emailLimit?: number;
+  importConflictResolutionLimit?: number;
   webhookMaxAttempts?: number;
   emailMaxAttempts?: number;
   webhookDryRun?: boolean;
@@ -1889,9 +1912,11 @@ export interface AutomationWorkerSettingsResponse {
   automationJobsEnabled?: boolean;
   webhookDeliveriesEnabled?: boolean;
   emailDeliveriesEnabled?: boolean;
+  importConflictResolutionEnabled?: boolean;
   automationLimit?: number;
   webhookLimit?: number;
   emailLimit?: number;
+  importConflictResolutionLimit?: number;
   webhookMaxAttempts?: number;
   emailMaxAttempts?: number;
   webhookDryRun?: boolean;
@@ -2784,6 +2809,17 @@ export interface ApiPaths {
     };
       query: undefined;
       body: ImportTransformPresetRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/import-samples/{sampleKey}/jobs": {
+    post: {
+      path: {
+      workspaceId: string;
+      sampleKey: string;
+    };
+      query: undefined;
+      body: ImportSampleJobRequest;
       response: unknown;
     };
   };
@@ -4980,6 +5016,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/import-samples": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs": {
     get: {
       path: {
@@ -5772,6 +5818,7 @@ export const apiOperations = {
   "invite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/invitations" },
   "listTransformPresets": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
   "createTransformPreset": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
+  "createSampleImportJob": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-samples/{sampleKey}/jobs" },
   "listMappingTemplates": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "createMappingTemplate": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "listImportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
@@ -6000,6 +6047,7 @@ export const apiOperations = {
   "updateProvider": { method: "patch", path: "/api/v1/agent-providers/{providerId}" },
   "projectActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity" },
   "listNotifications": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notifications" },
+  "listImportSamples": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-samples" },
   "listWorkspaceConflictResolutionJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs" },
   "listExportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs" },
   "getExportJob": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs/{exportJobId}" },

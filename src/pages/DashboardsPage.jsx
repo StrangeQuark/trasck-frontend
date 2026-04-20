@@ -8,6 +8,7 @@ import { RecordSelect } from '../components/RecordSelect';
 import { SelectField } from '../components/SelectField';
 import { TextField } from '../components/TextField';
 import { useApiAction } from '../hooks/useApiAction';
+import { ImportCompletionMetricsTable } from './imports/ImportReviewTables';
 
 export const DashboardsPage = ({ context }) => {
   const [dashboards, setDashboards] = useState([]);
@@ -173,8 +174,8 @@ export const DashboardsPage = ({ context }) => {
         <div className="data-columns two">
           <JsonPreview title="Project Summary" value={projectSummary} />
           <JsonPreview title="Workspace Summary" value={workspaceSummary} />
-          <JsonPreview title="Project Import Completions" value={projectImportCompletions} />
-          <JsonPreview title="Workspace Import Completions" value={workspaceImportCompletions} />
+          <ImportCompletionMetricsTable title="Project" metrics={projectImportCompletions} />
+          <ImportCompletionMetricsTable title="Workspace" metrics={workspaceImportCompletions} />
         </div>
       </Panel>
     </div>

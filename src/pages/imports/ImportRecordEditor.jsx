@@ -4,6 +4,7 @@ import { JsonPreview } from '../../components/JsonPreview';
 import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
+import { ImportRecordVersionDiffTable } from './ImportReviewTables';
 
 export const ImportRecordEditor = ({
   form,
@@ -33,7 +34,7 @@ export const ImportRecordEditor = ({
     </Field>
     <button className="secondary-button" disabled={pending || !form.recordId} type="submit"><FiCheck />Save record</button>
     <JsonPreview title="Selected Record" value={selectedRecord} />
-    <JsonPreview title="Record Version Diff Rows" value={versionDiffs} />
+    <ImportRecordVersionDiffTable diffs={versionDiffs} />
     <JsonPreview title="Record Versions" value={versions} />
   </form>
 );
