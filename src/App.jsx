@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { BrowserRouter, NavLink, Navigate, Route, Routes } from 'react-router-dom';
+import { BrowserRouter, Link, NavLink, Navigate, Route, Routes, useNavigate, useParams } from 'react-router-dom';
 import {
   FiActivity,
   FiArrowRight,
@@ -126,9 +126,18 @@ const App = () => {
             <Route path="/auth" element={<AuthPage context={context} />} />
             <Route path="/work" element={<WorkPage context={context} />} />
             <Route path="/planning" element={<PlanningPage context={context} />} />
+            <Route path="/planning/boards/:boardId" element={<BoardDetailPage context={context} />} />
+            <Route path="/planning/releases/:releaseId" element={<ReleaseDetailPage context={context} />} />
+            <Route path="/planning/roadmaps/:roadmapId" element={<RoadmapDetailPage context={context} />} />
             <Route path="/configuration" element={<ConfigurationPage context={context} />} />
+            <Route path="/configuration/custom-fields/:customFieldId" element={<CustomFieldDetailPage context={context} />} />
+            <Route path="/configuration/screens/:screenId" element={<ScreenDetailPage context={context} />} />
             <Route path="/automation" element={<AutomationPage context={context} />} />
+            <Route path="/automation/rules/:ruleId" element={<AutomationRuleDetailPage context={context} />} />
+            <Route path="/automation/webhooks/:webhookId" element={<WebhookDetailPage context={context} />} />
             <Route path="/imports" element={<ImportsPage context={context} />} />
+            <Route path="/imports/jobs/:importJobId" element={<ImportJobDetailPage context={context} />} />
+            <Route path="/imports/templates/:mappingTemplateId" element={<ImportTemplateDetailPage context={context} />} />
             <Route path="/dashboards" element={<DashboardsPage context={context} />} />
             <Route path="/filters" element={<SearchPage context={context} />} />
             <Route path="/agents" element={<AgentsPage context={context} />} />
@@ -812,6 +821,11 @@ const PlanningPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !roadmapId} onClick={loadRoadmapDetails} type="button">Roadmap items</button>
         </div>
         <ErrorLine message={action.error} />
+        <div className="data-columns three no-margin">
+          <DetailLinkGrid title="Board Routes" items={boards} basePath="/planning/boards" />
+          <DetailLinkGrid title="Release Routes" items={releases} basePath="/planning/releases" />
+          <DetailLinkGrid title="Roadmap Routes" items={roadmaps} basePath="/planning/roadmaps" />
+        </div>
         <div className="data-columns">
           <JsonPreview title="Teams" value={teams} />
           <JsonPreview title="Project Teams" value={projectTeams} />
@@ -1043,6 +1057,10 @@ const ConfigurationPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !screenId} onClick={loadScreenDetails} type="button">Screen details</button>
         </div>
         <ErrorLine message={action.error} />
+        <div className="data-columns two no-margin">
+          <DetailLinkGrid title="Custom Field Routes" items={customFields} basePath="/configuration/custom-fields" />
+          <DetailLinkGrid title="Screen Routes" items={screens} basePath="/configuration/screens" />
+        </div>
         <div className="data-columns">
           <JsonPreview title="Custom Fields" value={customFields} />
           <JsonPreview title="Field Configs" value={fieldConfigurations} />
@@ -1066,6 +1084,8 @@ const AutomationPage = ({ context }) => {
   const [emailDeliveries, setEmailDeliveries] = useState([]);
   const [emailDeliveryId, setEmailDeliveryId] = useState('');
   const [workerSettings, setWorkerSettings] = useState(null);
+  const [workerRuns, setWorkerRuns] = useState([]);
+  const [workerHealth, setWorkerHealth] = useState([]);
   const [rules, setRules] = useState([]);
   const [ruleId, setRuleId] = useState('');
   const [jobs, setJobs] = useState([]);
@@ -1099,7 +1119,7 @@ const AutomationPage = ({ context }) => {
       return;
     }
     const result = await action.run(async () => {
-      const [notificationPage, preferenceRows, defaultRows, webhookRows, ruleRows, workItemPage, settings, emailRows] = await Promise.all([
+      const [notificationPage, preferenceRows, defaultRows, webhookRows, ruleRows, workItemPage, settings, workerRunRows, workerHealthRows, emailRows] = await Promise.all([
         context.services.automation.listNotifications(context.workspaceId, { limit: 25 }),
         context.services.automation.listPreferences(context.workspaceId),
         context.services.automation.listDefaultPreferences(context.workspaceId),
@@ -1107,6 +1127,8 @@ const AutomationPage = ({ context }) => {
         context.services.automation.listRules(context.workspaceId),
         context.projectId ? context.services.workItems.listByProject(context.projectId, { limit: 50 }) : Promise.resolve({ items: [] }),
         context.services.automation.getWorkerSettings(context.workspaceId),
+        context.services.automation.listWorkerRuns(context.workspaceId),
+        context.services.automation.listWorkerHealth(context.workspaceId),
         context.services.automation.listEmailDeliveries(context.workspaceId),
       ]);
       const nextWebhookId = webhookId || firstId(webhookRows);
@@ -1116,7 +1138,7 @@ const AutomationPage = ({ context }) => {
         nextWebhookId ? context.services.automation.listWebhookDeliveries(nextWebhookId) : Promise.resolve([]),
         nextRuleId ? context.services.automation.listJobs(nextRuleId) : Promise.resolve([]),
       ]);
-      return { notificationPage, preferenceRows, defaultRows, webhookRows, ruleRows, workItemRows: workItemPage?.items || [], settings, emailRows, nextWebhookId, nextRuleId, nextEmailDeliveryId, deliveryRows, jobRows };
+      return { notificationPage, preferenceRows, defaultRows, webhookRows, ruleRows, workItemRows: workItemPage?.items || [], settings, workerRunRows, workerHealthRows, emailRows, nextWebhookId, nextRuleId, nextEmailDeliveryId, deliveryRows, jobRows };
     });
     if (result) {
       setNotifications(result.notificationPage || null);
@@ -1126,6 +1148,8 @@ const AutomationPage = ({ context }) => {
       setRules(result.ruleRows || []);
       setWorkItems(result.workItemRows || []);
       setWorkerSettings(result.settings || null);
+      setWorkerRuns(result.workerRunRows || []);
+      setWorkerHealth(result.workerHealthRows || []);
       setEmailDeliveries(result.emailRows || []);
       setWebhookId(result.nextWebhookId || '');
       setRuleId(result.nextRuleId || '');
@@ -1455,11 +1479,17 @@ const AutomationPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadEmailDeliveries} type="button">Emails</button>
         </div>
         <ErrorLine message={action.error} />
+        <div className="data-columns two no-margin">
+          <DetailLinkGrid title="Rule Routes" items={rules} basePath="/automation/rules" />
+          <DetailLinkGrid title="Webhook Routes" items={webhooks} basePath="/automation/webhooks" />
+        </div>
         <div className="data-columns">
           <JsonPreview title="Notifications" value={notifications} />
           <JsonPreview title="Preferences" value={preferences} />
           <JsonPreview title="Defaults" value={defaultPreferences} />
           <JsonPreview title="Worker Settings" value={workerSettings} />
+          <JsonPreview title="Worker Runs" value={workerRuns} />
+          <JsonPreview title="Worker Health" value={workerHealth} />
           <JsonPreview title="Webhooks" value={webhooks} />
           <JsonPreview title="Deliveries" value={webhookDeliveries} />
           <JsonPreview title="Emails" value={emailDeliveries} />
@@ -1489,6 +1519,7 @@ const ImportsPage = ({ context }) => {
     workItemTypeKey: 'story',
     fieldMappingText: JSON.stringify({ title: ['title', 'summary', 'fields.summary', 'Name'], descriptionMarkdown: ['description', 'fields.description', 'Description'] }, null, 2),
     defaultsText: JSON.stringify({ descriptionMarkdown: 'Imported through Trasck' }, null, 2),
+    transformationConfigText: JSON.stringify({ title: ['trim', 'collapse_whitespace'] }, null, 2),
     enabled: 'true',
   });
   const [parseForm, setParseForm] = useState({
@@ -1553,6 +1584,7 @@ const ImportsPage = ({ context }) => {
       workItemTypeKey: templateForm.workItemTypeKey,
       fieldMapping: parseJsonOrThrow(templateForm.fieldMappingText),
       defaults: parseJsonOrThrow(templateForm.defaultsText),
+      transformationConfig: parseJsonOrThrow(templateForm.transformationConfigText),
       enabled: templateForm.enabled === 'true',
     }), 'Mapping template created');
     if (template) {
@@ -1656,6 +1688,9 @@ const ImportsPage = ({ context }) => {
           <Field label="Defaults JSON">
             <textarea value={templateForm.defaultsText} onChange={(event) => setTemplateForm({ ...templateForm, defaultsText: event.target.value })} rows={4} spellCheck="false" />
           </Field>
+          <Field label="Transformations JSON">
+            <textarea value={templateForm.transformationConfigText} onChange={(event) => setTemplateForm({ ...templateForm, transformationConfigText: event.target.value })} rows={4} spellCheck="false" />
+          </Field>
           <button className="primary-button" disabled={action.pending || !context.workspaceId || !context.projectId} type="submit"><FiPlus />Create template</button>
         </form>
       </Panel>
@@ -1692,6 +1727,10 @@ const ImportsPage = ({ context }) => {
       </Panel>
       <Panel title="Import Records" icon={<FiEye />} wide>
         <ErrorLine message={action.error} />
+        <div className="data-columns two no-margin">
+          <DetailLinkGrid title="Import Job Routes" items={jobs} basePath="/imports/jobs" />
+          <DetailLinkGrid title="Template Routes" items={templates} basePath="/imports/templates" />
+        </div>
         <div className="data-columns">
           <JsonPreview title="Jobs" value={jobs} />
           <JsonPreview title="Templates" value={templates} />
@@ -1702,6 +1741,822 @@ const ImportsPage = ({ context }) => {
         </div>
       </Panel>
     </div>
+  );
+};
+
+const CustomFieldDetailPage = ({ context }) => {
+  const { customFieldId } = useParams();
+  const navigate = useNavigate();
+  const action = useApiAction(context.addToast);
+  const [field, setField] = useState(null);
+  const [contexts, setContexts] = useState([]);
+  const [configs, setConfigs] = useState([]);
+  const [form, setForm] = useState({ name: '', key: '', fieldType: 'text', optionsText: '{}', searchable: 'false', archived: 'false' });
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.configuration.getCustomField(customFieldId),
+      context.services.configuration.listCustomFieldContexts(customFieldId),
+      context.services.configuration.listFieldConfigurations(context.workspaceId),
+    ]));
+    if (result) {
+      const [fieldRow, contextRows, configRows] = result;
+      setField(fieldRow);
+      setContexts(contextRows || []);
+      setConfigs((configRows || []).filter((row) => row.customFieldId === customFieldId));
+      setForm({
+        name: fieldRow.name || '',
+        key: fieldRow.key || '',
+        fieldType: fieldRow.fieldType || 'text',
+        optionsText: toJsonText(fieldRow.options || {}),
+        searchable: String(Boolean(fieldRow.searchable)),
+        archived: String(Boolean(fieldRow.archived)),
+      });
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [customFieldId]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.configuration.updateCustomField(customFieldId, {
+      name: form.name,
+      key: form.key,
+      fieldType: form.fieldType,
+      options: parseJsonOrThrow(form.optionsText),
+      searchable: form.searchable === 'true',
+      archived: form.archived === 'true',
+    }), 'Custom field saved');
+    if (saved) {
+      await load();
+    }
+  };
+
+  const archive = async () => {
+    await action.run(() => context.services.configuration.archiveCustomField(customFieldId), 'Custom field archived');
+    navigate('/configuration');
+  };
+
+  return (
+    <DetailLayout backTo="/configuration" title="Custom Field Detail">
+      <Panel title="Field" icon={<FiSliders />}>
+        <form className="stack" onSubmit={save}>
+          <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+          <TextField label="Key" value={form.key} onChange={(key) => setForm({ ...form, key })} />
+          <SelectField label="Type" value={form.fieldType} onChange={(fieldType) => setForm({ ...form, fieldType })} options={['text', 'number', 'date', 'datetime', 'boolean', 'single_select', 'multi_select', 'json']} />
+          <SelectField label="Searchable" value={form.searchable} onChange={(searchable) => setForm({ ...form, searchable })} options={['true', 'false']} />
+          <SelectField label="Archived" value={form.archived} onChange={(archived) => setForm({ ...form, archived })} options={['false', 'true']} />
+          <Field label="Options JSON">
+            <textarea value={form.optionsText} onChange={(event) => setForm({ ...form, optionsText: event.target.value })} rows={6} spellCheck="false" />
+          </Field>
+          <div className="button-row wrap">
+            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive custom field" type="button"><FiX /></button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          </div>
+        </form>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Contexts And Configs" icon={<FiLayers />} wide>
+        <div className="data-columns two no-margin">
+          <JsonRecordEditor
+            records={contexts}
+            title="Contexts"
+            onDelete={(record) => context.services.configuration.deleteCustomFieldContext(customFieldId, record.id)}
+            onSave={(record, draft) => context.services.configuration.updateCustomFieldContext(customFieldId, record.id, pick(draft, ['projectId', 'workItemTypeId', 'required', 'defaultValue', 'validationConfig']))}
+            onSuccess={load}
+            action={action}
+          />
+          <JsonRecordEditor
+            records={configs}
+            title="Field Configurations"
+            onDelete={(record) => context.services.configuration.deleteFieldConfiguration(record.id)}
+            onSave={(record, draft) => context.services.configuration.updateFieldConfiguration(record.id, pick(draft, ['projectId', 'workItemTypeId', 'required', 'hidden', 'defaultValue', 'validationConfig']))}
+            onSuccess={load}
+            action={action}
+          />
+        </div>
+        <JsonPreview title="Field" value={field} />
+      </Panel>
+    </DetailLayout>
+  );
+};
+
+const ScreenDetailPage = ({ context }) => {
+  const { screenId } = useParams();
+  const navigate = useNavigate();
+  const action = useApiAction(context.addToast);
+  const [screen, setScreen] = useState(null);
+  const [fields, setFields] = useState([]);
+  const [assignments, setAssignments] = useState([]);
+  const [form, setForm] = useState({ name: '', screenType: 'edit', configText: '{}' });
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.configuration.getScreen(screenId),
+      context.services.configuration.listScreenFields(screenId),
+      context.services.configuration.listScreenAssignments(screenId),
+    ]));
+    if (result) {
+      const [screenRow, fieldRows, assignmentRows] = result;
+      setScreen(screenRow);
+      setFields(fieldRows || []);
+      setAssignments(assignmentRows || []);
+      setForm({
+        name: screenRow.name || '',
+        screenType: screenRow.screenType || 'edit',
+        configText: toJsonText(screenRow.config || {}),
+      });
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [screenId]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.configuration.updateScreen(screenId, {
+      name: form.name,
+      screenType: form.screenType,
+      config: parseJsonOrThrow(form.configText),
+    }), 'Screen saved');
+    if (saved) {
+      await load();
+    }
+  };
+
+  const archive = async () => {
+    await action.run(() => context.services.configuration.deleteScreen(screenId), 'Screen deleted');
+    navigate('/configuration');
+  };
+
+  return (
+    <DetailLayout backTo="/configuration" title="Screen Detail">
+      <Panel title="Screen" icon={<FiEye />}>
+        <form className="stack" onSubmit={save}>
+          <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+          <SelectField label="Type" value={form.screenType} onChange={(screenType) => setForm({ ...form, screenType })} options={['create', 'edit', 'view']} />
+          <Field label="Config JSON">
+            <textarea value={form.configText} onChange={(event) => setForm({ ...form, configText: event.target.value })} rows={7} spellCheck="false" />
+          </Field>
+          <div className="button-row wrap">
+            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Delete screen" type="button"><FiX /></button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          </div>
+        </form>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Layout Records" icon={<FiList />} wide>
+        <div className="data-columns two no-margin">
+          <JsonRecordEditor
+            records={fields}
+            title="Fields"
+            onDelete={(record) => context.services.configuration.deleteScreenField(screenId, record.id)}
+            onSave={(record, draft) => context.services.configuration.updateScreenField(screenId, record.id, pick(draft, ['customFieldId', 'systemFieldKey', 'position', 'required']))}
+            onSuccess={load}
+            action={action}
+          />
+          <JsonRecordEditor
+            records={assignments}
+            title="Assignments"
+            onDelete={(record) => context.services.configuration.deleteScreenAssignment(screenId, record.id)}
+            onSave={(record, draft) => context.services.configuration.updateScreenAssignment(screenId, record.id, pick(draft, ['projectId', 'workItemTypeId', 'operation', 'priority']))}
+            onSuccess={load}
+            action={action}
+          />
+        </div>
+        <JsonPreview title="Screen" value={screen} />
+      </Panel>
+    </DetailLayout>
+  );
+};
+
+const BoardDetailPage = ({ context }) => {
+  const { boardId } = useParams();
+  const navigate = useNavigate();
+  const action = useApiAction(context.addToast);
+  const [board, setBoard] = useState(null);
+  const [columns, setColumns] = useState([]);
+  const [swimlanes, setSwimlanes] = useState([]);
+  const [cards, setCards] = useState(null);
+  const [form, setForm] = useState({ name: '', type: 'kanban', filterConfigText: '{}', active: 'true' });
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.planning.getBoard(boardId),
+      context.services.planning.listBoardColumns(boardId),
+      context.services.planning.listBoardSwimlanes(boardId),
+      context.services.planning.listBoardWorkItems(boardId, { limitPerColumn: 50 }),
+    ]));
+    if (result) {
+      const [boardRow, columnRows, swimlaneRows, cardRows] = result;
+      setBoard(boardRow);
+      setColumns(columnRows || []);
+      setSwimlanes(swimlaneRows || []);
+      setCards(cardRows || null);
+      setForm({
+        name: boardRow.name || '',
+        type: boardRow.type || 'kanban',
+        filterConfigText: toJsonText(boardRow.filterConfig || {}),
+        active: String(boardRow.active ?? true),
+      });
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [boardId]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.planning.updateBoard(boardId, {
+      name: form.name,
+      type: form.type,
+      filterConfig: parseJsonOrThrow(form.filterConfigText),
+      active: form.active === 'true',
+    }), 'Board saved');
+    if (saved) {
+      await load();
+    }
+  };
+
+  const archive = async () => {
+    await action.run(() => context.services.planning.archiveBoard(boardId), 'Board archived');
+    navigate('/planning');
+  };
+
+  return (
+    <DetailLayout backTo="/planning" title="Board Detail">
+      <Panel title="Board" icon={<FiList />}>
+        <form className="stack" onSubmit={save}>
+          <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+          <SelectField label="Type" value={form.type} onChange={(type) => setForm({ ...form, type })} options={['kanban', 'scrum']} />
+          <SelectField label="Active" value={form.active} onChange={(active) => setForm({ ...form, active })} options={['true', 'false']} />
+          <Field label="Filter JSON">
+            <textarea value={form.filterConfigText} onChange={(event) => setForm({ ...form, filterConfigText: event.target.value })} rows={7} spellCheck="false" />
+          </Field>
+          <div className="button-row wrap">
+            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive board" type="button"><FiX /></button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          </div>
+        </form>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Columns And Swimlanes" icon={<FiSliders />} wide>
+        <div className="data-columns two no-margin">
+          <JsonRecordEditor
+            records={columns}
+            title="Columns"
+            onDelete={(record) => context.services.planning.deleteBoardColumn(boardId, record.id)}
+            onSave={(record, draft) => context.services.planning.updateBoardColumn(boardId, record.id, pick(draft, ['name', 'statusIds', 'position', 'wipLimit', 'doneColumn']))}
+            onSuccess={load}
+            action={action}
+          />
+          <JsonRecordEditor
+            records={swimlanes}
+            title="Swimlanes"
+            onDelete={(record) => context.services.planning.deleteBoardSwimlane(boardId, record.id)}
+            onSave={(record, draft) => context.services.planning.updateBoardSwimlane(boardId, record.id, pick(draft, ['name', 'swimlaneType', 'query', 'position', 'enabled']))}
+            onSuccess={load}
+            action={action}
+          />
+        </div>
+      </Panel>
+      <Panel title="Board Cards" icon={<FiEye />} wide>
+        <BoardCardColumns boardWorkItems={cards} />
+        <JsonPreview title="Board" value={board} />
+      </Panel>
+    </DetailLayout>
+  );
+};
+
+const ReleaseDetailPage = ({ context }) => {
+  const { releaseId } = useParams();
+  const navigate = useNavigate();
+  const action = useApiAction(context.addToast);
+  const [release, setRelease] = useState(null);
+  const [scope, setScope] = useState([]);
+  const [form, setForm] = useState({ name: '', version: '', startDate: '', releaseDate: '', status: 'planned', description: '' });
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.planning.getRelease(releaseId),
+      context.services.planning.listReleaseWorkItems(releaseId),
+    ]));
+    if (result) {
+      const [releaseRow, scopeRows] = result;
+      setRelease(releaseRow);
+      setScope(scopeRows || []);
+      setForm({
+        name: releaseRow.name || '',
+        version: releaseRow.version || '',
+        startDate: releaseRow.startDate || '',
+        releaseDate: releaseRow.releaseDate || '',
+        status: releaseRow.status || 'planned',
+        description: releaseRow.description || '',
+      });
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [releaseId]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.planning.updateRelease(releaseId, {
+      ...form,
+      description: form.description || undefined,
+    }), 'Release saved');
+    if (saved) {
+      await load();
+    }
+  };
+
+  const archive = async () => {
+    await action.run(() => context.services.planning.deleteRelease(releaseId), 'Release archived');
+    navigate('/planning');
+  };
+
+  return (
+    <DetailLayout backTo="/planning" title="Release Detail">
+      <Panel title="Release" icon={<FiActivity />}>
+        <form className="stack" onSubmit={save}>
+          <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+          <TextField label="Version" value={form.version} onChange={(version) => setForm({ ...form, version })} />
+          <TextField label="Start" value={form.startDate} onChange={(startDate) => setForm({ ...form, startDate })} />
+          <TextField label="Release date" value={form.releaseDate} onChange={(releaseDate) => setForm({ ...form, releaseDate })} />
+          <SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={['planned', 'active', 'released', 'archived']} />
+          <TextField label="Description" value={form.description} onChange={(description) => setForm({ ...form, description })} />
+          <div className="button-row wrap">
+            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive release" type="button"><FiX /></button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          </div>
+        </form>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Scope" icon={<FiList />} wide>
+        <JsonPreview title="Release" value={release} />
+        <JsonPreview title="Work Items" value={scope} />
+      </Panel>
+    </DetailLayout>
+  );
+};
+
+const RoadmapDetailPage = ({ context }) => {
+  const { roadmapId } = useParams();
+  const navigate = useNavigate();
+  const action = useApiAction(context.addToast);
+  const [roadmap, setRoadmap] = useState(null);
+  const [items, setItems] = useState([]);
+  const [form, setForm] = useState({ name: '', visibility: 'project', configText: '{}' });
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.planning.getRoadmap(roadmapId),
+      context.services.planning.listRoadmapItems(roadmapId),
+    ]));
+    if (result) {
+      const [roadmapRow, itemRows] = result;
+      setRoadmap(roadmapRow);
+      setItems(itemRows || []);
+      setForm({
+        name: roadmapRow.name || '',
+        visibility: roadmapRow.visibility || 'project',
+        configText: toJsonText(roadmapRow.config || {}),
+      });
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [roadmapId]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.planning.updateRoadmap(roadmapId, {
+      projectId: context.projectId || roadmap?.projectId,
+      name: form.name,
+      visibility: form.visibility,
+      config: parseJsonOrThrow(form.configText),
+    }), 'Roadmap saved');
+    if (saved) {
+      await load();
+    }
+  };
+
+  const archive = async () => {
+    await action.run(() => context.services.planning.deleteRoadmap(roadmapId), 'Roadmap archived');
+    navigate('/planning');
+  };
+
+  return (
+    <DetailLayout backTo="/planning" title="Roadmap Detail">
+      <Panel title="Roadmap" icon={<FiBarChart2 />}>
+        <form className="stack" onSubmit={save}>
+          <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+          <SelectField label="Visibility" value={form.visibility} onChange={(visibility) => setForm({ ...form, visibility })} options={['private', 'project', 'workspace', 'public']} />
+          <Field label="Config JSON">
+            <textarea value={form.configText} onChange={(event) => setForm({ ...form, configText: event.target.value })} rows={8} spellCheck="false" />
+          </Field>
+          <div className="button-row wrap">
+            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive roadmap" type="button"><FiX /></button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          </div>
+        </form>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Items" icon={<FiList />} wide>
+        <JsonRecordEditor
+          records={items}
+          title="Roadmap Items"
+          onDelete={(record) => context.services.planning.deleteRoadmapItem(roadmapId, record.id)}
+          onSave={(record, draft) => context.services.planning.updateRoadmapItem(roadmapId, record.id, pick(draft, ['workItemId', 'startDate', 'endDate', 'position', 'displayConfig']))}
+          onSuccess={load}
+          action={action}
+        />
+        <JsonPreview title="Roadmap" value={roadmap} />
+      </Panel>
+    </DetailLayout>
+  );
+};
+
+const AutomationRuleDetailPage = ({ context }) => {
+  const { ruleId } = useParams();
+  const navigate = useNavigate();
+  const action = useApiAction(context.addToast);
+  const [rule, setRule] = useState(null);
+  const [jobs, setJobs] = useState([]);
+  const [form, setForm] = useState({ name: '', triggerType: 'manual', triggerConfigText: '{}', enabled: 'true' });
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.automation.getRule(ruleId),
+      context.services.automation.listJobs(ruleId),
+    ]));
+    if (result) {
+      const [ruleRow, jobRows] = result;
+      setRule(ruleRow);
+      setJobs(jobRows || []);
+      setForm({
+        name: ruleRow.name || '',
+        triggerType: ruleRow.triggerType || 'manual',
+        triggerConfigText: toJsonText(ruleRow.triggerConfig || {}),
+        enabled: String(ruleRow.enabled ?? true),
+      });
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [ruleId]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.automation.updateRule(ruleId, {
+      projectId: context.projectId || rule?.projectId,
+      name: form.name,
+      triggerType: form.triggerType,
+      triggerConfig: parseJsonOrThrow(form.triggerConfigText),
+      enabled: form.enabled === 'true',
+    }), 'Rule saved');
+    if (saved) {
+      await load();
+    }
+  };
+
+  const remove = async () => {
+    await action.run(() => context.services.automation.deleteRule(ruleId), 'Rule deleted');
+    navigate('/automation');
+  };
+
+  return (
+    <DetailLayout backTo="/automation" title="Automation Rule Detail">
+      <Panel title="Rule" icon={<FiCpu />}>
+        <form className="stack" onSubmit={save}>
+          <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+          <SelectField label="Trigger" value={form.triggerType} onChange={(triggerType) => setForm({ ...form, triggerType })} options={['manual', 'work_item.updated', 'work_item.created', 'schedule']} />
+          <SelectField label="Enabled" value={form.enabled} onChange={(enabled) => setForm({ ...form, enabled })} options={['true', 'false']} />
+          <Field label="Trigger JSON">
+            <textarea value={form.triggerConfigText} onChange={(event) => setForm({ ...form, triggerConfigText: event.target.value })} rows={7} spellCheck="false" />
+          </Field>
+          <div className="button-row wrap">
+            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending} onClick={remove} title="Delete rule" type="button"><FiX /></button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          </div>
+        </form>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Conditions And Actions" icon={<FiSettings />} wide>
+        <div className="data-columns two no-margin">
+          <JsonRecordEditor
+            records={rule?.conditions || []}
+            title="Conditions"
+            onDelete={(record) => context.services.automation.deleteCondition(ruleId, record.id)}
+            onSave={(record, draft) => context.services.automation.updateCondition(ruleId, record.id, pick(draft, ['conditionType', 'config', 'position']))}
+            onSuccess={load}
+            action={action}
+          />
+          <JsonRecordEditor
+            records={rule?.actions || []}
+            title="Actions"
+            onDelete={(record) => context.services.automation.deleteAction(ruleId, record.id)}
+            onSave={(record, draft) => context.services.automation.updateAction(ruleId, record.id, pick(draft, ['actionType', 'executionMode', 'config', 'position']))}
+            onSuccess={load}
+            action={action}
+          />
+        </div>
+        <JsonPreview title="Jobs" value={jobs} />
+      </Panel>
+    </DetailLayout>
+  );
+};
+
+const WebhookDetailPage = ({ context }) => {
+  const { webhookId } = useParams();
+  const navigate = useNavigate();
+  const action = useApiAction(context.addToast);
+  const [webhook, setWebhook] = useState(null);
+  const [deliveries, setDeliveries] = useState([]);
+  const [form, setForm] = useState({ name: '', url: '', secret: '', eventTypesText: '[]', enabled: 'true' });
+
+  const load = async () => {
+    const rows = await action.run(() => context.services.automation.listWebhooks(context.workspaceId));
+    if (rows) {
+      const selected = (rows || []).find((row) => row.id === webhookId) || null;
+      const deliveryRows = await action.run(() => context.services.automation.listWebhookDeliveries(webhookId));
+      setWebhook(selected);
+      setDeliveries(deliveryRows || []);
+      if (selected) {
+        setForm({
+          name: selected.name || '',
+          url: selected.url || '',
+          secret: '',
+          eventTypesText: toJsonText(selected.eventTypes || []),
+          enabled: String(selected.enabled ?? true),
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [webhookId, context.workspaceId]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.automation.updateWebhook(webhookId, {
+      name: form.name,
+      url: form.url,
+      secret: form.secret || undefined,
+      eventTypes: parseJsonOrThrow(form.eventTypesText),
+      enabled: form.enabled === 'true',
+    }), 'Webhook saved');
+    if (saved) {
+      await load();
+    }
+  };
+
+  const remove = async () => {
+    await action.run(() => context.services.automation.deleteWebhook(webhookId), 'Webhook disabled');
+    navigate('/automation');
+  };
+
+  return (
+    <DetailLayout backTo="/automation" title="Webhook Detail">
+      <Panel title="Webhook" icon={<FiSend />}>
+        <form className="stack" onSubmit={save}>
+          <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+          <TextField label="URL" value={form.url} onChange={(url) => setForm({ ...form, url })} />
+          <TextField label="Secret" value={form.secret} onChange={(secret) => setForm({ ...form, secret })} />
+          <SelectField label="Enabled" value={form.enabled} onChange={(enabled) => setForm({ ...form, enabled })} options={['true', 'false']} />
+          <Field label="Event types JSON">
+            <textarea value={form.eventTypesText} onChange={(event) => setForm({ ...form, eventTypesText: event.target.value })} rows={6} spellCheck="false" />
+          </Field>
+          <div className="button-row wrap">
+            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending} onClick={remove} title="Disable webhook" type="button"><FiX /></button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          </div>
+        </form>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Deliveries" icon={<FiEye />} wide>
+        <JsonPreview title="Webhook" value={webhook} />
+        <JsonPreview title="Deliveries" value={deliveries} />
+      </Panel>
+    </DetailLayout>
+  );
+};
+
+const ImportJobDetailPage = ({ context }) => {
+  const { importJobId } = useParams();
+  const action = useApiAction(context.addToast);
+  const [job, setJob] = useState(null);
+  const [records, setRecords] = useState([]);
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.imports.getJob(importJobId),
+      context.services.imports.listRecords(importJobId),
+    ]));
+    if (result) {
+      const [jobRow, recordRows] = result;
+      setJob(jobRow);
+      setRecords(recordRows || []);
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [importJobId]);
+
+  const command = async (fn, success) => {
+    await action.run(() => fn(importJobId), success);
+    await load();
+  };
+
+  return (
+    <DetailLayout backTo="/imports" title="Import Job Detail">
+      <Panel title="Lifecycle" icon={<FiUploadCloud />}>
+        <div className="button-row wrap">
+          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          <button className="secondary-button" disabled={action.pending} onClick={() => command(context.services.imports.start, 'Import started')} type="button">Start</button>
+          <button className="secondary-button" disabled={action.pending} onClick={() => command(context.services.imports.complete, 'Import completed')} type="button">Complete</button>
+          <button className="secondary-button" disabled={action.pending} onClick={() => command(context.services.imports.fail, 'Import failed')} type="button">Fail</button>
+          <button className="icon-button danger" disabled={action.pending} onClick={() => command(context.services.imports.cancel, 'Import canceled')} title="Cancel import" type="button"><FiX /></button>
+        </div>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Records" icon={<FiEye />} wide>
+        <JsonPreview title="Job" value={job} />
+        <JsonPreview title="Records" value={records} />
+      </Panel>
+    </DetailLayout>
+  );
+};
+
+const ImportTemplateDetailPage = ({ context }) => {
+  const { mappingTemplateId } = useParams();
+  const navigate = useNavigate();
+  const action = useApiAction(context.addToast);
+  const [template, setTemplate] = useState(null);
+  const [lookups, setLookups] = useState([]);
+  const [typeTranslations, setTypeTranslations] = useState([]);
+  const [statusTranslations, setStatusTranslations] = useState([]);
+  const [form, setForm] = useState({ name: '', provider: 'csv', sourceType: '', workItemTypeKey: '', statusKey: '', fieldMappingText: '{}', defaultsText: '{}', transformationConfigText: '{}', enabled: 'true' });
+  const [lookupForm, setLookupForm] = useState({ sourceField: '', sourceValue: '', targetField: '', targetValueText: 'null' });
+  const [typeForm, setTypeForm] = useState({ sourceTypeKey: '', targetTypeKey: '' });
+  const [statusForm, setStatusForm] = useState({ sourceStatusKey: '', targetStatusKey: '' });
+
+  const load = async () => {
+    const result = await action.run(() => Promise.all([
+      context.services.imports.listMappingTemplates(context.workspaceId),
+      context.services.imports.listValueLookups(mappingTemplateId),
+      context.services.imports.listTypeTranslations(mappingTemplateId),
+      context.services.imports.listStatusTranslations(mappingTemplateId),
+    ]));
+    if (result) {
+      const [templates, lookupRows, typeRows, statusRows] = result;
+      const selected = (templates || []).find((row) => row.id === mappingTemplateId) || null;
+      setTemplate(selected);
+      setLookups(lookupRows || []);
+      setTypeTranslations(typeRows || []);
+      setStatusTranslations(statusRows || []);
+      if (selected) {
+        setForm({
+          name: selected.name || '',
+          provider: selected.provider || 'csv',
+          sourceType: selected.sourceType || '',
+          workItemTypeKey: selected.workItemTypeKey || '',
+          statusKey: selected.statusKey || '',
+          fieldMappingText: toJsonText(selected.fieldMapping || {}),
+          defaultsText: toJsonText(selected.defaults || {}),
+          transformationConfigText: toJsonText(selected.transformationConfig || {}),
+          enabled: String(selected.enabled ?? true),
+        });
+      }
+    }
+  };
+
+  useEffect(() => {
+    load();
+  }, [mappingTemplateId, context.workspaceId]);
+
+  const save = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(() => context.services.imports.updateMappingTemplate(mappingTemplateId, {
+      name: form.name,
+      provider: form.provider,
+      sourceType: form.sourceType || undefined,
+      targetType: 'work_item',
+      projectId: context.projectId || template?.projectId,
+      workItemTypeKey: form.workItemTypeKey || undefined,
+      statusKey: form.statusKey || undefined,
+      fieldMapping: parseJsonOrThrow(form.fieldMappingText),
+      defaults: parseJsonOrThrow(form.defaultsText),
+      transformationConfig: parseJsonOrThrow(form.transformationConfigText),
+      enabled: form.enabled === 'true',
+    }), 'Mapping template saved');
+    if (saved) {
+      await load();
+    }
+  };
+
+  const disable = async () => {
+    await action.run(() => context.services.imports.deleteMappingTemplate(mappingTemplateId), 'Template disabled');
+    navigate('/imports');
+  };
+
+  const createLookup = async (event) => {
+    event.preventDefault();
+    await action.run(() => context.services.imports.createValueLookup(mappingTemplateId, {
+      sourceField: lookupForm.sourceField,
+      sourceValue: lookupForm.sourceValue,
+      targetField: lookupForm.targetField,
+      targetValue: parseJsonOrThrow(lookupForm.targetValueText),
+      enabled: true,
+    }), 'Lookup added');
+    await load();
+  };
+
+  const createTypeTranslation = async (event) => {
+    event.preventDefault();
+    await action.run(() => context.services.imports.createTypeTranslation(mappingTemplateId, { ...typeForm, enabled: true }), 'Type translation added');
+    await load();
+  };
+
+  const createStatusTranslation = async (event) => {
+    event.preventDefault();
+    await action.run(() => context.services.imports.createStatusTranslation(mappingTemplateId, { ...statusForm, enabled: true }), 'Status translation added');
+    await load();
+  };
+
+  return (
+    <DetailLayout backTo="/imports" title="Import Template Detail">
+      <Panel title="Template" icon={<FiSliders />}>
+        <form className="stack" onSubmit={save}>
+          <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
+          <SelectField label="Provider" value={form.provider} onChange={(provider) => setForm({ ...form, provider })} options={['csv', 'jira', 'rally']} />
+          <TextField label="Source type" value={form.sourceType} onChange={(sourceType) => setForm({ ...form, sourceType })} />
+          <TextField label="Type fallback" value={form.workItemTypeKey} onChange={(workItemTypeKey) => setForm({ ...form, workItemTypeKey })} />
+          <TextField label="Status fallback" value={form.statusKey} onChange={(statusKey) => setForm({ ...form, statusKey })} />
+          <SelectField label="Enabled" value={form.enabled} onChange={(enabled) => setForm({ ...form, enabled })} options={['true', 'false']} />
+          <Field label="Field mapping JSON">
+            <textarea value={form.fieldMappingText} onChange={(event) => setForm({ ...form, fieldMappingText: event.target.value })} rows={6} spellCheck="false" />
+          </Field>
+          <Field label="Defaults JSON">
+            <textarea value={form.defaultsText} onChange={(event) => setForm({ ...form, defaultsText: event.target.value })} rows={4} spellCheck="false" />
+          </Field>
+          <Field label="Transformations JSON">
+            <textarea value={form.transformationConfigText} onChange={(event) => setForm({ ...form, transformationConfigText: event.target.value })} rows={4} spellCheck="false" />
+          </Field>
+          <div className="button-row wrap">
+            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending} onClick={disable} title="Disable template" type="button"><FiX /></button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
+          </div>
+        </form>
+        <ErrorLine message={action.error} />
+      </Panel>
+      <Panel title="Mapping Rules" icon={<FiDatabase />} wide>
+        <div className="data-columns two no-margin">
+          <form className="stack" onSubmit={createLookup}>
+            <TextField label="Source field" value={lookupForm.sourceField} onChange={(sourceField) => setLookupForm({ ...lookupForm, sourceField })} />
+            <TextField label="Source value" value={lookupForm.sourceValue} onChange={(sourceValue) => setLookupForm({ ...lookupForm, sourceValue })} />
+            <TextField label="Target field" value={lookupForm.targetField} onChange={(targetField) => setLookupForm({ ...lookupForm, targetField })} />
+            <TextField label="Target value JSON" value={lookupForm.targetValueText} onChange={(targetValueText) => setLookupForm({ ...lookupForm, targetValueText })} />
+            <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Add lookup</button>
+          </form>
+          <div className="stack">
+            <form className="stack" onSubmit={createTypeTranslation}>
+              <TextField label="Source type" value={typeForm.sourceTypeKey} onChange={(sourceTypeKey) => setTypeForm({ ...typeForm, sourceTypeKey })} />
+              <TextField label="Target type" value={typeForm.targetTypeKey} onChange={(targetTypeKey) => setTypeForm({ ...typeForm, targetTypeKey })} />
+              <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Add type</button>
+            </form>
+            <form className="stack nested-form" onSubmit={createStatusTranslation}>
+              <TextField label="Source status" value={statusForm.sourceStatusKey} onChange={(sourceStatusKey) => setStatusForm({ ...statusForm, sourceStatusKey })} />
+              <TextField label="Target status" value={statusForm.targetStatusKey} onChange={(targetStatusKey) => setStatusForm({ ...statusForm, targetStatusKey })} />
+              <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Add status</button>
+            </form>
+          </div>
+        </div>
+        <div className="data-columns">
+          <JsonPreview title="Lookups" value={lookups} />
+          <JsonPreview title="Type Translations" value={typeTranslations} />
+          <JsonPreview title="Status Translations" value={statusTranslations} />
+          <JsonPreview title="Template" value={template} />
+        </div>
+      </Panel>
+    </DetailLayout>
   );
 };
 
@@ -2311,6 +3166,111 @@ const RecordSelect = ({ includeBlank = false, label, onChange, records, value })
   </Field>
 );
 
+const DetailLayout = ({ backTo, children, title }) => (
+  <div className="detail-layout">
+    <div className="detail-toolbar">
+      <Link className="secondary-button" to={backTo}><FiArrowRight className="back-icon" />Back</Link>
+      <h2>{title}</h2>
+    </div>
+    <div className="content-grid">
+      {children}
+    </div>
+  </div>
+);
+
+const JsonRecordEditor = ({ action, onDelete, onSave, onSuccess, records, title }) => {
+  const [selectedId, setSelectedId] = useState('');
+  const [draft, setDraft] = useState('{}');
+  const selected = records.find((record) => record.id === selectedId) || records[0] || null;
+
+  useEffect(() => {
+    if (!selectedId && selected?.id) {
+      setSelectedId(selected.id);
+    }
+  }, [records, selectedId, selected]);
+
+  useEffect(() => {
+    setDraft(toJsonText(selected || {}));
+  }, [selected?.id]);
+
+  const save = async () => {
+    if (!selected) {
+      return;
+    }
+    const result = await action.run(() => onSave(selected, parseJsonOrThrow(draft)), `${title} saved`);
+    if (result !== undefined && onSuccess) {
+      await onSuccess();
+    }
+  };
+
+  const remove = async () => {
+    if (!selected) {
+      return;
+    }
+    const result = await action.run(async () => {
+      await onDelete(selected);
+      return true;
+    }, `${title} deleted`);
+    if (result !== undefined && onSuccess) {
+      setSelectedId('');
+      await onSuccess();
+    }
+  };
+
+  return (
+    <section className="json-record-editor">
+      <h3>{title}</h3>
+      <RecordSelect includeBlank label="Record" records={records} value={selected?.id || ''} onChange={setSelectedId} />
+      <textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={10} spellCheck="false" />
+      <div className="button-row wrap">
+        <button className="secondary-button" disabled={action.pending || !selected} onClick={save} type="button"><FiCheck />Save</button>
+        <button className="icon-button danger" disabled={action.pending || !selected} onClick={remove} title={`Delete ${title}`} type="button"><FiX /></button>
+      </div>
+    </section>
+  );
+};
+
+const DetailLinkGrid = ({ basePath, items, title }) => (
+  <section className="detail-link-group">
+    <h3>{title}</h3>
+    <div className="detail-link-grid">
+      {items.length === 0 ? (
+        <EmptyState label="No records loaded" />
+      ) : items.map((item) => (
+        <Link className="detail-link-card" key={item.id} to={`${basePath}/${item.id}`}>
+          <span>{recordLabel(item)}</span>
+          <FiArrowRight />
+        </Link>
+      ))}
+    </div>
+  </section>
+);
+
+const BoardCardColumns = ({ boardWorkItems }) => {
+  const columns = boardWorkItems?.columns || [];
+  if (columns.length === 0) {
+    return <EmptyState label="No board cards loaded" />;
+  }
+  return (
+    <div className="board-card-columns">
+      {columns.map((column) => (
+        <section className="board-card-column" key={column.columnId}>
+          <h3>{column.columnName}</h3>
+          {(column.workItems || []).length === 0 ? (
+            <EmptyState label="No work items" />
+          ) : (column.workItems || []).map((item) => (
+            <article className="board-card" key={item.id}>
+              <span>{item.key}</span>
+              <strong>{item.title}</strong>
+              <small>{item.statusKey || item.typeKey}</small>
+            </article>
+          ))}
+        </section>
+      ))}
+    </div>
+  );
+};
+
 const InlineId = ({ label, onChange, value }) => (
   <label className="inline-id">
     <span>{label}</span>
@@ -2389,6 +3349,15 @@ const parseJsonOrThrow = (value) => {
     throw new Error('JSON is invalid');
   }
 };
+
+const toJsonText = (value) => JSON.stringify(value ?? {}, null, 2);
+
+const pick = (record, keys) => keys.reduce((request, key) => {
+  if (Object.prototype.hasOwnProperty.call(record, key)) {
+    request[key] = record[key];
+  }
+  return request;
+}, {});
 
 const csv = (value) => value.split(',').map((entry) => entry.trim()).filter(Boolean);
 

@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:33537",
+      "url": "http://localhost:37199",
       "description": "Generated server url"
     }
   ],
@@ -4603,6 +4603,225 @@
         }
       }
     },
+    "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listValueLookups",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportMappingValueLookupResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "createValueLookup",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMappingValueLookupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMappingValueLookupResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listTypeTranslations",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportMappingTypeTranslationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "createTypeTranslation",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMappingTypeTranslationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMappingTypeTranslationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listStatusTranslations",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportMappingStatusTranslationResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "createStatusTranslation",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMappingStatusTranslationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMappingStatusTranslationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-jobs/{importJobId}/start": {
       "post": {
         "tags": [
@@ -7529,6 +7748,249 @@
         }
       }
     },
+    "/api/v1/import-mapping-templates/{mappingTemplateId}/value-lookups/{lookupId}": {
+      "delete": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "deleteValueLookup",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "lookupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "updateValueLookup",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "lookupId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMappingValueLookupRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMappingValueLookupResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-mapping-templates/{mappingTemplateId}/type-translations/{translationId}": {
+      "delete": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "deleteTypeTranslation",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "translationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "updateTypeTranslation",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "translationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMappingTypeTranslationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMappingTypeTranslationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-mapping-templates/{mappingTemplateId}/status-translations/{translationId}": {
+      "delete": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "deleteStatusTranslation",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "translationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "updateStatusTranslation",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "translationId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMappingStatusTranslationRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMappingStatusTranslationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/field-configurations/{fieldConfigurationId}": {
       "get": {
         "tags": [
@@ -8811,6 +9273,74 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/EmailDeliveryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/automation-worker-runs": {
+      "get": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "listWorkerRuns",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AutomationWorkerRunHistoryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/automation-worker-health": {
+      "get": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "listWorkerHealth",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AutomationWorkerHealthResponse"
                   }
                 }
               }
@@ -11827,6 +12357,7 @@
           },
           "fieldMapping": {},
           "defaults": {},
+          "transformationConfig": {},
           "enabled": {
             "type": "boolean"
           }
@@ -11867,6 +12398,7 @@
           },
           "fieldMapping": {},
           "defaults": {},
+          "transformationConfig": {},
           "enabled": {
             "type": "boolean"
           },
@@ -14606,6 +15138,154 @@
           }
         }
       },
+      "ImportMappingValueLookupRequest": {
+        "type": "object",
+        "properties": {
+          "sourceField": {
+            "type": "string"
+          },
+          "sourceValue": {
+            "type": "string"
+          },
+          "targetField": {
+            "type": "string"
+          },
+          "targetValue": {},
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImportMappingValueLookupResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mappingTemplateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceField": {
+            "type": "string"
+          },
+          "sourceValue": {
+            "type": "string"
+          },
+          "targetField": {
+            "type": "string"
+          },
+          "targetValue": {},
+          "sortOrder": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ImportMappingTypeTranslationRequest": {
+        "type": "object",
+        "properties": {
+          "sourceTypeKey": {
+            "type": "string"
+          },
+          "targetTypeKey": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImportMappingTypeTranslationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mappingTemplateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceTypeKey": {
+            "type": "string"
+          },
+          "targetTypeKey": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ImportMappingStatusTranslationRequest": {
+        "type": "object",
+        "properties": {
+          "sourceStatusKey": {
+            "type": "string"
+          },
+          "targetStatusKey": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImportMappingStatusTranslationResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mappingTemplateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceStatusKey": {
+            "type": "string"
+          },
+          "targetStatusKey": {
+            "type": "string"
+          },
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ImportJobRecordRequest": {
         "type": "object",
         "properties": {
@@ -15381,6 +16061,105 @@
             "format": "date-time"
           },
           "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AutomationWorkerRunHistoryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workerType": {
+            "type": "string"
+          },
+          "triggerType": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "dryRun": {
+            "type": "boolean"
+          },
+          "requestedLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "processedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "successCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failureCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deadLetterCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "metadata": {},
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AutomationWorkerHealthResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workerType": {
+            "type": "string"
+          },
+          "lastRunId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "lastStatus": {
+            "type": "string"
+          },
+          "lastStartedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastFinishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "consecutiveFailures": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "updatedAt": {
             "type": "string",
             "format": "date-time"
           }
