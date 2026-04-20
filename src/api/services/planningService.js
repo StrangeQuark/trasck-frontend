@@ -117,6 +117,13 @@ export const createPlanningService = (api) => ({
     });
   },
 
+  moveBoardWorkItem(boardId, workItemId, request) {
+    return api.request('post', '/api/v1/boards/{boardId}/work-items/{workItemId}/move', {
+      path: { boardId, workItemId },
+      body: request,
+    });
+  },
+
   listBoardColumns(boardId) {
     return api.request('get', '/api/v1/boards/{boardId}/columns', {
       path: { boardId },

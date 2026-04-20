@@ -45,6 +45,13 @@ export const settingsToForm = (settings) => ({
   emailMaxAttempts: String(settings.emailMaxAttempts ?? 3),
   webhookDryRun: String(settings.webhookDryRun ?? true),
   emailDryRun: String(settings.emailDryRun ?? true),
+  workerRunRetentionEnabled: String(Boolean(settings.workerRunRetentionEnabled)),
+  workerRunRetentionDays: String(settings.workerRunRetentionDays ?? ''),
+  workerRunExportBeforePrune: String(settings.workerRunExportBeforePrune ?? true),
+  workerRunPruningAutomaticEnabled: String(Boolean(settings.workerRunPruningAutomaticEnabled)),
+  workerRunPruningIntervalMinutes: String(settings.workerRunPruningIntervalMinutes ?? 1440),
+  workerRunPruningWindowStart: String(settings.workerRunPruningWindowStart ?? ''),
+  workerRunPruningWindowEnd: String(settings.workerRunPruningWindowEnd ?? ''),
 });
 
 export const recordLabel = (record) => {

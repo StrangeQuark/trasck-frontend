@@ -8,9 +8,11 @@ import { Field } from '../../components/Field';
 import { JsonPreview } from '../../components/JsonPreview';
 import { JsonRecordEditor } from '../../components/JsonRecordEditor';
 import { Panel } from '../../components/Panel';
+import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
+import { parseJsonOrThrow, pick, toJsonText } from '../../utils/forms';
 
 export const BoardDetailPage = ({ context }) => {
   const { boardId } = useParams();
@@ -20,6 +22,7 @@ export const BoardDetailPage = ({ context }) => {
   const [columns, setColumns] = useState([]);
   const [swimlanes, setSwimlanes] = useState([]);
   const [cards, setCards] = useState(null);
+  const [moveForm, setMoveForm] = useState({ workItemId: '', targetColumnId: '', previousWorkItemId: '', nextWorkItemId: '', transitionKey: '' });
   const [form, setForm] = useState({ name: '', type: 'kanban', filterConfigText: '{}', active: 'true' });
 
   const load = async () => {
@@ -31,10 +34,17 @@ export const BoardDetailPage = ({ context }) => {
     ]));
     if (result) {
       const [boardRow, columnRows, swimlaneRows, cardRows] = result;
+      const firstColumn = firstBoardColumn(columnRows);
+      const firstCard = firstBoardCard(cardRows);
       setBoard(boardRow);
       setColumns(columnRows || []);
       setSwimlanes(swimlaneRows || []);
       setCards(cardRows || null);
+      setMoveForm((current) => ({
+        ...current,
+        workItemId: current.workItemId || firstCard?.id || '',
+        targetColumnId: current.targetColumnId || firstColumn?.id || firstColumn?.columnId || '',
+      }));
       setForm({
         name: boardRow.name || '',
         type: boardRow.type || 'kanban',
@@ -66,6 +76,28 @@ export const BoardDetailPage = ({ context }) => {
     navigate('/planning');
   };
 
+  const moveWorkItem = async (request) => {
+    const workItemId = request.workItemId || moveForm.workItemId;
+    if (!workItemId) {
+      action.setError('Work item is required');
+      return;
+    }
+    const moved = await action.run(() => context.services.planning.moveBoardWorkItem(boardId, workItemId, {
+      targetColumnId: request.targetColumnId || moveForm.targetColumnId || undefined,
+      previousWorkItemId: request.previousWorkItemId || moveForm.previousWorkItemId || undefined,
+      nextWorkItemId: request.nextWorkItemId || moveForm.nextWorkItemId || undefined,
+      transitionKey: request.transitionKey || moveForm.transitionKey || undefined,
+    }), 'Board card moved');
+    if (moved) {
+      await load();
+    }
+  };
+
+  const submitMove = async (event) => {
+    event.preventDefault();
+    await moveWorkItem({});
+  };
+
   return (
     <DetailLayout backTo="/planning" title="Board Detail">
       <Panel title="Board" icon={<FiList />}>
@@ -84,6 +116,16 @@ export const BoardDetailPage = ({ context }) => {
         </form>
         <ErrorLine message={action.error} />
       </Panel>
+      <Panel title="Move Card" icon={<FiActivity />}>
+        <form className="stack" onSubmit={submitMove}>
+          <RecordSelect label="Work item" records={boardWorkItemsList(cards)} value={moveForm.workItemId} onChange={(workItemId) => setMoveForm({ ...moveForm, workItemId })} />
+          <RecordSelect label="Target column" records={columns} value={moveForm.targetColumnId} onChange={(targetColumnId) => setMoveForm({ ...moveForm, targetColumnId })} />
+          <RecordSelect label="Previous" records={boardWorkItemsList(cards)} value={moveForm.previousWorkItemId} onChange={(previousWorkItemId) => setMoveForm({ ...moveForm, previousWorkItemId })} includeBlank />
+          <RecordSelect label="Next" records={boardWorkItemsList(cards)} value={moveForm.nextWorkItemId} onChange={(nextWorkItemId) => setMoveForm({ ...moveForm, nextWorkItemId })} includeBlank />
+          <TextField label="Transition key" value={moveForm.transitionKey} onChange={(transitionKey) => setMoveForm({ ...moveForm, transitionKey })} />
+          <button className="primary-button" disabled={action.pending || !moveForm.workItemId} type="submit"><FiCheck />Move</button>
+        </form>
+      </Panel>
       <Panel title="Columns And Swimlanes" icon={<FiSliders />} wide>
         <div className="data-columns two no-margin">
           <JsonRecordEditor
@@ -98,19 +140,25 @@ export const BoardDetailPage = ({ context }) => {
             records={swimlanes}
             title="Swimlanes"
             onDelete={(record) => context.services.planning.deleteBoardSwimlane(boardId, record.id)}
-            onSave={(record, draft) => context.services.planning.updateBoardSwimlane(boardId, record.id, pick(draft, ['name', 'swimlaneType', 'query', 'position', 'enabled']))}
+            onSave={(record, draft) => context.services.planning.updateBoardSwimlane(boardId, record.id, pick(draft, ['name', 'swimlaneType', 'savedFilterId', 'clearSavedFilter', 'query', 'position', 'enabled']))}
             onSuccess={load}
             action={action}
           />
         </div>
       </Panel>
       <Panel title="Board Cards" icon={<FiEye />} wide>
-        <BoardCardColumns boardWorkItems={cards} />
+        <BoardCardColumns boardWorkItems={cards} onMove={(workItemId, request) => moveWorkItem({ ...request, workItemId })} />
         <JsonPreview title="Board" value={board} />
       </Panel>
     </DetailLayout>
   );
 };
+
+const boardWorkItemsList = (cards) => (cards?.columns || []).flatMap((column) => column.workItems || []);
+
+const firstBoardCard = (cards) => boardWorkItemsList(cards)[0] || null;
+
+const firstBoardColumn = (columns) => Array.isArray(columns) && columns.length > 0 ? columns[0] : null;
 
 export const ReleaseDetailPage = ({ context }) => {
   const { releaseId } = useParams();

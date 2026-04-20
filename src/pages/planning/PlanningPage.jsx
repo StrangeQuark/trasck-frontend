@@ -9,6 +9,7 @@ import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
+import { firstId, numberOrUndefined, parseJsonOrThrow } from '../../utils/forms';
 
 export const PlanningPage = ({ context }) => {
   const [teams, setTeams] = useState([]);
@@ -20,6 +21,7 @@ export const PlanningPage = ({ context }) => {
   const [boardColumns, setBoardColumns] = useState([]);
   const [boardSwimlanes, setBoardSwimlanes] = useState([]);
   const [boardWorkItems, setBoardWorkItems] = useState(null);
+  const [savedFilters, setSavedFilters] = useState([]);
   const [releases, setReleases] = useState([]);
   const [releaseId, setReleaseId] = useState('');
   const [releaseWorkItems, setReleaseWorkItems] = useState([]);
@@ -31,7 +33,18 @@ export const PlanningPage = ({ context }) => {
   const [iterationForm, setIterationForm] = useState({ name: 'Sprint 1', teamId: '', startDate: '2026-04-20', endDate: '2026-05-01', status: 'planned' });
   const [boardForm, setBoardForm] = useState({ name: 'Project Board', type: 'kanban', teamId: '', filterConfigText: JSON.stringify({ projectScoped: true }, null, 2) });
   const [columnForm, setColumnForm] = useState({ name: 'Ready', statusIdsText: '[]', position: '1', wipLimit: '', doneColumn: 'false' });
-  const [swimlaneForm, setSwimlaneForm] = useState({ name: 'Team lanes', swimlaneType: 'team', queryText: JSON.stringify({ field: 'teamId' }, null, 2), position: '1', enabled: 'true' });
+  const [swimlaneForm, setSwimlaneForm] = useState({
+    name: 'Assigned work',
+    mode: 'simple',
+    swimlaneType: 'assignee',
+    savedFilterId: '',
+    field: 'assigneeId',
+    operator: 'is_not_null',
+    value: '',
+    queryText: JSON.stringify({ where: { field: 'assigneeId', operator: 'is_not_null' } }, null, 2),
+    position: '1',
+    enabled: 'true',
+  });
   const [releaseForm, setReleaseForm] = useState({ name: 'Release 1', version: '1.0.0', startDate: '2026-04-20', releaseDate: '2026-05-15', status: 'planned', description: '' });
   const [releaseItemForm, setReleaseItemForm] = useState({ workItemId: '' });
   const [roadmapForm, setRoadmapForm] = useState({ name: 'Product Roadmap', visibility: 'project', configText: JSON.stringify({ lanes: ['now', 'next', 'later'] }, null, 2) });
@@ -52,6 +65,7 @@ export const PlanningPage = ({ context }) => {
         releaseRows,
         roadmapRows,
         workItemPage,
+        savedFilterRows,
       ] = await Promise.all([
         context.services.planning.listTeams(context.workspaceId),
         context.services.planning.listProjectTeams(context.projectId),
@@ -60,6 +74,7 @@ export const PlanningPage = ({ context }) => {
         context.services.planning.listReleases(context.projectId),
         context.services.planning.listProjectRoadmaps(context.projectId),
         context.services.workItems.listByProject(context.projectId, { limit: 50 }),
+        context.services.search.listProjectSavedFilters(context.projectId),
       ]);
       const nextBoardId = boardId || firstId(boardRows);
       const nextReleaseId = releaseId || firstId(releaseRows);
@@ -79,6 +94,7 @@ export const PlanningPage = ({ context }) => {
         releaseRows,
         roadmapRows,
         workItemRows: workItemPage?.items || [],
+        savedFilterRows,
         nextBoardId,
         nextReleaseId,
         nextRoadmapId,
@@ -97,6 +113,7 @@ export const PlanningPage = ({ context }) => {
       setReleases(result.releaseRows || []);
       setRoadmaps(result.roadmapRows || []);
       setWorkItems(result.workItemRows || []);
+      setSavedFilters(result.savedFilterRows || []);
       setBoardId(result.nextBoardId || '');
       setReleaseId(result.nextReleaseId || '');
       setRoadmapId(result.nextRoadmapId || '');
@@ -173,8 +190,9 @@ export const PlanningPage = ({ context }) => {
     event.preventDefault();
     await action.run(() => context.services.planning.createBoardSwimlane(boardId, {
       name: swimlaneForm.name,
-      swimlaneType: swimlaneForm.swimlaneType,
-      query: parseJsonOrThrow(swimlaneForm.queryText),
+      swimlaneType: swimlaneForm.mode === 'saved_filter' ? 'query' : swimlaneForm.swimlaneType,
+      savedFilterId: swimlaneForm.mode === 'saved_filter' ? swimlaneForm.savedFilterId || undefined : undefined,
+      query: swimlaneQuery(swimlaneForm),
       position: Number(swimlaneForm.position || 0),
       enabled: swimlaneForm.enabled === 'true',
     }), 'Swimlane created');
@@ -321,10 +339,21 @@ export const PlanningPage = ({ context }) => {
         </form>
         <form className="stack nested-form" onSubmit={createSwimlane}>
           <TextField label="Swimlane" value={swimlaneForm.name} onChange={(name) => setSwimlaneForm({ ...swimlaneForm, name })} />
-          <SelectField label="Type" value={swimlaneForm.swimlaneType} onChange={(swimlaneType) => setSwimlaneForm({ ...swimlaneForm, swimlaneType })} options={['team', 'assignee', 'epic', 'query']} />
-          <Field label="Query JSON">
-            <textarea value={swimlaneForm.queryText} onChange={(event) => setSwimlaneForm({ ...swimlaneForm, queryText: event.target.value })} rows={3} spellCheck="false" />
-          </Field>
+          <SelectField label="Mode" value={swimlaneForm.mode} onChange={(mode) => setSwimlaneForm({ ...swimlaneForm, mode })} options={['simple', 'saved_filter', 'advanced']} />
+          {swimlaneForm.mode === 'saved_filter' ? (
+            <RecordSelect label="Saved filter" records={savedFilters} value={swimlaneForm.savedFilterId} onChange={(savedFilterId) => setSwimlaneForm({ ...swimlaneForm, savedFilterId })} />
+          ) : swimlaneForm.mode === 'advanced' ? (
+            <Field label="Query JSON">
+              <textarea value={swimlaneForm.queryText} onChange={(event) => setSwimlaneForm({ ...swimlaneForm, queryText: event.target.value })} rows={3} spellCheck="false" />
+            </Field>
+          ) : (
+            <div className="two-column compact">
+              <SelectField label="Type" value={swimlaneForm.swimlaneType} onChange={(swimlaneType) => setSwimlaneForm({ ...swimlaneForm, swimlaneType })} options={['query', 'team', 'assignee', 'reporter', 'type', 'priority']} />
+              <TextField label="Field" value={swimlaneForm.field} onChange={(field) => setSwimlaneForm({ ...swimlaneForm, field })} />
+              <SelectField label="Operator" value={swimlaneForm.operator} onChange={(operator) => setSwimlaneForm({ ...swimlaneForm, operator })} options={['is_not_null', 'is_null', 'eq', 'ne', 'contains']} />
+              <TextField label="Value" value={swimlaneForm.value} onChange={(value) => setSwimlaneForm({ ...swimlaneForm, value })} />
+            </div>
+          )}
           <button className="secondary-button" disabled={action.pending || !boardId} type="submit"><FiPlus />Add swimlane</button>
         </form>
       </Panel>
@@ -385,6 +414,7 @@ export const PlanningPage = ({ context }) => {
           <JsonPreview title="Columns" value={boardColumns} />
           <JsonPreview title="Swimlanes" value={boardSwimlanes} />
           <JsonPreview title="Board Work" value={boardWorkItems} />
+          <JsonPreview title="Saved Filters" value={savedFilters} />
           <JsonPreview title="Releases" value={releases} />
           <JsonPreview title="Release Work" value={releaseWorkItems} />
           <JsonPreview title="Roadmaps" value={roadmaps} />
@@ -394,4 +424,21 @@ export const PlanningPage = ({ context }) => {
       </Panel>
     </div>
   );
+};
+
+const swimlaneQuery = (form) => {
+  if (form.mode === 'advanced') {
+    return parseJsonOrThrow(form.queryText);
+  }
+  if (form.mode === 'saved_filter') {
+    return {};
+  }
+  const predicate = {
+    field: form.field || 'assigneeId',
+    operator: form.operator || 'is_not_null',
+  };
+  if (!['is_null', 'is_not_null'].includes(predicate.operator)) {
+    predicate.value = form.value;
+  }
+  return { where: predicate };
 };
