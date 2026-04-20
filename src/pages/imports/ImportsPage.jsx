@@ -35,6 +35,9 @@ const filterRequest = (filters) => ({
   sourceType: filters.sourceType || undefined,
 });
 
+const openConflictCompletionPhrase = 'COMPLETE WITH OPEN CONFLICTS';
+const filteredConflictResolutionPhrase = 'RESOLVE FILTERED CONFLICTS';
+
 export const ImportsPage = ({ context }) => {
   const [jobs, setJobs] = useState([]);
   const [importJobId, setImportJobId] = useState('');
@@ -81,6 +84,7 @@ export const ImportsPage = ({ context }) => {
   const [retargetPreview, setRetargetPreview] = useState(null);
   const [conflictForm, setConflictForm] = useState({ recordId: '', resolution: 'create_new' });
   const [bulkConflictIds, setBulkConflictIds] = useState([]);
+  const [filteredConflictPreview, setFilteredConflictPreview] = useState(null);
   const [rerunForm, setRerunForm] = useState({ materializationRunId: '', limit: '25', updateExisting: 'source' });
   const action = useApiAction(context.addToast);
   const selectedConflict = conflicts.find((record) => record.id === conflictForm.recordId) || null;
@@ -317,10 +321,47 @@ export const ImportsPage = ({ context }) => {
 
   const resolveSelectedConflicts = async () => {
     await action.run(() => context.services.imports.resolveConflicts(importJobId, {
+      scope: 'selected',
       recordIds: bulkConflictIds,
       resolution: conflictForm.resolution,
     }), 'Import conflicts resolved');
     setBulkConflictIds([]);
+    setFilteredConflictPreview(null);
+    await loadRecords();
+  };
+
+  const filteredConflictRequest = () => ({
+    scope: 'filtered',
+    ...filterRequest({ ...recordFilters, conflictStatus: 'open' }),
+    conflictStatus: 'open',
+    resolution: conflictForm.resolution,
+  });
+
+  const previewFilteredConflicts = async () => {
+    const preview = await action.run(() => context.services.imports.previewResolveConflicts(importJobId, filteredConflictRequest()), 'Filtered conflict preview ready');
+    if (preview) {
+      setFilteredConflictPreview(preview);
+    }
+    return preview;
+  };
+
+  const resolveFilteredConflicts = async () => {
+    const preview = filteredConflictPreview || await previewFilteredConflicts();
+    if (!preview?.matched) {
+      action.setError('No filtered open conflicts are available to resolve');
+      return;
+    }
+    const confirmation = window.prompt(`Type ${filteredConflictResolutionPhrase} to resolve ${preview.matched} filtered open conflicts.`);
+    if (confirmation !== filteredConflictResolutionPhrase) {
+      action.setError('Filtered conflict resolution confirmation did not match');
+      return;
+    }
+    await action.run(() => context.services.imports.resolveConflicts(importJobId, {
+      ...filteredConflictRequest(),
+      expectedCount: preview.matched,
+      confirmation,
+    }), 'Filtered import conflicts resolved');
+    setFilteredConflictPreview(null);
     await loadRecords();
   };
 
@@ -356,6 +397,7 @@ export const ImportsPage = ({ context }) => {
       await syncRecordEditForm(rows, preferredRecordId);
       setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(conflictRows, current.recordId) }));
       setBulkConflictIds((current) => current.filter((recordId) => (conflictRows || []).some((record) => record.id === recordId)));
+      setFilteredConflictPreview(null);
       setRerunForm((current) => ({ ...current, materializationRunId: selectedIdOrFirst(runs, current.materializationRunId) }));
     }
   };
@@ -382,10 +424,25 @@ export const ImportsPage = ({ context }) => {
 
   const completeImportJob = async () => {
     const hasOpenConflicts = conflicts.length > 0;
-    if (hasOpenConflicts && !window.confirm('Open import conflicts remain. Complete this import anyway?')) {
-      return;
+    let request;
+    if (hasOpenConflicts) {
+      const confirmation = window.prompt(`Type ${openConflictCompletionPhrase} to complete with open conflicts.`);
+      if (confirmation !== openConflictCompletionPhrase) {
+        action.setError('Open-conflict completion confirmation did not match');
+        return;
+      }
+      const reason = window.prompt('Enter an audit reason for completing with open conflicts.');
+      if (!reason?.trim()) {
+        action.setError('Open-conflict completion requires an audit reason');
+        return;
+      }
+      request = {
+        acceptOpenConflicts: true,
+        openConflictConfirmation: confirmation,
+        openConflictReason: reason.trim(),
+      };
     }
-    await action.run(() => context.services.imports.complete(importJobId, hasOpenConflicts ? { acceptOpenConflicts: true } : undefined), 'Import completed');
+    await action.run(() => context.services.imports.complete(importJobId, request), 'Import completed');
     await loadRecords();
   };
 
@@ -483,9 +540,9 @@ export const ImportsPage = ({ context }) => {
         <form className="stack" onSubmit={(event) => { event.preventDefault(); loadRecords(); }}>
           <h3>Filter Records</h3>
           <div className="data-columns three no-margin">
-            <SelectField label="Status" value={recordFilters.status} onChange={(status) => setRecordFilters({ ...recordFilters, status })} options={['', 'pending', 'imported', 'failed', 'skipped', 'conflict']} />
-            <SelectField label="Conflict" value={recordFilters.conflictStatus} onChange={(conflictStatus) => setRecordFilters({ ...recordFilters, conflictStatus })} options={['', 'open', 'resolved']} />
-            <TextField label="Source type" value={recordFilters.sourceType} onChange={(sourceType) => setRecordFilters({ ...recordFilters, sourceType })} />
+            <SelectField label="Status" value={recordFilters.status} onChange={(status) => { setFilteredConflictPreview(null); setRecordFilters({ ...recordFilters, status }); }} options={['', 'pending', 'imported', 'failed', 'skipped', 'conflict']} />
+            <SelectField label="Conflict" value={recordFilters.conflictStatus} onChange={(conflictStatus) => { setFilteredConflictPreview(null); setRecordFilters({ ...recordFilters, conflictStatus }); }} options={['', 'open', 'resolved']} />
+            <TextField label="Source type" value={recordFilters.sourceType} onChange={(sourceType) => { setFilteredConflictPreview(null); setRecordFilters({ ...recordFilters, sourceType }); }} />
           </div>
           <button className="secondary-button" disabled={action.pending || !importJobId} type="submit"><FiRefreshCw />Apply filters</button>
         </form>
@@ -531,6 +588,9 @@ export const ImportsPage = ({ context }) => {
             </div>
             <button className="secondary-button" disabled={action.pending || !conflictForm.recordId} type="submit"><FiArrowRight />Resolve</button>
             <button className="secondary-button" disabled={action.pending || bulkConflictIds.length === 0} onClick={resolveSelectedConflicts} type="button"><FiCheck />Resolve selected</button>
+            <button className="secondary-button" disabled={action.pending || !importJobId} onClick={previewFilteredConflicts} type="button"><FiEye />Preview filtered</button>
+            <button className="secondary-button" disabled={action.pending || !filteredConflictPreview?.matched} onClick={resolveFilteredConflicts} type="button"><FiCheck />Resolve filtered</button>
+            <JsonPreview title="Filtered Conflict Preview" value={filteredConflictPreview} />
           </form>
           <form className="stack" onSubmit={rerunMaterialization}>
             <h3>Rerun Snapshot</h3>

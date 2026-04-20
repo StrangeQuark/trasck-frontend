@@ -1615,18 +1615,35 @@ export interface ImportMaterializeRequest {
 export interface ImportConflictBulkResolutionRequest {
   recordIds?: string[];
   resolution?: string;
+  scope?: string;
+  status?: string;
+  conflictStatus?: string;
+  sourceType?: string;
+  expectedCount?: number;
+  confirmation?: string;
 }
 
 export interface ImportConflictBulkResolutionResponse {
   importJobId?: string;
   resolution?: string;
+  scope?: string;
   requested?: number;
   resolved?: number;
   records?: ImportJobRecordResponse[];
 }
 
+export interface ImportConflictBulkResolutionPreviewResponse {
+  importJobId?: string;
+  resolution?: string;
+  scope?: string;
+  matched?: number;
+  records?: ImportJobRecordResponse[];
+}
+
 export interface ImportJobCompleteRequest {
   acceptOpenConflicts?: boolean;
+  openConflictConfirmation?: string;
+  openConflictReason?: string;
 }
 
 export interface ImportConflictResolutionRequest {
@@ -3620,6 +3637,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/conflicts/resolve-preview": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: ImportConflictBulkResolutionRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/import-jobs/{importJobId}/complete": {
     post: {
       path: {
@@ -5592,6 +5619,7 @@ export const apiOperations = {
   "materializeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/materialize" },
   "failImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/fail" },
   "resolveConflicts": { method: "post", path: "/api/v1/import-jobs/{importJobId}/conflicts/resolve" },
+  "previewResolveConflicts": { method: "post", path: "/api/v1/import-jobs/{importJobId}/conflicts/resolve-preview" },
   "completeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/complete" },
   "cancelImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/cancel" },
   "resolveConflict": { method: "post", path: "/api/v1/import-job-records/{recordId}/resolve-conflict" },

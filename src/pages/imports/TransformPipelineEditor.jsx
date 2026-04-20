@@ -8,6 +8,7 @@ import { parseJson, toJsonText } from '../../utils/forms';
 
 const functions = ['trim', 'collapse_whitespace', 'lower', 'upper', 'replace', 'prefix', 'suffix', 'truncate'];
 const targetFields = ['title', 'descriptionMarkdown', 'typeKey', 'statusKey', 'priorityKey', 'visibility'];
+const customTargetField = 'custom...';
 
 const pipelineFor = (value) => {
   if (Array.isArray(value)) {
@@ -43,6 +44,7 @@ const buildStep = (form) => {
 export const TransformPipelineEditor = ({ label, value, onChange }) => {
   const [form, setForm] = useState({
     targetField: 'title',
+    customTargetField: '',
     functionName: 'trim',
     target: '',
     replacement: '',
@@ -51,26 +53,38 @@ export const TransformPipelineEditor = ({ label, value, onChange }) => {
     maxLength: '80',
   });
   const config = parseJson(value, {});
-  const selectedPipeline = pipelineFor(config[form.targetField]);
+  const configuredFields = Object.keys(config).filter((field) => !targetFields.includes(field));
+  const targetFieldOptions = [...targetFields, ...configuredFields, customTargetField];
+  const activeTargetField = form.targetField === customTargetField ? form.customTargetField.trim() : form.targetField;
+  const selectedPipeline = activeTargetField ? pipelineFor(config[activeTargetField]) : [];
 
   const writeConfig = (nextConfig) => onChange(toJsonText(nextConfig));
 
   const addStep = () => {
+    if (!activeTargetField) {
+      return;
+    }
     const next = { ...config };
-    next[form.targetField] = [...selectedPipeline, buildStep(form)];
+    next[activeTargetField] = [...selectedPipeline, buildStep(form)];
     writeConfig(next);
   };
 
   const clearField = () => {
+    if (!activeTargetField) {
+      return;
+    }
     const next = { ...config };
-    delete next[form.targetField];
+    delete next[activeTargetField];
     writeConfig(next);
   };
 
   return (
     <div className="stack">
       <div className="two-column compact">
-        <SelectField label="Transform field" value={form.targetField} onChange={(targetField) => setForm({ ...form, targetField })} options={targetFields} />
+        <SelectField label="Transform field" value={form.targetField} onChange={(targetField) => setForm({ ...form, targetField })} options={targetFieldOptions} />
+        {form.targetField === customTargetField && (
+          <TextField label="Custom field" value={form.customTargetField} onChange={(nextValue) => setForm({ ...form, customTargetField: nextValue })} />
+        )}
         <SelectField label="Function" value={form.functionName} onChange={(functionName) => setForm({ ...form, functionName })} options={functions} />
         {(form.functionName === 'replace') && (
           <>
@@ -87,8 +101,8 @@ export const TransformPipelineEditor = ({ label, value, onChange }) => {
         )}
       </div>
       <div className="button-row wrap">
-        <button className="secondary-button" onClick={addStep} type="button"><FiPlus />Add step</button>
-        <button className="icon-button danger" onClick={clearField} title="Clear field pipeline" type="button"><FiTrash2 /></button>
+        <button className="secondary-button" disabled={!activeTargetField} onClick={addStep} type="button"><FiPlus />Add step</button>
+        <button className="icon-button danger" disabled={!activeTargetField} onClick={clearField} title="Clear field pipeline" type="button"><FiTrash2 /></button>
       </div>
       <JsonPreview title={label + ' Pipeline'} value={config} />
       <Field label={label + ' JSON'}>

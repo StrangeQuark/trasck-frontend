@@ -235,6 +235,13 @@ export const createImportsService = (api) => ({
     });
   },
 
+  previewResolveConflicts(importJobId, request) {
+    return api.request('post', '/api/v1/import-jobs/{importJobId}/conflicts/resolve-preview', {
+      path: { importJobId },
+      body: request,
+    });
+  },
+
   createRecord(importJobId, request) {
     return api.request('post', '/api/v1/import-jobs/{importJobId}/records', {
       path: { importJobId },
