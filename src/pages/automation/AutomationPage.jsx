@@ -288,8 +288,10 @@ export const AutomationPage = ({ context }) => {
   };
 
   const exportWorkerRuns = async () => {
+    const workerQuery = workerTypeFilter === 'all' ? {} : { workerType: workerTypeFilter };
     const result = await action.run(() => context.services.automation.exportWorkerRuns(context.workspaceId, {
       limit: numberOrUndefined(workerForm.limit),
+      ...workerQuery,
     }), 'Worker runs exported');
     if (result) {
       setRunResult(result);
@@ -298,7 +300,8 @@ export const AutomationPage = ({ context }) => {
   };
 
   const pruneWorkerRuns = async () => {
-    const result = await action.run(() => context.services.automation.pruneWorkerRuns(context.workspaceId), 'Worker runs pruned');
+    const workerQuery = workerTypeFilter === 'all' ? {} : { workerType: workerTypeFilter };
+    const result = await action.run(() => context.services.automation.pruneWorkerRuns(context.workspaceId, workerQuery), 'Worker runs pruned');
     if (result) {
       setRunResult(result);
       await load();

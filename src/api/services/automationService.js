@@ -169,9 +169,10 @@ export const createAutomationService = (api) => ({
     });
   },
 
-  pruneWorkerRuns(workspaceId) {
+  pruneWorkerRuns(workspaceId, query = {}) {
     return api.request('post', '/api/v1/workspaces/{workspaceId}/automation-worker-runs/prune', {
       path: { workspaceId },
+      query,
     });
   },
 

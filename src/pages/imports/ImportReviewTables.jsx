@@ -222,7 +222,7 @@ export const ImportJobVersionDiffTable = ({ diffs, onCsvExport }) => {
   );
 };
 
-export const ImportConflictResolutionJobsTable = ({ jobs = [] }) => {
+export const ImportConflictResolutionJobsTable = ({ jobs = [], onCsvExport }) => {
   const rows = asRows(jobs).map((job) => ({
     ...job,
     filters: [
@@ -250,7 +250,7 @@ export const ImportConflictResolutionJobsTable = ({ jobs = [] }) => {
   }
   return (
     <div className="stack">
-      <TableControls columns={columns} csvFilename="import-conflict-resolution-jobs.csv" filter={filter} filterColumn={filterColumn} rows={filteredRows} setFilter={setFilter} setFilterColumn={setFilterColumn} />
+      <TableControls columns={columns} csvFilename="import-conflict-resolution-jobs.csv" filter={filter} filterColumn={filterColumn} onCsvExport={onCsvExport} rows={filteredRows} setFilter={setFilter} setFilterColumn={setFilterColumn} />
       {filteredRows.length === 0 ? <EmptyTableState message="No conflict-resolution jobs match this filter" /> : (
         <div className="table-wrap">
           <table className="data-table">
@@ -285,7 +285,7 @@ export const ImportConflictResolutionJobsTable = ({ jobs = [] }) => {
   );
 };
 
-export const ImportExportJobsTable = ({ jobs = [], onDownload }) => {
+export const ImportExportJobsTable = ({ jobs = [], onCsvExport, onDownload }) => {
   const rows = asRows(jobs).map((job) => ({
     ...job,
     sizeLabel: String(job.sizeBytes ?? 0),
@@ -305,7 +305,7 @@ export const ImportExportJobsTable = ({ jobs = [], onDownload }) => {
   }
   return (
     <div className="stack">
-      <TableControls columns={columns} csvFilename="import-diff-export-artifacts.csv" filter={filter} filterColumn={filterColumn} rows={filteredRows} setFilter={setFilter} setFilterColumn={setFilterColumn} />
+      <TableControls columns={columns} csvFilename="import-diff-export-artifacts.csv" filter={filter} filterColumn={filterColumn} onCsvExport={onCsvExport} rows={filteredRows} setFilter={setFilter} setFilterColumn={setFilterColumn} />
       {filteredRows.length === 0 ? <EmptyTableState message="No import diff export artifacts match this filter" /> : (
         <div className="table-wrap">
           <table className="data-table">
@@ -342,7 +342,7 @@ export const ImportExportJobsTable = ({ jobs = [], onDownload }) => {
   );
 };
 
-export const ImportCompletionMetricsTable = ({ title = 'Import Completion', metrics }) => {
+export const ImportCompletionMetricsTable = ({ title = 'Import Completion', metrics, onCsvExport }) => {
   const rows = metrics ? [{
     scope: title,
     completedJobs: metrics.completedJobs ?? 0,
@@ -364,7 +364,7 @@ export const ImportCompletionMetricsTable = ({ title = 'Import Completion', metr
   }
   return (
     <div className="stack">
-      <TableControls columns={columns} csvFilename={`${title.toLowerCase().replaceAll(' ', '-')}-import-completion.csv`} filter={filter} filterColumn={filterColumn} rows={filteredRows} setFilter={setFilter} setFilterColumn={setFilterColumn} />
+      <TableControls columns={columns} csvFilename={`${title.toLowerCase().replaceAll(' ', '-')}-import-completion.csv`} filter={filter} filterColumn={filterColumn} onCsvExport={onCsvExport} rows={filteredRows} setFilter={setFilter} setFilterColumn={setFilterColumn} />
       {filteredRows.length === 0 ? <EmptyTableState message={`${title} metrics do not match this filter`} /> : (
         <div className="table-wrap">
           <table className="data-table metrics-table">

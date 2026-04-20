@@ -546,6 +546,31 @@ export interface ImportSampleResponse {
   description?: string;
 }
 
+export interface ImportReviewCsvExportJobRequest {
+  tableType?: string;
+  importJobId?: string;
+  projectId?: string;
+  status?: string;
+  exportType?: string;
+  filterColumn?: string;
+  filter?: string;
+}
+
+export interface ExportJobResponse {
+  id?: string;
+  workspaceId?: string;
+  requestedById?: string;
+  exportType?: string;
+  status?: string;
+  fileAttachmentId?: string;
+  filename?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  checksum?: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
 export interface ImportMappingTemplateRequest {
   name?: string;
   provider?: string;
@@ -745,6 +770,7 @@ export interface AutomationWorkerRunHistoryResponse {
 
 export interface AutomationWorkerRunRetentionResponse {
   workspaceId?: string;
+  workerType?: string;
   retentionEnabled?: boolean;
   retentionDays?: number;
   exportBeforePrune?: boolean;
@@ -962,6 +988,29 @@ export interface AgentArtifactResponse {
   createdAt?: string;
 }
 
+export interface AgentDispatchAttemptResponse {
+  id?: string;
+  workspaceId?: string;
+  agentTaskId?: string;
+  providerId?: string;
+  agentProfileId?: string;
+  workItemId?: string;
+  requestedById?: string;
+  attemptType?: string;
+  dispatchMode?: string;
+  providerType?: string;
+  transport?: string;
+  status?: string;
+  externalTaskId?: string;
+  idempotencyKey?: string;
+  externalDispatch?: boolean;
+  requestPayload?: unknown;
+  responsePayload?: unknown;
+  errorMessage?: string;
+  startedAt?: string;
+  finishedAt?: string;
+}
+
 export interface AgentMessageResponse {
   id?: string;
   agentTaskId?: string;
@@ -1004,6 +1053,7 @@ export interface AgentTaskResponse {
   messages?: AgentMessageResponse[];
   artifacts?: AgentArtifactResponse[];
   repositories?: AgentTaskRepositoryLinkResponse[];
+  dispatchAttempts?: AgentDispatchAttemptResponse[];
   callbackHeaderName?: string;
   callbackToken?: string;
 }
@@ -1647,21 +1697,6 @@ export interface ImportJobVersionDiffExportJobRequest {
   format?: string;
   filterColumn?: string;
   filter?: string;
-}
-
-export interface ExportJobResponse {
-  id?: string;
-  workspaceId?: string;
-  requestedById?: string;
-  exportType?: string;
-  status?: string;
-  fileAttachmentId?: string;
-  filename?: string;
-  contentType?: string;
-  sizeBytes?: number;
-  checksum?: string;
-  startedAt?: string;
-  finishedAt?: string;
 }
 
 export interface ImportJobRecordRequest {
@@ -2842,6 +2877,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/import-review/export-jobs": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: ImportReviewCsvExportJobRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/import-mapping-templates": {
     get: {
       path: {
@@ -2971,7 +3016,9 @@ export interface ApiPaths {
       path: {
       workspaceId: string;
     };
-      query: undefined;
+      query: {
+      workerType?: string;
+    };
       body: undefined;
       response: unknown;
     };
@@ -2983,6 +3030,7 @@ export interface ApiPaths {
     };
       query: {
       limit?: number;
+      workerType?: string;
     };
       body: undefined;
       response: unknown;
@@ -5860,6 +5908,7 @@ export const apiOperations = {
   "listTransformPresets": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
   "createTransformPreset": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
   "createSampleImportJob": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-samples/{sampleKey}/jobs" },
+  "createImportReviewCsvExportJob": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-review/export-jobs" },
   "listMappingTemplates": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "createMappingTemplate": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-mapping-templates" },
   "listImportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-jobs" },
