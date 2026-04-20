@@ -2027,10 +2027,12 @@ export interface AutomationWorkerSettingsRequest {
   webhookDeliveriesEnabled?: boolean;
   emailDeliveriesEnabled?: boolean;
   importConflictResolutionEnabled?: boolean;
+  importReviewExportsEnabled?: boolean;
   automationLimit?: number;
   webhookLimit?: number;
   emailLimit?: number;
   importConflictResolutionLimit?: number;
+  importReviewExportLimit?: number;
   webhookMaxAttempts?: number;
   emailMaxAttempts?: number;
   webhookDryRun?: boolean;
@@ -2042,6 +2044,13 @@ export interface AutomationWorkerSettingsRequest {
   workerRunPruningIntervalMinutes?: number;
   workerRunPruningWindowStart?: string;
   workerRunPruningWindowEnd?: string;
+  agentDispatchAttemptRetentionEnabled?: boolean;
+  agentDispatchAttemptRetentionDays?: number;
+  agentDispatchAttemptExportBeforePrune?: boolean;
+  agentDispatchAttemptPruningAutomaticEnabled?: boolean;
+  agentDispatchAttemptPruningIntervalMinutes?: number;
+  agentDispatchAttemptPruningWindowStart?: string;
+  agentDispatchAttemptPruningWindowEnd?: string;
 }
 
 export interface AutomationWorkerSettingsResponse {
@@ -2050,10 +2059,12 @@ export interface AutomationWorkerSettingsResponse {
   webhookDeliveriesEnabled?: boolean;
   emailDeliveriesEnabled?: boolean;
   importConflictResolutionEnabled?: boolean;
+  importReviewExportsEnabled?: boolean;
   automationLimit?: number;
   webhookLimit?: number;
   emailLimit?: number;
   importConflictResolutionLimit?: number;
+  importReviewExportLimit?: number;
   webhookMaxAttempts?: number;
   emailMaxAttempts?: number;
   webhookDryRun?: boolean;
@@ -2067,6 +2078,15 @@ export interface AutomationWorkerSettingsResponse {
   workerRunPruningWindowEnd?: string;
   workerRunPruningLastStartedAt?: string;
   workerRunPruningLastFinishedAt?: string;
+  agentDispatchAttemptRetentionEnabled?: boolean;
+  agentDispatchAttemptRetentionDays?: number;
+  agentDispatchAttemptExportBeforePrune?: boolean;
+  agentDispatchAttemptPruningAutomaticEnabled?: boolean;
+  agentDispatchAttemptPruningIntervalMinutes?: number;
+  agentDispatchAttemptPruningWindowStart?: string;
+  agentDispatchAttemptPruningWindowEnd?: string;
+  agentDispatchAttemptPruningLastStartedAt?: string;
+  agentDispatchAttemptPruningLastFinishedAt?: string;
   updatedAt?: string;
 }
 

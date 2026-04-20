@@ -39,10 +39,12 @@ export const settingsToForm = (settings) => ({
   webhookDeliveriesEnabled: String(Boolean(settings.webhookDeliveriesEnabled)),
   emailDeliveriesEnabled: String(Boolean(settings.emailDeliveriesEnabled)),
   importConflictResolutionEnabled: String(Boolean(settings.importConflictResolutionEnabled)),
+  importReviewExportsEnabled: String(Boolean(settings.importReviewExportsEnabled)),
   automationLimit: String(settings.automationLimit ?? 25),
   webhookLimit: String(settings.webhookLimit ?? 25),
   emailLimit: String(settings.emailLimit ?? 25),
   importConflictResolutionLimit: String(settings.importConflictResolutionLimit ?? 10),
+  importReviewExportLimit: String(settings.importReviewExportLimit ?? 10),
   webhookMaxAttempts: String(settings.webhookMaxAttempts ?? 3),
   emailMaxAttempts: String(settings.emailMaxAttempts ?? 3),
   webhookDryRun: String(settings.webhookDryRun ?? true),
@@ -54,6 +56,13 @@ export const settingsToForm = (settings) => ({
   workerRunPruningIntervalMinutes: String(settings.workerRunPruningIntervalMinutes ?? 1440),
   workerRunPruningWindowStart: String(settings.workerRunPruningWindowStart ?? ''),
   workerRunPruningWindowEnd: String(settings.workerRunPruningWindowEnd ?? ''),
+  agentDispatchAttemptRetentionEnabled: String(Boolean(settings.agentDispatchAttemptRetentionEnabled)),
+  agentDispatchAttemptRetentionDays: String(settings.agentDispatchAttemptRetentionDays ?? 30),
+  agentDispatchAttemptExportBeforePrune: String(settings.agentDispatchAttemptExportBeforePrune ?? true),
+  agentDispatchAttemptPruningAutomaticEnabled: String(Boolean(settings.agentDispatchAttemptPruningAutomaticEnabled)),
+  agentDispatchAttemptPruningIntervalMinutes: String(settings.agentDispatchAttemptPruningIntervalMinutes ?? 1440),
+  agentDispatchAttemptPruningWindowStart: String(settings.agentDispatchAttemptPruningWindowStart ?? ''),
+  agentDispatchAttemptPruningWindowEnd: String(settings.agentDispatchAttemptPruningWindowEnd ?? ''),
 });
 
 export const recordLabel = (record) => {
