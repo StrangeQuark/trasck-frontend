@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { FiCheck, FiDatabase, FiEye, FiPlus, FiRefreshCw, FiSliders, FiUploadCloud, FiX } from 'react-icons/fi';
+import { FiActivity, FiCheck, FiDatabase, FiEye, FiPlus, FiRefreshCw, FiSliders, FiUploadCloud, FiX } from 'react-icons/fi';
 import { DetailLayout } from '../../components/DetailLayout';
 import { ErrorLine } from '../../components/ErrorLine';
 import { Field } from '../../components/Field';
@@ -26,7 +26,11 @@ export const ImportJobDetailPage = ({ context }) => {
   const [recordVersions, setRecordVersions] = useState([]);
   const [recordVersionDiffs, setRecordVersionDiffs] = useState([]);
   const [conflicts, setConflicts] = useState([]);
+  const [conflictResolutionJobs, setConflictResolutionJobs] = useState([]);
+  const [conflictResolutionJobId, setConflictResolutionJobId] = useState('');
   const [materializationRuns, setMaterializationRuns] = useState([]);
+  const [jobVersionDiffs, setJobVersionDiffs] = useState(null);
+  const [jobVersionDiffExport, setJobVersionDiffExport] = useState(null);
   const [materializeResult, setMaterializeResult] = useState(null);
   const [recordEditForm, setRecordEditForm] = useState(importRecordToForm());
   const [conflictForm, setConflictForm] = useState({ recordId: '', resolution: 'create_new' });
@@ -57,16 +61,22 @@ export const ImportJobDetailPage = ({ context }) => {
       context.services.imports.getJob(importJobId),
       context.services.imports.listRecords(importJobId),
       context.services.imports.listConflicts(importJobId),
+      context.services.imports.listConflictResolutionJobs(importJobId),
+      context.services.imports.listJobVersionDiffs(importJobId),
       context.services.imports.listMaterializationRuns(importJobId),
     ]));
     if (result) {
-      const [jobRow, recordRows, conflictRows, runRows] = result;
+      const [jobRow, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows] = result;
       setJob(jobRow);
       setRecords(recordRows || []);
       setConflicts(conflictRows || []);
+      setConflictResolutionJobs(resolutionJobRows || []);
+      setJobVersionDiffs(jobDiffRows || null);
+      setJobVersionDiffExport(null);
       setMaterializationRuns(runRows || []);
       await syncRecordEditForm(recordRows);
       setConflictForm((current) => ({ ...current, recordId: firstId(conflictRows) }));
+      setConflictResolutionJobId((current) => (resolutionJobRows || []).some((jobRow) => jobRow.id === current) ? current : firstId(resolutionJobRows));
       setRerunForm((current) => ({ ...current, materializationRunId: firstId(runRows) }));
     }
   };
@@ -123,6 +133,22 @@ export const ImportJobDetailPage = ({ context }) => {
     }
   };
 
+  const runConflictResolutionJob = async () => {
+    if (!conflictResolutionJobId) {
+      action.setError('Conflict resolution job is required');
+      return;
+    }
+    await action.run(() => context.services.imports.runConflictResolutionJob(conflictResolutionJobId), 'Conflict resolution job ran');
+    await load();
+  };
+
+  const loadJobVersionDiffExport = async () => {
+    const exported = await action.run(() => context.services.imports.exportJobVersionDiffs(importJobId), 'Job diff export loaded');
+    if (exported) {
+      setJobVersionDiffExport(exported);
+    }
+  };
+
   const selectRecordForEdit = async (recordId) => {
     const selected = records.find((record) => record.id === recordId) || null;
     setRecordEditForm(importRecordToForm(selected));
@@ -176,6 +202,11 @@ export const ImportJobDetailPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !conflictForm.recordId} type="submit"><FiCheck />Resolve</button>
         </form>
       </Panel>
+      <Panel title="Conflict Jobs" icon={<FiActivity />}>
+        <RecordSelect label="Resolution job" records={conflictResolutionJobs} value={conflictResolutionJobId} onChange={setConflictResolutionJobId} />
+        <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={runConflictResolutionJob} type="button"><FiActivity />Run job</button>
+        <JsonPreview title="Resolution Jobs" value={conflictResolutionJobs} />
+      </Panel>
       <Panel title="Rerun Snapshot" icon={<FiRefreshCw />}>
         <form className="stack" onSubmit={rerunMaterialization}>
           <RecordSelect label="Run" records={materializationRuns} value={rerunForm.materializationRunId} onChange={(materializationRunId) => setRerunForm({ ...rerunForm, materializationRunId })} />
@@ -198,8 +229,14 @@ export const ImportJobDetailPage = ({ context }) => {
         />
       </Panel>
       <Panel title="Records" icon={<FiEye />} wide>
+        <div className="button-row wrap">
+          <button className="secondary-button" disabled={action.pending} onClick={loadJobVersionDiffExport} type="button"><FiEye />Load job diff export</button>
+        </div>
         <JsonPreview title="Job" value={job} />
         <JsonPreview title="Open Conflicts" value={conflicts} />
+        <JsonPreview title="Conflict Resolution Jobs" value={conflictResolutionJobs} />
+        <JsonPreview title="Job Version Diffs" value={jobVersionDiffs} />
+        <JsonPreview title="Job Version Diff Export" value={jobVersionDiffExport} />
         <JsonPreview title="Materialization Runs" value={materializationRuns} />
         <JsonPreview title="Materialize Result" value={materializeResult} />
         <JsonPreview title="Records" value={records} />

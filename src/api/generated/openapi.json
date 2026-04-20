@@ -5546,6 +5546,47 @@
         }
       }
     },
+    "/api/v1/import-jobs/{importJobId}/conflicts/resolve-async": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "createConflictResolutionJob",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportConflictBulkResolutionRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportConflictResolutionJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-jobs/{importJobId}/complete": {
       "post": {
         "tags": [
@@ -5651,6 +5692,37 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportJobRecordResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-conflict-resolution-jobs/{jobId}/run": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "runConflictResolutionJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportConflictResolutionJobResponse"
                 }
               }
             }
@@ -11381,6 +11453,68 @@
         }
       }
     },
+    "/api/v1/import-jobs/{importJobId}/version-diffs": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listJobVersionDiffs",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobVersionDiffResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-jobs/{importJobId}/version-diffs/export": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "exportJobVersionDiffs",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportJobVersionDiffExportResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-jobs/{importJobId}/materialization-runs": {
       "get": {
         "tags": [
@@ -11441,6 +11575,40 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/ImportJobRecordResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-jobs/{importJobId}/conflict-resolution-jobs": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listConflictResolutionJobs",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportConflictResolutionJobResponse"
                   }
                 }
               }
@@ -11510,6 +11678,37 @@
                   "items": {
                     "$ref": "#/components/schemas/ImportJobRecordVersionDiffResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/import-conflict-resolution-jobs/{jobId}": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "getConflictResolutionJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportConflictResolutionJobResponse"
                 }
               }
             }
@@ -16959,6 +17158,76 @@
           }
         }
       },
+      "ImportConflictResolutionJobResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "requestedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "resolution": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "statusFilter": {
+            "type": "string"
+          },
+          "conflictStatusFilter": {
+            "type": "string"
+          },
+          "sourceTypeFilter": {
+            "type": "string"
+          },
+          "expectedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "matchedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "resolvedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failedCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "errorMessage": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ImportJobCompleteRequest": {
         "type": "object",
         "properties": {
@@ -17914,6 +18183,27 @@
           }
         }
       },
+      "ImportCompletionMetricsResponse": {
+        "type": "object",
+        "properties": {
+          "completedJobs": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "completedWithOpenConflicts": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "acceptedOpenConflictCount": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "lastOpenConflictCompletedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "PortfolioReportSummaryResponse": {
         "type": "object",
         "properties": {
@@ -17943,6 +18233,9 @@
           },
           "cycleTime": {
             "$ref": "#/components/schemas/CycleTimeMetricsResponse"
+          },
+          "importCompletions": {
+            "$ref": "#/components/schemas/ImportCompletionMetricsResponse"
           },
           "byProject": {
             "type": "array",
@@ -18447,6 +18740,9 @@
           "cycleTime": {
             "$ref": "#/components/schemas/CycleTimeMetricsResponse"
           },
+          "importCompletions": {
+            "$ref": "#/components/schemas/ImportCompletionMetricsResponse"
+          },
           "byStatus": {
             "type": "array",
             "items": {
@@ -18625,6 +18921,141 @@
           }
         }
       },
+      "ImportJobRecordFieldDiffResponse": {
+        "type": "object",
+        "properties": {
+          "path": {
+            "type": "string"
+          },
+          "changeType": {
+            "type": "string"
+          },
+          "previousValue": {},
+          "value": {}
+        }
+      },
+      "ImportJobRecordVersionDiffGroupResponse": {
+        "type": "object",
+        "properties": {
+          "recordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "sourceId": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "targetId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "conflictStatus": {
+            "type": "string"
+          },
+          "diffs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJobRecordVersionDiffResponse"
+            }
+          }
+        }
+      },
+      "ImportJobRecordVersionDiffResponse": {
+        "type": "object",
+        "properties": {
+          "versionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "importJobRecordId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "version": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "comparedToVersion": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "changeType": {
+            "type": "string"
+          },
+          "changedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "fields": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJobRecordFieldDiffResponse"
+            }
+          }
+        }
+      },
+      "ImportJobVersionDiffResponse": {
+        "type": "object",
+        "properties": {
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recordCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "versionCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "diffCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJobRecordVersionDiffGroupResponse"
+            }
+          }
+        }
+      },
+      "ImportJobVersionDiffExportResponse": {
+        "type": "object",
+        "properties": {
+          "generatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "importJob": {
+            "$ref": "#/components/schemas/ImportJobResponse"
+          },
+          "diffs": {
+            "$ref": "#/components/schemas/ImportJobVersionDiffResponse"
+          }
+        }
+      },
       "ImportMaterializationRunResponse": {
         "type": "object",
         "properties": {
@@ -18734,61 +19165,6 @@
           "createdAt": {
             "type": "string",
             "format": "date-time"
-          }
-        }
-      },
-      "ImportJobRecordFieldDiffResponse": {
-        "type": "object",
-        "properties": {
-          "path": {
-            "type": "string"
-          },
-          "changeType": {
-            "type": "string"
-          },
-          "previousValue": {},
-          "value": {}
-        }
-      },
-      "ImportJobRecordVersionDiffResponse": {
-        "type": "object",
-        "properties": {
-          "versionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "importJobRecordId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "importJobId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "version": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "comparedToVersion": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "changeType": {
-            "type": "string"
-          },
-          "changedById": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "fields": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/ImportJobRecordFieldDiffResponse"
-            }
           }
         }
       },
