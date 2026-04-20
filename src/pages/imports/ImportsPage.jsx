@@ -48,6 +48,7 @@ export const ImportsPage = ({ context }) => {
   const [transformPresetVersions, setTransformPresetVersions] = useState([]);
   const [records, setRecords] = useState([]);
   const [recordVersions, setRecordVersions] = useState([]);
+  const [recordVersionDiffs, setRecordVersionDiffs] = useState([]);
   const [conflicts, setConflicts] = useState([]);
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
@@ -94,10 +95,16 @@ export const ImportsPage = ({ context }) => {
     const selected = selectedRecordFromRows(recordRows, preferredRecordId, recordEditForm.recordId);
     setRecordEditForm(importRecordToForm(selected));
     if (selected?.id) {
-      const versions = await action.run(() => context.services.imports.listRecordVersions(selected.id));
+      const versionResult = await action.run(() => Promise.all([
+        context.services.imports.listRecordVersions(selected.id),
+        context.services.imports.listRecordVersionDiffs(selected.id),
+      ]));
+      const [versions, diffs] = versionResult || [];
       setRecordVersions(versions || []);
+      setRecordVersionDiffs(diffs || []);
     } else {
       setRecordVersions([]);
+      setRecordVersionDiffs([]);
     }
   };
 
@@ -241,10 +248,16 @@ export const ImportsPage = ({ context }) => {
     const selected = records.find((record) => record.id === recordId) || null;
     setRecordEditForm(importRecordToForm(selected));
     if (selected?.id) {
-      const versions = await action.run(() => context.services.imports.listRecordVersions(selected.id));
+      const versionResult = await action.run(() => Promise.all([
+        context.services.imports.listRecordVersions(selected.id),
+        context.services.imports.listRecordVersionDiffs(selected.id),
+      ]));
+      const [versions, diffs] = versionResult || [];
       setRecordVersions(versions || []);
+      setRecordVersionDiffs(diffs || []);
     } else {
       setRecordVersions([]);
+      setRecordVersionDiffs([]);
     }
   };
 
@@ -253,8 +266,13 @@ export const ImportsPage = ({ context }) => {
     const saved = await action.run(() => context.services.imports.updateRecord(recordEditForm.recordId, importRecordFormToRequest(recordEditForm, parseJsonOrThrow)), 'Record saved');
     if (saved) {
       setRecordEditForm(importRecordToForm(saved));
-      const versions = await action.run(() => context.services.imports.listRecordVersions(saved.id));
+      const versionResult = await action.run(() => Promise.all([
+        context.services.imports.listRecordVersions(saved.id),
+        context.services.imports.listRecordVersionDiffs(saved.id),
+      ]));
+      const [versions, diffs] = versionResult || [];
       setRecordVersions(versions || []);
+      setRecordVersionDiffs(diffs || []);
     }
     await loadRecords();
   };
@@ -609,6 +627,7 @@ export const ImportsPage = ({ context }) => {
           records={records}
           selectedRecord={selectedImportRecord}
           versions={recordVersions}
+          versionDiffs={recordVersionDiffs}
         />
         <JsonRecordEditor
           records={transformPresets}
