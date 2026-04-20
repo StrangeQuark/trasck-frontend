@@ -36,11 +36,22 @@ describe('App', () => {
     ['/planning/boards/00000000-0000-0000-0000-000000000003', 'Board Detail'],
     ['/automation/rules/00000000-0000-0000-0000-000000000004', 'Automation Rule Detail'],
     ['/imports/templates/00000000-0000-0000-0000-000000000005', 'Import Template Detail'],
+    ['/imports/jobs/00000000-0000-0000-0000-000000000006', 'Import Job Detail'],
   ])('renders detail route %s', async (path, title) => {
     window.history.pushState({}, '', path);
 
     render(<App />);
 
     expect(await screen.findByRole('heading', { name: title })).toBeInTheDocument();
+  });
+
+  it('renders import conflict and materialization controls', async () => {
+    window.history.pushState({}, '', '/imports');
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { name: 'Import Job' })).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { name: 'Conflict Review' }).length).toBeGreaterThan(0);
+    expect(screen.getAllByRole('heading', { name: 'Rerun Snapshot' }).length).toBeGreaterThan(0);
   });
 });

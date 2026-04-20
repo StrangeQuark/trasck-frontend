@@ -12,6 +12,11 @@ import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
 import { firstId, numberOrUndefined, parseJson, parseJsonOrThrow, pick } from '../../utils/forms';
 
+const selectedIdOrFirst = (records, selectedId) => {
+  const rows = records || [];
+  return rows.some((record) => record.id === selectedId) ? selectedId : firstId(rows);
+};
+
 export const ImportsPage = ({ context }) => {
   const [jobs, setJobs] = useState([]);
   const [importJobId, setImportJobId] = useState('');
@@ -21,6 +26,7 @@ export const ImportsPage = ({ context }) => {
   const [transformPresetId, setTransformPresetId] = useState('');
   const [transformPresetVersions, setTransformPresetVersions] = useState([]);
   const [records, setRecords] = useState([]);
+  const [conflicts, setConflicts] = useState([]);
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [parseResult, setParseResult] = useState(null);
@@ -49,6 +55,9 @@ export const ImportsPage = ({ context }) => {
   });
   const [materializeForm, setMaterializeForm] = useState({ limit: '25', updateExisting: 'false' });
   const [recordForm, setRecordForm] = useState({ sourceType: 'issue', sourceId: 'MANUAL-1', targetType: 'work_item', targetId: '', rawPayloadText: '{}' });
+  const [cloneForm, setCloneForm] = useState({ versionId: '', name: '', enabled: 'true' });
+  const [conflictForm, setConflictForm] = useState({ recordId: '', resolution: 'create_new' });
+  const [rerunForm, setRerunForm] = useState({ materializationRunId: '', limit: '25' });
   const action = useApiAction(context.addToast);
 
   const load = async () => {
@@ -65,13 +74,14 @@ export const ImportsPage = ({ context }) => {
       const nextJobId = importJobId || firstId(jobRows);
       const nextTemplateId = mappingTemplateId || firstId(templateRows);
       const nextPresetId = transformPresetId || firstId(presetRows);
-      const [job, recordRows, runRows, versionRows] = await Promise.all([
+      const [job, recordRows, conflictRows, runRows, versionRows] = await Promise.all([
         nextJobId ? context.services.imports.getJob(nextJobId) : Promise.resolve(null),
         nextJobId ? context.services.imports.listRecords(nextJobId) : Promise.resolve([]),
+        nextJobId ? context.services.imports.listConflicts(nextJobId) : Promise.resolve([]),
         nextJobId ? context.services.imports.listMaterializationRuns(nextJobId) : Promise.resolve([]),
         nextPresetId ? context.services.imports.listTransformPresetVersions(nextPresetId) : Promise.resolve([]),
       ]);
-      return { jobRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, runRows, versionRows };
+      return { jobRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, conflictRows, runRows, versionRows };
     });
     if (result) {
       setJobs(result.jobRows || []);
@@ -82,8 +92,12 @@ export const ImportsPage = ({ context }) => {
       setTransformPresetId(result.nextPresetId || '');
       setSelectedJob(result.job || null);
       setRecords(result.recordRows || []);
+      setConflicts(result.conflictRows || []);
       setMaterializationRuns(result.runRows || []);
       setTransformPresetVersions(result.versionRows || []);
+      setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(result.conflictRows, current.recordId) }));
+      setRerunForm((current) => ({ ...current, materializationRunId: selectedIdOrFirst(result.runRows, current.materializationRunId) }));
+      setCloneForm((current) => ({ ...current, versionId: selectedIdOrFirst(result.versionRows, current.versionId) }));
     }
   };
 
@@ -176,6 +190,38 @@ export const ImportsPage = ({ context }) => {
     await loadRecords();
   };
 
+  const cloneTransformPresetVersion = async (event) => {
+    event.preventDefault();
+    const preset = await action.run(() => context.services.imports.cloneTransformPresetVersion(transformPresetId, cloneForm.versionId, {
+      name: cloneForm.name || undefined,
+      enabled: cloneForm.enabled === 'true',
+    }), 'Transform preset cloned');
+    if (preset) {
+      setTransformPresetId(preset.id || '');
+      setCloneForm((current) => ({ ...current, name: '', versionId: '' }));
+      await load();
+    }
+  };
+
+  const resolveConflict = async (event) => {
+    event.preventDefault();
+    await action.run(() => context.services.imports.resolveConflict(conflictForm.recordId, {
+      resolution: conflictForm.resolution,
+    }), 'Import conflict resolved');
+    await loadRecords();
+  };
+
+  const rerunMaterialization = async (event) => {
+    event.preventDefault();
+    const result = await action.run(() => context.services.imports.rerunMaterialization(rerunForm.materializationRunId, {
+      limit: numberOrUndefined(rerunForm.limit),
+    }), 'Materialization rerun completed');
+    if (result) {
+      setMaterializeResult(result);
+      await loadRecords();
+    }
+  };
+
   const loadRecords = async () => {
     if (!importJobId) {
       action.setError('Import job is required');
@@ -184,17 +230,17 @@ export const ImportsPage = ({ context }) => {
     const result = await action.run(() => Promise.all([
       context.services.imports.getJob(importJobId),
       context.services.imports.listRecords(importJobId),
+      context.services.imports.listConflicts(importJobId),
+      context.services.imports.listMaterializationRuns(importJobId),
     ]));
     if (result) {
-      const [job, rows] = result;
+      const [job, rows, conflictRows, runs] = result;
       setSelectedJob(job || null);
       setRecords(rows || []);
-      if (job) {
-        const runs = await action.run(() => context.services.imports.listMaterializationRuns(importJobId));
-        if (runs) {
-          setMaterializationRuns(runs || []);
-        }
-      }
+      setConflicts(conflictRows || []);
+      setMaterializationRuns(runs || []);
+      setConflictForm((current) => ({ ...current, recordId: selectedIdOrFirst(conflictRows, current.recordId) }));
+      setRerunForm((current) => ({ ...current, materializationRunId: selectedIdOrFirst(runs, current.materializationRunId) }));
     }
   };
 
@@ -207,6 +253,7 @@ export const ImportsPage = ({ context }) => {
     if (versions) {
       setTransformPresetId(presetId);
       setTransformPresetVersions(versions || []);
+      setCloneForm((current) => ({ ...current, versionId: selectedIdOrFirst(versions, current.versionId) }));
     }
   };
 
@@ -310,6 +357,27 @@ export const ImportsPage = ({ context }) => {
           <RecordSelect label="Version history preset" records={transformPresets} value={transformPresetId} onChange={(presetId) => loadPresetVersions(presetId)} includeBlank />
           <button className="secondary-button" disabled={action.pending || !transformPresetId} onClick={() => loadPresetVersions()} type="button"><FiRefreshCw />Load versions</button>
         </div>
+        <div className="data-columns three no-margin">
+          <form className="stack" onSubmit={cloneTransformPresetVersion}>
+            <h3>Clone Version</h3>
+            <RecordSelect label="Version" records={transformPresetVersions} value={cloneForm.versionId} onChange={(versionId) => setCloneForm({ ...cloneForm, versionId })} />
+            <TextField label="Clone name" value={cloneForm.name} onChange={(name) => setCloneForm({ ...cloneForm, name })} />
+            <SelectField label="Enabled" value={cloneForm.enabled} onChange={(enabled) => setCloneForm({ ...cloneForm, enabled })} options={['true', 'false']} />
+            <button className="secondary-button" disabled={action.pending || !transformPresetId || !cloneForm.versionId} type="submit"><FiPlus />Clone</button>
+          </form>
+          <form className="stack" onSubmit={resolveConflict}>
+            <h3>Conflict Review</h3>
+            <RecordSelect label="Open conflict" records={conflicts} value={conflictForm.recordId} onChange={(recordId) => setConflictForm({ ...conflictForm, recordId })} />
+            <SelectField label="Resolution" value={conflictForm.resolution} onChange={(resolution) => setConflictForm({ ...conflictForm, resolution })} options={['create_new', 'update_existing', 'skip']} />
+            <button className="secondary-button" disabled={action.pending || !conflictForm.recordId} type="submit"><FiArrowRight />Resolve</button>
+          </form>
+          <form className="stack" onSubmit={rerunMaterialization}>
+            <h3>Rerun Snapshot</h3>
+            <RecordSelect label="Run" records={materializationRuns} value={rerunForm.materializationRunId} onChange={(materializationRunId) => setRerunForm({ ...rerunForm, materializationRunId })} />
+            <TextField label="Limit" type="number" value={rerunForm.limit} onChange={(limit) => setRerunForm({ ...rerunForm, limit })} />
+            <button className="secondary-button" disabled={action.pending || !rerunForm.materializationRunId} type="submit"><FiRefreshCw />Rerun</button>
+          </form>
+        </div>
         <JsonRecordEditor
           records={transformPresets}
           title="Transform Presets"
@@ -327,6 +395,7 @@ export const ImportsPage = ({ context }) => {
           <JsonPreview title="Parse Result" value={parseResult} />
           <JsonPreview title="Materialize Result" value={materializeResult} />
           <JsonPreview title="Materialization Runs" value={materializationRuns} />
+          <JsonPreview title="Open Conflicts" value={conflicts} />
           <JsonPreview title="Records" value={records} />
         </div>
       </Panel>
