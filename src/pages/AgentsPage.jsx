@@ -15,11 +15,40 @@ export const AgentsPage = ({ context }) => {
   const [repositories, setRepositories] = useState([]);
   const [workItems, setWorkItems] = useState([]);
   const [task, setTask] = useState(null);
-  const [providerForm, setProviderForm] = useState({ providerKey: 'simulated', providerType: 'simulated', displayName: 'Simulated Agent', dispatchMode: 'simulated' });
+  const [runtimePreview, setRuntimePreview] = useState(null);
+  const [dispatchAttempts, setDispatchAttempts] = useState([]);
+  const [providerForm, setProviderForm] = useState({
+    providerKey: 'simulated',
+    providerType: 'simulated',
+    displayName: 'Simulated Agent',
+    dispatchMode: 'simulated',
+    runtimeMode: 'stub',
+    externalExecutionEnabled: 'false',
+    hostedApiBaseUrl: '',
+    cliWorkerCommandProfile: '',
+  });
   const [profileForm, setProfileForm] = useState({ providerId: '', displayName: 'Trasck Agent', username: 'trasck-agent', roleId: '', projectIds: '' });
   const [repositoryForm, setRepositoryForm] = useState({ provider: 'generic_git', name: 'Local repo', repositoryUrl: '', defaultBranch: 'main' });
   const [taskForm, setTaskForm] = useState({ workItemId: '', agentProfileId: '', repositoryConnectionIds: '', instructions: 'Review this work item and prepare an implementation plan.', message: 'Adding context from the frontend console.' });
+  const [attemptForm, setAttemptForm] = useState({ attemptType: 'all', status: 'all', retentionDays: '30' });
   const action = useApiAction(context.addToast);
+
+  const providerRuntimeConfig = () => ({
+    runtime: {
+      mode: providerForm.runtimeMode,
+      externalExecutionEnabled: providerForm.externalExecutionEnabled === 'true',
+      ...(providerForm.hostedApiBaseUrl ? { hostedApi: { baseUrl: providerForm.hostedApiBaseUrl } } : {}),
+      ...(providerForm.cliWorkerCommandProfile ? { cliWorker: { commandProfile: providerForm.cliWorkerCommandProfile } } : {}),
+    },
+  });
+
+  const attemptQuery = () => ({
+    ...(profileForm.providerId ? { providerId: profileForm.providerId } : {}),
+    ...(context.agentTaskId ? { agentTaskId: context.agentTaskId } : {}),
+    ...(attemptForm.attemptType === 'all' ? {} : { attemptType: attemptForm.attemptType }),
+    ...(attemptForm.status === 'all' ? {} : { status: attemptForm.status }),
+    limit: 25,
+  });
 
   const load = async () => {
     if (!context.workspaceId) {
@@ -31,13 +60,15 @@ export const AgentsPage = ({ context }) => {
       context.services.agents.listProfiles(context.workspaceId),
       context.services.agents.listRepositoryConnections(context.workspaceId),
       context.projectId ? context.services.workItems.listByProject(context.projectId, { limit: 50 }) : Promise.resolve({ items: [] }),
+      context.services.agents.listDispatchAttempts(context.workspaceId, attemptQuery()),
     ]));
     if (result) {
-      const [providerRows, profileRows, repoRows, workItemPage] = result;
+      const [providerRows, profileRows, repoRows, workItemPage, attemptPage] = result;
       setProviders(providerRows || []);
       setProfiles(profileRows || []);
       setRepositories(repoRows || []);
       setWorkItems(workItemPage?.items || []);
+      setDispatchAttempts(attemptPage?.items || []);
       if (!profileForm.providerId && firstId(providerRows)) {
         setProfileForm((current) => ({ ...current, providerId: firstId(providerRows) }));
       }
@@ -53,7 +84,11 @@ export const AgentsPage = ({ context }) => {
   const createProvider = async (event) => {
     event.preventDefault();
     const provider = await action.run(() => context.services.agents.createProvider(context.workspaceId, {
-      ...providerForm,
+      providerKey: providerForm.providerKey,
+      providerType: providerForm.providerType,
+      displayName: providerForm.displayName,
+      dispatchMode: providerForm.dispatchMode,
+      config: providerRuntimeConfig(),
       enabled: true,
     }), 'Provider created');
     if (provider) {
@@ -108,12 +143,62 @@ export const AgentsPage = ({ context }) => {
     const loaded = await action.run(() => context.services.agents.getTask(context.agentTaskId));
     if (loaded) {
       setTask(loaded);
+      setDispatchAttempts(loaded.dispatchAttempts || []);
     }
   };
 
   const taskCommand = async (command, success) => {
     await action.run(() => command(context.agentTaskId), success);
     await loadTask();
+  };
+
+  const previewRuntime = async () => {
+    if (!profileForm.providerId) {
+      action.setError('Provider is required');
+      return;
+    }
+    const preview = await action.run(() => context.services.agents.previewRuntime(profileForm.providerId, {
+      agentProfileId: taskForm.agentProfileId || undefined,
+      workItemId: taskForm.workItemId || undefined,
+      action: 'dispatched',
+    }));
+    if (preview) {
+      setRuntimePreview(preview);
+    }
+  };
+
+  const loadDispatchAttempts = async () => {
+    const page = await action.run(() => context.services.agents.listDispatchAttempts(context.workspaceId, attemptQuery()));
+    if (page) {
+      setDispatchAttempts(page.items || []);
+    }
+  };
+
+  const exportDispatchAttempts = async () => {
+    const exportJob = await action.run(() => context.services.agents.exportDispatchAttempts(context.workspaceId, {
+      ...(profileForm.providerId ? { providerId: profileForm.providerId } : {}),
+      ...(context.agentTaskId ? { agentTaskId: context.agentTaskId } : {}),
+      ...(attemptForm.attemptType === 'all' ? {} : { attemptType: attemptForm.attemptType }),
+      ...(attemptForm.status === 'all' ? {} : { status: attemptForm.status }),
+      limit: 1000,
+    }), 'Dispatch attempts exported');
+    if (exportJob) {
+      setRuntimePreview(exportJob);
+    }
+  };
+
+  const pruneDispatchAttempts = async () => {
+    const result = await action.run(() => context.services.agents.pruneDispatchAttempts(context.workspaceId, {
+      ...(profileForm.providerId ? { providerId: profileForm.providerId } : {}),
+      ...(attemptForm.attemptType === 'all' ? {} : { attemptType: attemptForm.attemptType }),
+      ...(attemptForm.status === 'all' ? {} : { status: attemptForm.status }),
+      retentionDays: Number(attemptForm.retentionDays || 30),
+      exportBeforePrune: true,
+    }), 'Dispatch attempts pruned');
+    if (result) {
+      setRuntimePreview(result);
+      setDispatchAttempts(result.attempts || []);
+    }
   };
 
   return (
@@ -124,6 +209,10 @@ export const AgentsPage = ({ context }) => {
           <SelectField label="Type" value={providerForm.providerType} onChange={(providerType) => setProviderForm({ ...providerForm, providerType })} options={['simulated', 'codex', 'claude_code', 'generic_worker']} />
           <TextField label="Display name" value={providerForm.displayName} onChange={(displayName) => setProviderForm({ ...providerForm, displayName })} />
           <SelectField label="Dispatch" value={providerForm.dispatchMode} onChange={(dispatchMode) => setProviderForm({ ...providerForm, dispatchMode })} options={['simulated', 'polling', 'webhook_push']} />
+          <SelectField label="Runtime" value={providerForm.runtimeMode} onChange={(runtimeMode) => setProviderForm({ ...providerForm, runtimeMode })} options={['stub', 'hosted_api', 'cli_worker']} />
+          <SelectField label="External execution" value={providerForm.externalExecutionEnabled} onChange={(externalExecutionEnabled) => setProviderForm({ ...providerForm, externalExecutionEnabled })} options={['false', 'true']} />
+          <TextField label="Hosted API URL" value={providerForm.hostedApiBaseUrl} onChange={(hostedApiBaseUrl) => setProviderForm({ ...providerForm, hostedApiBaseUrl })} />
+          <TextField label="CLI profile" value={providerForm.cliWorkerCommandProfile} onChange={(cliWorkerCommandProfile) => setProviderForm({ ...providerForm, cliWorkerCommandProfile })} />
           <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create provider</button>
         </form>
       </Panel>
@@ -135,6 +224,7 @@ export const AgentsPage = ({ context }) => {
           <TextField label="Role ID" value={profileForm.roleId} onChange={(roleId) => setProfileForm({ ...profileForm, roleId })} />
           <TextField label="Project IDs" value={profileForm.projectIds} onChange={(projectIds) => setProfileForm({ ...profileForm, projectIds })} />
           <button className="primary-button" disabled={action.pending || !profileForm.providerId} type="submit"><FiPlus />Create profile</button>
+          <button className="secondary-button" disabled={action.pending || !profileForm.providerId} onClick={previewRuntime} type="button"><FiEye />Preview runtime</button>
         </form>
       </Panel>
       <Panel title="Repository" icon={<FiDatabase />}>
@@ -169,8 +259,42 @@ export const AgentsPage = ({ context }) => {
         <ErrorLine message={action.error} />
       </Panel>
       <Panel title="Agent Records" icon={<FiEye />} wide>
-        <div className="button-row">
+        <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
+          <SelectField label="Attempt" value={attemptForm.attemptType} onChange={(attemptType) => setAttemptForm({ ...attemptForm, attemptType })} options={['all', 'dispatch', 'retry', 'cancel']} />
+          <SelectField label="Status" value={attemptForm.status} onChange={(status) => setAttemptForm({ ...attemptForm, status })} options={['all', 'succeeded', 'failed']} />
+          <TextField label="Retention days" type="number" value={attemptForm.retentionDays} onChange={(retentionDays) => setAttemptForm({ ...attemptForm, retentionDays })} />
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadDispatchAttempts} type="button">Attempts</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={exportDispatchAttempts} type="button">Export attempts</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={pruneDispatchAttempts} type="button">Prune attempts</button>
+        </div>
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Provider</th>
+                <th>Transport</th>
+                <th>External</th>
+                <th>Started</th>
+                <th>Error</th>
+              </tr>
+            </thead>
+            <tbody>
+              {dispatchAttempts.map((attempt) => (
+                <tr key={attempt.id}>
+                  <td>{attempt.attemptType}</td>
+                  <td><span className={attempt.status === 'succeeded' ? 'status-pill active' : 'status-pill'}>{attempt.status}</span></td>
+                  <td>{attempt.providerType}</td>
+                  <td>{attempt.transport}</td>
+                  <td>{attempt.externalDispatch ? 'true' : 'false'}</td>
+                  <td>{attempt.startedAt ? new Date(attempt.startedAt).toLocaleString() : ''}</td>
+                  <td className="truncate-cell">{attempt.errorMessage || ''}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
         <div className="data-columns">
           <JsonPreview title="Providers" value={providers} />
@@ -178,6 +302,8 @@ export const AgentsPage = ({ context }) => {
           <JsonPreview title="Repositories" value={repositories} />
           <JsonPreview title="Work Items" value={workItems} />
           <JsonPreview title="Task" value={task} />
+          <JsonPreview title="Runtime Preview" value={runtimePreview} />
+          <JsonPreview title="Dispatch Attempts" value={dispatchAttempts} />
         </div>
       </Panel>
     </div>

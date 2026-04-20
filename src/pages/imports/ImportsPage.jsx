@@ -68,6 +68,7 @@ export const ImportsPage = ({ context }) => {
   const [conflictResolutionJobId, setConflictResolutionJobId] = useState('');
   const [conflictResolutionJobStatus, setConflictResolutionJobStatus] = useState('');
   const [conflictResolutionWorkerResult, setConflictResolutionWorkerResult] = useState(null);
+  const [reviewExportWorkerResult, setReviewExportWorkerResult] = useState(null);
   const [materializationRuns, setMaterializationRuns] = useState([]);
   const [jobVersionDiffs, setJobVersionDiffs] = useState(null);
   const [jobVersionDiffExport, setJobVersionDiffExport] = useState(null);
@@ -555,6 +556,51 @@ export const ImportsPage = ({ context }) => {
     filterColumn,
   });
 
+  const createImportReviewCsvExportJob = async (request) => {
+    if (!context.workspaceId) {
+      action.setError('Workspace ID is required');
+      return;
+    }
+    const exportJob = await action.run(() => context.services.imports.createReviewCsvExportJob(context.workspaceId, request), 'Import review export queued');
+    if (exportJob) {
+      setJobVersionDiffExportJob(exportJob);
+      setExportJobs((current) => [exportJob, ...current.filter((job) => job.id !== exportJob.id)].slice(0, 20));
+    }
+  };
+
+  const processReviewCsvExportJobs = async () => {
+    if (!context.workspaceId) {
+      action.setError('Workspace ID is required');
+      return;
+    }
+    const result = await action.run(() => context.services.imports.processReviewCsvExportJobs(context.workspaceId, { limit: 10 }), 'Import review exports processed');
+    if (result) {
+      setReviewExportWorkerResult(result);
+      setExportJobs((current) => [...(result.jobs || []), ...current.filter((job) => !(result.jobs || []).some((processed) => processed.id === job.id))].slice(0, 20));
+    }
+  };
+
+  const createConflictJobsCsvExportJob = (scope = {}) => ({ filter, filterColumn }) => createImportReviewCsvExportJob({
+    tableType: 'conflict_resolution_jobs',
+    filter,
+    filterColumn,
+    ...scope,
+  });
+
+  const createExportJobsCsvExportJob = ({ filter, filterColumn }) => createImportReviewCsvExportJob({
+    tableType: 'export_jobs',
+    exportType: 'import_job_version_diffs',
+    filter,
+    filterColumn,
+  });
+
+  const createCompletionCsvExportJob = (tableType, extra = {}) => ({ filter, filterColumn }) => createImportReviewCsvExportJob({
+    tableType,
+    filter,
+    filterColumn,
+    ...extra,
+  });
+
   const downloadExportJob = async (exportJob) => {
     if (!context.workspaceId || !exportJob?.id) {
       action.setError('Export job is required');
@@ -795,12 +841,14 @@ export const ImportsPage = ({ context }) => {
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadImportOpsAudit} type="button"><FiRefreshCw />Load audit</button>
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processConflictResolutionJobs} type="button"><FiActivity />Process queued</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processReviewCsvExportJobs} type="button"><FiActivity />Process review exports</button>
         </div>
         <JsonPreview title="Worker Result" value={conflictResolutionWorkerResult} />
-        <ImportConflictResolutionJobsTable jobs={workspaceConflictResolutionJobs} />
-        <ImportExportJobsTable jobs={exportJobs} onDownload={downloadExportJob} />
-        <ImportCompletionMetricsTable title="Project" metrics={projectImportCompletions} />
-        <ImportCompletionMetricsTable title="Workspace" metrics={workspaceImportCompletions} />
+        <JsonPreview title="Review Export Result" value={reviewExportWorkerResult} />
+        <ImportConflictResolutionJobsTable jobs={workspaceConflictResolutionJobs} onCsvExport={createConflictJobsCsvExportJob({ status: conflictResolutionJobStatus || undefined })} />
+        <ImportExportJobsTable jobs={exportJobs} onCsvExport={createExportJobsCsvExportJob} onDownload={downloadExportJob} />
+        <ImportCompletionMetricsTable title="Project" metrics={projectImportCompletions} onCsvExport={createCompletionCsvExportJob('project_completion', { projectId: context.projectId || undefined })} />
+        <ImportCompletionMetricsTable title="Workspace" metrics={workspaceImportCompletions} onCsvExport={createCompletionCsvExportJob('workspace_completion')} />
       </Panel>
       <Panel title="Import Records" icon={<FiEye />} wide>
         <ErrorLine message={action.error} />
@@ -873,7 +921,7 @@ export const ImportsPage = ({ context }) => {
               <button className="icon-button danger" disabled={action.pending || !conflictResolutionJobId} onClick={cancelConflictResolutionJob} title="Cancel conflict resolution job" type="button"><FiX /></button>
             </div>
             <JsonPreview title="Filtered Conflict Preview" value={filteredConflictPreview} />
-            <ImportConflictResolutionJobsTable jobs={conflictResolutionJobs} />
+            <ImportConflictResolutionJobsTable jobs={conflictResolutionJobs} onCsvExport={createConflictJobsCsvExportJob({ importJobId })} />
           </form>
           <form className="stack" onSubmit={rerunMaterialization}>
             <h3>Rerun Snapshot</h3>
@@ -907,7 +955,7 @@ export const ImportsPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={() => createJobVersionDiffExportJob()} type="button"><FiPlus />Create export artifact</button>
         </div>
         <ImportJobVersionDiffTable diffs={jobVersionDiffs} onCsvExport={createJobVersionDiffCsvExportJob} />
-        <ImportExportJobsTable jobs={exportJobs} onDownload={downloadExportJob} />
+        <ImportExportJobsTable jobs={exportJobs} onCsvExport={createExportJobsCsvExportJob} onDownload={downloadExportJob} />
         <div className="data-columns">
           <JsonPreview title="Jobs" value={jobs} />
           <JsonPreview title="Templates" value={templates} />

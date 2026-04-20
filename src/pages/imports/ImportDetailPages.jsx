@@ -39,6 +39,7 @@ export const ImportJobDetailPage = ({ context }) => {
   const [jobVersionDiffExportJob, setJobVersionDiffExportJob] = useState(null);
   const [exportJobs, setExportJobs] = useState([]);
   const [conflictResolutionWorkerResult, setConflictResolutionWorkerResult] = useState(null);
+  const [reviewExportWorkerResult, setReviewExportWorkerResult] = useState(null);
   const [materializeResult, setMaterializeResult] = useState(null);
   const [recordEditForm, setRecordEditForm] = useState(importRecordToForm());
   const [conflictForm, setConflictForm] = useState({ recordId: '', resolution: 'create_new' });
@@ -207,6 +208,44 @@ export const ImportJobDetailPage = ({ context }) => {
     filterColumn,
   });
 
+  const createImportReviewCsvExportJob = async (request) => {
+    if (!context.workspaceId) {
+      action.setError('Workspace ID is required');
+      return;
+    }
+    const exportJob = await action.run(() => context.services.imports.createReviewCsvExportJob(context.workspaceId, request), 'Import review export queued');
+    if (exportJob) {
+      setJobVersionDiffExportJob(exportJob);
+      setExportJobs((current) => [exportJob, ...current.filter((job) => job.id !== exportJob.id)].slice(0, 20));
+    }
+  };
+
+  const processReviewCsvExportJobs = async () => {
+    if (!context.workspaceId) {
+      action.setError('Workspace ID is required');
+      return;
+    }
+    const result = await action.run(() => context.services.imports.processReviewCsvExportJobs(context.workspaceId, { limit: 10 }), 'Import review exports processed');
+    if (result) {
+      setReviewExportWorkerResult(result);
+      setExportJobs((current) => [...(result.jobs || []), ...current.filter((job) => !(result.jobs || []).some((processed) => processed.id === job.id))].slice(0, 20));
+    }
+  };
+
+  const createConflictJobsCsvExportJob = ({ filter, filterColumn }) => createImportReviewCsvExportJob({
+    tableType: 'conflict_resolution_jobs',
+    importJobId,
+    filter,
+    filterColumn,
+  });
+
+  const createExportJobsCsvExportJob = ({ filter, filterColumn }) => createImportReviewCsvExportJob({
+    tableType: 'export_jobs',
+    exportType: 'import_job_version_diffs',
+    filter,
+    filterColumn,
+  });
+
   const downloadExportJob = async (exportJob) => {
     if (!context.workspaceId || !exportJob?.id) {
       action.setError('Export job is required');
@@ -282,10 +321,12 @@ export const ImportJobDetailPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={runConflictResolutionJob} type="button"><FiActivity />Run job</button>
           <button className="secondary-button" disabled={action.pending || !conflictResolutionJobId} onClick={retryConflictResolutionJob} type="button"><FiRefreshCw />Retry job</button>
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processConflictResolutionJobs} type="button"><FiActivity />Process queued</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processReviewCsvExportJobs} type="button"><FiActivity />Process review exports</button>
           <button className="icon-button danger" disabled={action.pending || !conflictResolutionJobId} onClick={cancelConflictResolutionJob} title="Cancel conflict resolution job" type="button"><FiX /></button>
         </div>
         <JsonPreview title="Worker Result" value={conflictResolutionWorkerResult} />
-        <ImportConflictResolutionJobsTable jobs={conflictResolutionJobs} />
+        <JsonPreview title="Review Export Result" value={reviewExportWorkerResult} />
+        <ImportConflictResolutionJobsTable jobs={conflictResolutionJobs} onCsvExport={createConflictJobsCsvExportJob} />
       </Panel>
       <Panel title="Rerun Snapshot" icon={<FiRefreshCw />}>
         <form className="stack" onSubmit={rerunMaterialization}>
@@ -315,9 +356,9 @@ export const ImportJobDetailPage = ({ context }) => {
         </div>
         <JsonPreview title="Job" value={job} />
         <JsonPreview title="Open Conflicts" value={conflicts} />
-        <ImportConflictResolutionJobsTable jobs={conflictResolutionJobs} />
+        <ImportConflictResolutionJobsTable jobs={conflictResolutionJobs} onCsvExport={createConflictJobsCsvExportJob} />
         <ImportJobVersionDiffTable diffs={jobVersionDiffs} onCsvExport={createJobVersionDiffCsvExportJob} />
-        <ImportExportJobsTable jobs={exportJobs} onDownload={downloadExportJob} />
+        <ImportExportJobsTable jobs={exportJobs} onCsvExport={createExportJobsCsvExportJob} onDownload={downloadExportJob} />
         <JsonPreview title="Job Version Diff Export" value={jobVersionDiffExport} />
         <JsonPreview title="Job Version Diff Export Artifact" value={jobVersionDiffExportJob} />
         <JsonPreview title="Materialization Runs" value={materializationRuns} />
