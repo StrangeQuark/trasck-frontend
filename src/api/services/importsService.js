@@ -12,6 +12,32 @@ export const createImportsService = (api) => ({
     });
   },
 
+  listMappingTemplates(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/import-mapping-templates', {
+      path: { workspaceId },
+    });
+  },
+
+  createMappingTemplate(workspaceId, request) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/import-mapping-templates', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
+  updateMappingTemplate(mappingTemplateId, request) {
+    return api.request('patch', '/api/v1/import-mapping-templates/{mappingTemplateId}', {
+      path: { mappingTemplateId },
+      body: request,
+    });
+  },
+
+  deleteMappingTemplate(mappingTemplateId) {
+    return api.request('delete', '/api/v1/import-mapping-templates/{mappingTemplateId}', {
+      path: { mappingTemplateId },
+    });
+  },
+
   getJob(importJobId) {
     return api.request('get', '/api/v1/import-jobs/{importJobId}', {
       path: { importJobId },
@@ -20,6 +46,13 @@ export const createImportsService = (api) => ({
 
   parse(importJobId, request) {
     return api.request('post', '/api/v1/import-jobs/{importJobId}/parse', {
+      path: { importJobId },
+      body: request,
+    });
+  },
+
+  materialize(importJobId, request) {
+    return api.request('post', '/api/v1/import-jobs/{importJobId}/materialize', {
       path: { importJobId },
       body: request,
     });

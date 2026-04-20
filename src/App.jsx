@@ -1062,6 +1062,10 @@ const AutomationPage = ({ context }) => {
   const [webhooks, setWebhooks] = useState([]);
   const [webhookId, setWebhookId] = useState('');
   const [webhookDeliveries, setWebhookDeliveries] = useState([]);
+  const [webhookDeliveryId, setWebhookDeliveryId] = useState('');
+  const [emailDeliveries, setEmailDeliveries] = useState([]);
+  const [emailDeliveryId, setEmailDeliveryId] = useState('');
+  const [workerSettings, setWorkerSettings] = useState(null);
   const [rules, setRules] = useState([]);
   const [ruleId, setRuleId] = useState('');
   const [jobs, setJobs] = useState([]);
@@ -1072,9 +1076,21 @@ const AutomationPage = ({ context }) => {
   const [webhookForm, setWebhookForm] = useState({ name: 'Automation Webhook', url: 'https://example.com/hooks/trasck', secret: '', eventTypesText: JSON.stringify(['automation.rule_executed'], null, 2), enabled: 'true' });
   const [ruleForm, setRuleForm] = useState({ name: 'Notify on update', triggerType: 'manual', triggerConfigText: '{}' });
   const [conditionForm, setConditionForm] = useState({ conditionType: 'always', configText: '{}', position: '1' });
-  const [actionForm, setActionForm] = useState({ actionType: 'email', executionMode: 'async', configText: JSON.stringify({ subject: 'Automation ran', body: 'Trasck queued the email delivery action.' }, null, 2), position: '1' });
+  const [actionForm, setActionForm] = useState({ actionType: 'email', executionMode: 'async', configText: JSON.stringify({ toEmail: 'admin@trasck.local', subject: 'Automation ran', body: 'Trasck queued the email delivery action.' }, null, 2), position: '1' });
   const [executeForm, setExecuteForm] = useState({ sourceEntityType: 'work_item', sourceEntityId: '', payloadText: '{}' });
   const [workerForm, setWorkerForm] = useState({ limit: '10', maxAttempts: '3', dryRun: 'true' });
+  const [workerSettingsForm, setWorkerSettingsForm] = useState({
+    automationJobsEnabled: 'false',
+    webhookDeliveriesEnabled: 'false',
+    emailDeliveriesEnabled: 'false',
+    automationLimit: '25',
+    webhookLimit: '25',
+    emailLimit: '25',
+    webhookMaxAttempts: '3',
+    emailMaxAttempts: '3',
+    webhookDryRun: 'true',
+    emailDryRun: 'true',
+  });
   const action = useApiAction(context.addToast);
 
   const load = async () => {
@@ -1083,21 +1099,24 @@ const AutomationPage = ({ context }) => {
       return;
     }
     const result = await action.run(async () => {
-      const [notificationPage, preferenceRows, defaultRows, webhookRows, ruleRows, workItemPage] = await Promise.all([
+      const [notificationPage, preferenceRows, defaultRows, webhookRows, ruleRows, workItemPage, settings, emailRows] = await Promise.all([
         context.services.automation.listNotifications(context.workspaceId, { limit: 25 }),
         context.services.automation.listPreferences(context.workspaceId),
         context.services.automation.listDefaultPreferences(context.workspaceId),
         context.services.automation.listWebhooks(context.workspaceId),
         context.services.automation.listRules(context.workspaceId),
         context.projectId ? context.services.workItems.listByProject(context.projectId, { limit: 50 }) : Promise.resolve({ items: [] }),
+        context.services.automation.getWorkerSettings(context.workspaceId),
+        context.services.automation.listEmailDeliveries(context.workspaceId),
       ]);
       const nextWebhookId = webhookId || firstId(webhookRows);
       const nextRuleId = ruleId || firstId(ruleRows);
+      const nextEmailDeliveryId = emailDeliveryId || firstId(emailRows);
       const [deliveryRows, jobRows] = await Promise.all([
         nextWebhookId ? context.services.automation.listWebhookDeliveries(nextWebhookId) : Promise.resolve([]),
         nextRuleId ? context.services.automation.listJobs(nextRuleId) : Promise.resolve([]),
       ]);
-      return { notificationPage, preferenceRows, defaultRows, webhookRows, ruleRows, workItemRows: workItemPage?.items || [], nextWebhookId, nextRuleId, deliveryRows, jobRows };
+      return { notificationPage, preferenceRows, defaultRows, webhookRows, ruleRows, workItemRows: workItemPage?.items || [], settings, emailRows, nextWebhookId, nextRuleId, nextEmailDeliveryId, deliveryRows, jobRows };
     });
     if (result) {
       setNotifications(result.notificationPage || null);
@@ -1106,10 +1125,17 @@ const AutomationPage = ({ context }) => {
       setWebhooks(result.webhookRows || []);
       setRules(result.ruleRows || []);
       setWorkItems(result.workItemRows || []);
+      setWorkerSettings(result.settings || null);
+      setEmailDeliveries(result.emailRows || []);
       setWebhookId(result.nextWebhookId || '');
       setRuleId(result.nextRuleId || '');
+      setEmailDeliveryId(result.nextEmailDeliveryId || '');
       setWebhookDeliveries(result.deliveryRows || []);
+      setWebhookDeliveryId(firstId(result.deliveryRows) || '');
       setJobs(result.jobRows || []);
+      if (result.settings) {
+        setWorkerSettingsForm(settingsToForm(result.settings));
+      }
       if (!executeForm.sourceEntityId && firstId(result.workItemRows)) {
         setExecuteForm((current) => ({ ...current, sourceEntityId: firstId(result.workItemRows) }));
       }
@@ -1246,6 +1272,67 @@ const AutomationPage = ({ context }) => {
     }
   };
 
+  const processEmails = async () => {
+    const result = await action.run(() => context.services.automation.processEmailDeliveries(context.workspaceId, {
+      limit: numberOrUndefined(workerForm.limit),
+      maxAttempts: numberOrUndefined(workerForm.maxAttempts),
+      dryRun: workerForm.dryRun === 'true',
+    }), 'Email worker run');
+    if (result) {
+      setRunResult(result);
+      await loadEmailDeliveries();
+    }
+  };
+
+  const saveWorkerSettings = async () => {
+    const settings = await action.run(() => context.services.automation.updateWorkerSettings(context.workspaceId, {
+      automationJobsEnabled: workerSettingsForm.automationJobsEnabled === 'true',
+      webhookDeliveriesEnabled: workerSettingsForm.webhookDeliveriesEnabled === 'true',
+      emailDeliveriesEnabled: workerSettingsForm.emailDeliveriesEnabled === 'true',
+      automationLimit: numberOrUndefined(workerSettingsForm.automationLimit),
+      webhookLimit: numberOrUndefined(workerSettingsForm.webhookLimit),
+      emailLimit: numberOrUndefined(workerSettingsForm.emailLimit),
+      webhookMaxAttempts: numberOrUndefined(workerSettingsForm.webhookMaxAttempts),
+      emailMaxAttempts: numberOrUndefined(workerSettingsForm.emailMaxAttempts),
+      webhookDryRun: workerSettingsForm.webhookDryRun === 'true',
+      emailDryRun: workerSettingsForm.emailDryRun === 'true',
+    }), 'Worker settings saved');
+    if (settings) {
+      setWorkerSettings(settings);
+      setWorkerSettingsForm(settingsToForm(settings));
+    }
+  };
+
+  const loadEmailDeliveries = async () => {
+    const rows = await action.run(() => context.services.automation.listEmailDeliveries(context.workspaceId));
+    if (rows) {
+      setEmailDeliveries(rows || []);
+      setEmailDeliveryId(emailDeliveryId || firstId(rows) || '');
+    }
+  };
+
+  const webhookDeliveryCommand = async (command, success) => {
+    if (!webhookDeliveryId) {
+      action.setError('Webhook delivery is required');
+      return;
+    }
+    const delivery = await action.run(() => command(webhookDeliveryId), success);
+    if (delivery) {
+      await loadWebhookDeliveries();
+    }
+  };
+
+  const emailDeliveryCommand = async (command, success) => {
+    if (!emailDeliveryId) {
+      action.setError('Email delivery is required');
+      return;
+    }
+    const delivery = await action.run(() => command(emailDeliveryId), success);
+    if (delivery) {
+      await loadEmailDeliveries();
+    }
+  };
+
   const useSelectedWebhookConfig = () => {
     if (!webhookId) {
       return;
@@ -1331,20 +1418,51 @@ const AutomationPage = ({ context }) => {
           <SelectField label="Dry run" value={workerForm.dryRun} onChange={(dryRun) => setWorkerForm({ ...workerForm, dryRun })} options={['true', 'false']} />
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={runQueuedJobs} type="button">Run jobs</button>
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processDeliveries} type="button">Run deliveries</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processEmails} type="button">Run emails</button>
+        </div>
+        <div className="data-columns two no-margin">
+          <div className="stack nested-form">
+            <div className="two-column compact">
+              <SelectField label="Job schedule" value={workerSettingsForm.automationJobsEnabled} onChange={(automationJobsEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, automationJobsEnabled })} options={['false', 'true']} />
+              <SelectField label="Webhook schedule" value={workerSettingsForm.webhookDeliveriesEnabled} onChange={(webhookDeliveriesEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, webhookDeliveriesEnabled })} options={['false', 'true']} />
+              <SelectField label="Email schedule" value={workerSettingsForm.emailDeliveriesEnabled} onChange={(emailDeliveriesEnabled) => setWorkerSettingsForm({ ...workerSettingsForm, emailDeliveriesEnabled })} options={['false', 'true']} />
+              <TextField label="Job limit" type="number" value={workerSettingsForm.automationLimit} onChange={(automationLimit) => setWorkerSettingsForm({ ...workerSettingsForm, automationLimit })} />
+              <TextField label="Webhook limit" type="number" value={workerSettingsForm.webhookLimit} onChange={(webhookLimit) => setWorkerSettingsForm({ ...workerSettingsForm, webhookLimit })} />
+              <TextField label="Email limit" type="number" value={workerSettingsForm.emailLimit} onChange={(emailLimit) => setWorkerSettingsForm({ ...workerSettingsForm, emailLimit })} />
+              <TextField label="Webhook attempts" type="number" value={workerSettingsForm.webhookMaxAttempts} onChange={(webhookMaxAttempts) => setWorkerSettingsForm({ ...workerSettingsForm, webhookMaxAttempts })} />
+              <TextField label="Email attempts" type="number" value={workerSettingsForm.emailMaxAttempts} onChange={(emailMaxAttempts) => setWorkerSettingsForm({ ...workerSettingsForm, emailMaxAttempts })} />
+              <SelectField label="Webhook dry" value={workerSettingsForm.webhookDryRun} onChange={(webhookDryRun) => setWorkerSettingsForm({ ...workerSettingsForm, webhookDryRun })} options={['true', 'false']} />
+              <SelectField label="Email dry" value={workerSettingsForm.emailDryRun} onChange={(emailDryRun) => setWorkerSettingsForm({ ...workerSettingsForm, emailDryRun })} options={['true', 'false']} />
+            </div>
+            <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={saveWorkerSettings} type="button"><FiCheck />Save worker settings</button>
+          </div>
+          <div className="stack nested-form">
+            <RecordSelect label="Webhook delivery" records={webhookDeliveries} value={webhookDeliveryId} onChange={setWebhookDeliveryId} />
+            <RecordSelect label="Email delivery" records={emailDeliveries} value={emailDeliveryId} onChange={setEmailDeliveryId} />
+            <div className="button-row wrap">
+              <button className="secondary-button" disabled={action.pending || !webhookDeliveryId} onClick={() => webhookDeliveryCommand(context.services.automation.retryWebhookDelivery, 'Webhook delivery queued')} type="button">Retry webhook</button>
+              <button className="icon-button danger" disabled={action.pending || !webhookDeliveryId} onClick={() => webhookDeliveryCommand(context.services.automation.cancelWebhookDelivery, 'Webhook delivery canceled')} title="Cancel webhook delivery" type="button"><FiX /></button>
+              <button className="secondary-button" disabled={action.pending || !emailDeliveryId} onClick={() => emailDeliveryCommand(context.services.automation.retryEmailDelivery, 'Email delivery queued')} type="button">Retry email</button>
+              <button className="icon-button danger" disabled={action.pending || !emailDeliveryId} onClick={() => emailDeliveryCommand(context.services.automation.cancelEmailDelivery, 'Email delivery canceled')} title="Cancel email delivery" type="button"><FiX /></button>
+            </div>
+          </div>
         </div>
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
           <button className="secondary-button" disabled={action.pending || !ruleId} onClick={loadRuleJobs} type="button">Rule jobs</button>
           <RecordSelect label="Webhook" records={webhooks} value={webhookId} onChange={setWebhookId} />
           <button className="secondary-button" disabled={action.pending || !webhookId} onClick={loadWebhookDeliveries} type="button">Deliveries</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadEmailDeliveries} type="button">Emails</button>
         </div>
         <ErrorLine message={action.error} />
         <div className="data-columns">
           <JsonPreview title="Notifications" value={notifications} />
           <JsonPreview title="Preferences" value={preferences} />
           <JsonPreview title="Defaults" value={defaultPreferences} />
+          <JsonPreview title="Worker Settings" value={workerSettings} />
           <JsonPreview title="Webhooks" value={webhooks} />
           <JsonPreview title="Deliveries" value={webhookDeliveries} />
+          <JsonPreview title="Emails" value={emailDeliveries} />
           <JsonPreview title="Rules" value={rules} />
           <JsonPreview title="Jobs" value={jobs} />
           <JsonPreview title="Run Result" value={runResult} />
@@ -1357,15 +1475,27 @@ const AutomationPage = ({ context }) => {
 const ImportsPage = ({ context }) => {
   const [jobs, setJobs] = useState([]);
   const [importJobId, setImportJobId] = useState('');
+  const [templates, setTemplates] = useState([]);
+  const [mappingTemplateId, setMappingTemplateId] = useState('');
   const [records, setRecords] = useState([]);
   const [selectedJob, setSelectedJob] = useState(null);
   const [parseResult, setParseResult] = useState(null);
+  const [materializeResult, setMaterializeResult] = useState(null);
   const [jobForm, setJobForm] = useState({ provider: 'csv', configText: JSON.stringify({ targetProjectId: '' }, null, 2) });
+  const [templateForm, setTemplateForm] = useState({
+    name: 'Default work item mapping',
+    provider: 'csv',
+    sourceType: 'row',
+    workItemTypeKey: 'story',
+    fieldMappingText: JSON.stringify({ title: ['title', 'summary', 'fields.summary', 'Name'], descriptionMarkdown: ['description', 'fields.description', 'Description'] }, null, 2),
+    defaultsText: JSON.stringify({ descriptionMarkdown: 'Imported through Trasck' }, null, 2),
+    enabled: 'true',
+  });
   const [parseForm, setParseForm] = useState({
     sourceType: '',
-    mappingText: '{}',
     content: 'key,title,type\nTRASCK-1,Imported story,story',
   });
+  const [materializeForm, setMaterializeForm] = useState({ limit: '25', updateExisting: 'false' });
   const [recordForm, setRecordForm] = useState({ sourceType: 'issue', sourceId: 'MANUAL-1', targetType: 'work_item', targetId: '', rawPayloadText: '{}' });
   const action = useApiAction(context.addToast);
 
@@ -1375,17 +1505,23 @@ const ImportsPage = ({ context }) => {
       return;
     }
     const result = await action.run(async () => {
-      const jobRows = await context.services.imports.listJobs(context.workspaceId);
+      const [jobRows, templateRows] = await Promise.all([
+        context.services.imports.listJobs(context.workspaceId),
+        context.services.imports.listMappingTemplates(context.workspaceId),
+      ]);
       const nextJobId = importJobId || firstId(jobRows);
+      const nextTemplateId = mappingTemplateId || firstId(templateRows);
       const [job, recordRows] = await Promise.all([
         nextJobId ? context.services.imports.getJob(nextJobId) : Promise.resolve(null),
         nextJobId ? context.services.imports.listRecords(nextJobId) : Promise.resolve([]),
       ]);
-      return { jobRows, nextJobId, job, recordRows };
+      return { jobRows, templateRows, nextJobId, nextTemplateId, job, recordRows };
     });
     if (result) {
       setJobs(result.jobRows || []);
+      setTemplates(result.templateRows || []);
       setImportJobId(result.nextJobId || '');
+      setMappingTemplateId(result.nextTemplateId || '');
       setSelectedJob(result.job || null);
       setRecords(result.recordRows || []);
     }
@@ -1406,15 +1542,47 @@ const ImportsPage = ({ context }) => {
     }
   };
 
+  const createTemplate = async (event) => {
+    event.preventDefault();
+    const template = await action.run(() => context.services.imports.createMappingTemplate(context.workspaceId, {
+      name: templateForm.name,
+      provider: templateForm.provider,
+      sourceType: templateForm.sourceType || undefined,
+      targetType: 'work_item',
+      projectId: context.projectId || undefined,
+      workItemTypeKey: templateForm.workItemTypeKey,
+      fieldMapping: parseJsonOrThrow(templateForm.fieldMappingText),
+      defaults: parseJsonOrThrow(templateForm.defaultsText),
+      enabled: templateForm.enabled === 'true',
+    }), 'Mapping template created');
+    if (template) {
+      setMappingTemplateId(template.id || '');
+      await load();
+    }
+  };
+
   const parseJob = async (event) => {
     event.preventDefault();
     const parsed = await action.run(() => context.services.imports.parse(importJobId, {
       content: parseForm.content,
-      mapping: parseJsonOrThrow(parseForm.mappingText),
       sourceType: parseForm.sourceType || undefined,
     }), 'Import parsed');
     if (parsed) {
       setParseResult(parsed);
+      await loadRecords();
+    }
+  };
+
+  const materializeJob = async (event) => {
+    event.preventDefault();
+    const result = await action.run(() => context.services.imports.materialize(importJobId, {
+      mappingTemplateId,
+      projectId: context.projectId || undefined,
+      limit: numberOrUndefined(materializeForm.limit),
+      updateExisting: materializeForm.updateExisting === 'true',
+    }), 'Import materialized');
+    if (result) {
+      setMaterializeResult(result);
       await loadRecords();
     }
   };
@@ -1473,6 +1641,35 @@ const ImportsPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !importJobId} type="submit"><FiRefreshCw />Parse</button>
         </form>
       </Panel>
+      <Panel title="Mapping Template" icon={<FiSliders />}>
+        <form className="stack" onSubmit={createTemplate}>
+          <TextField label="Name" value={templateForm.name} onChange={(name) => setTemplateForm({ ...templateForm, name })} />
+          <div className="two-column compact">
+            <SelectField label="Provider" value={templateForm.provider} onChange={(provider) => setTemplateForm({ ...templateForm, provider })} options={['csv', 'jira', 'rally']} />
+            <TextField label="Source type" value={templateForm.sourceType} onChange={(sourceType) => setTemplateForm({ ...templateForm, sourceType })} />
+            <TextField label="Type key" value={templateForm.workItemTypeKey} onChange={(workItemTypeKey) => setTemplateForm({ ...templateForm, workItemTypeKey })} />
+            <SelectField label="Enabled" value={templateForm.enabled} onChange={(enabled) => setTemplateForm({ ...templateForm, enabled })} options={['true', 'false']} />
+          </div>
+          <Field label="Field mapping JSON">
+            <textarea value={templateForm.fieldMappingText} onChange={(event) => setTemplateForm({ ...templateForm, fieldMappingText: event.target.value })} rows={6} spellCheck="false" />
+          </Field>
+          <Field label="Defaults JSON">
+            <textarea value={templateForm.defaultsText} onChange={(event) => setTemplateForm({ ...templateForm, defaultsText: event.target.value })} rows={4} spellCheck="false" />
+          </Field>
+          <button className="primary-button" disabled={action.pending || !context.workspaceId || !context.projectId} type="submit"><FiPlus />Create template</button>
+        </form>
+      </Panel>
+      <Panel title="Materialize" icon={<FiArrowRight />}>
+        <form className="stack" onSubmit={materializeJob}>
+          <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={setImportJobId} />
+          <RecordSelect label="Template" records={templates} value={mappingTemplateId} onChange={setMappingTemplateId} />
+          <div className="two-column compact">
+            <TextField label="Limit" type="number" value={materializeForm.limit} onChange={(limit) => setMaterializeForm({ ...materializeForm, limit })} />
+            <SelectField label="Update existing" value={materializeForm.updateExisting} onChange={(updateExisting) => setMaterializeForm({ ...materializeForm, updateExisting })} options={['false', 'true']} />
+          </div>
+          <button className="primary-button" disabled={action.pending || !importJobId || !mappingTemplateId || !context.projectId} type="submit"><FiArrowRight />Materialize</button>
+        </form>
+      </Panel>
       <Panel title="Manual Record" icon={<FiPlus />}>
         <form className="stack" onSubmit={createRecord}>
           <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={setImportJobId} />
@@ -1497,8 +1694,10 @@ const ImportsPage = ({ context }) => {
         <ErrorLine message={action.error} />
         <div className="data-columns">
           <JsonPreview title="Jobs" value={jobs} />
+          <JsonPreview title="Templates" value={templates} />
           <JsonPreview title="Selected Job" value={selectedJob} />
           <JsonPreview title="Parse Result" value={parseResult} />
+          <JsonPreview title="Materialize Result" value={materializeResult} />
           <JsonPreview title="Records" value={records} />
         </div>
       </Panel>
@@ -2202,9 +2401,22 @@ const numberOrUndefined = (value) => {
   return Number(value);
 };
 
+const settingsToForm = (settings) => ({
+  automationJobsEnabled: String(Boolean(settings.automationJobsEnabled)),
+  webhookDeliveriesEnabled: String(Boolean(settings.webhookDeliveriesEnabled)),
+  emailDeliveriesEnabled: String(Boolean(settings.emailDeliveriesEnabled)),
+  automationLimit: String(settings.automationLimit ?? 25),
+  webhookLimit: String(settings.webhookLimit ?? 25),
+  emailLimit: String(settings.emailLimit ?? 25),
+  webhookMaxAttempts: String(settings.webhookMaxAttempts ?? 3),
+  emailMaxAttempts: String(settings.emailMaxAttempts ?? 3),
+  webhookDryRun: String(settings.webhookDryRun ?? true),
+  emailDryRun: String(settings.emailDryRun ?? true),
+});
+
 const recordLabel = (record) => {
-  const prefix = record.key || record.version || record.provider || record.channel || record.eventType || '';
-  const name = record.name || record.title || record.displayName || record.username || record.sourceId || record.status || '';
+  const prefix = record.key || record.version || record.provider || record.channel || record.eventType || record.recipientEmail || '';
+  const name = record.name || record.title || record.displayName || record.username || record.sourceId || record.status || record.subject || '';
   const label = [prefix, name].filter(Boolean).join(' - ');
   return label || record.id;
 };

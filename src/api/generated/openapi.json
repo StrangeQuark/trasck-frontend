@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:46303",
+      "url": "http://localhost:33537",
       "description": "Generated server url"
     }
   ],
@@ -1462,6 +1462,79 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/import-mapping-templates": {
+      "get": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "listMappingTemplates",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/ImportMappingTemplateResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "createMappingTemplate",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMappingTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMappingTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/import-jobs": {
       "get": {
         "tags": [
@@ -1601,6 +1674,46 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/FieldConfigurationResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/email-deliveries/process": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "processEmailDeliveries",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmailDeliveryWorkerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailDeliveryWorkerResponse"
                 }
               }
             }
@@ -3299,6 +3412,68 @@
         }
       }
     },
+    "/api/v1/webhook-deliveries/{deliveryId}/retry": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "retryWebhookDelivery",
+        "parameters": [
+          {
+            "name": "deliveryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhook-deliveries/{deliveryId}/cancel": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "cancelWebhookDelivery",
+        "parameters": [
+          {
+            "name": "deliveryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/teams/{teamId}/memberships": {
       "get": {
         "tags": [
@@ -4573,6 +4748,47 @@
         }
       }
     },
+    "/api/v1/import-jobs/{importJobId}/materialize": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "materializeImportJob",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMaterializeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMaterializeResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-jobs/{importJobId}/fail": {
       "post": {
         "tags": [
@@ -4659,6 +4875,68 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/email-deliveries/{deliveryId}/retry": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "retryEmailDelivery",
+        "parameters": [
+          {
+            "name": "deliveryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailDeliveryResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/email-deliveries/{deliveryId}/cancel": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "cancelEmailDelivery",
+        "parameters": [
+          {
+            "name": "deliveryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailDeliveryResponse"
                 }
               }
             }
@@ -5658,6 +5936,76 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/AgentTaskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/automation-worker-settings": {
+      "get": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "getWorkerSettings",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationWorkerSettingsResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "updateWorkerSettings",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationWorkerSettingsRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationWorkerSettingsResponse"
                 }
               }
             }
@@ -7118,6 +7466,69 @@
         }
       }
     },
+    "/api/v1/import-mapping-templates/{mappingTemplateId}": {
+      "delete": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "deleteMappingTemplate",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "updateMappingTemplate",
+        "parameters": [
+          {
+            "name": "mappingTemplateId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportMappingTemplateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportMappingTemplateResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/field-configurations/{fieldConfigurationId}": {
       "get": {
         "tags": [
@@ -8374,6 +8785,40 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/email-deliveries": {
+      "get": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "listEmailDeliveries",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/EmailDeliveryResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/audit-log": {
       "get": {
         "tags": [
@@ -8620,6 +9065,37 @@
                   "items": {
                     "$ref": "#/components/schemas/WebhookDeliveryResponse"
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/webhook-deliveries/{deliveryId}": {
+      "get": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "getWebhookDelivery",
+        "parameters": [
+          {
+            "name": "deliveryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryResponse"
                 }
               }
             }
@@ -9494,6 +9970,37 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ImportJobResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/email-deliveries/{deliveryId}": {
+      "get": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "getEmailDelivery",
+        "parameters": [
+          {
+            "name": "deliveryId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/EmailDeliveryResponse"
                 }
               }
             }
@@ -11293,6 +11800,86 @@
           }
         }
       },
+      "ImportMappingTemplateRequest": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workItemTypeKey": {
+            "type": "string"
+          },
+          "statusKey": {
+            "type": "string"
+          },
+          "fieldMapping": {},
+          "defaults": {},
+          "enabled": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImportMappingTemplateResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "sourceType": {
+            "type": "string"
+          },
+          "targetType": {
+            "type": "string"
+          },
+          "workItemTypeKey": {
+            "type": "string"
+          },
+          "statusKey": {
+            "type": "string"
+          },
+          "fieldMapping": {},
+          "defaults": {},
+          "enabled": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ImportJobRequest": {
         "type": "object",
         "properties": {
@@ -11429,6 +12016,111 @@
           },
           "defaultValue": {},
           "validationConfig": {}
+        }
+      },
+      "EmailDeliveryWorkerRequest": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        }
+      },
+      "EmailDeliveryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "automationJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "fromEmail": {
+            "type": "string"
+          },
+          "recipientEmail": {
+            "type": "string"
+          },
+          "subject": {
+            "type": "string"
+          },
+          "body": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "attemptCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "responseBody": {
+            "type": "string"
+          },
+          "nextRetryAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sentAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EmailDeliveryWorkerResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "processed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "sent": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deadLettered": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EmailDeliveryResponse"
+            }
+          }
         }
       },
       "DomainEventReplayRequest": {
@@ -13973,6 +14665,65 @@
           }
         }
       },
+      "ImportMaterializeRequest": {
+        "type": "object",
+        "properties": {
+          "mappingTemplateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updateExisting": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ImportMaterializeResponse": {
+        "type": "object",
+        "properties": {
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "mappingTemplateId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "recordsProcessed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "created": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "updated": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJobRecordResponse"
+            }
+          }
+        }
+      },
       "DashboardWidgetRequest": {
         "type": "object",
         "properties": {
@@ -14310,6 +15061,94 @@
             "items": {
               "$ref": "#/components/schemas/AgentTaskCallbackMessageRequest"
             }
+          }
+        }
+      },
+      "AutomationWorkerSettingsRequest": {
+        "type": "object",
+        "properties": {
+          "automationJobsEnabled": {
+            "type": "boolean"
+          },
+          "webhookDeliveriesEnabled": {
+            "type": "boolean"
+          },
+          "emailDeliveriesEnabled": {
+            "type": "boolean"
+          },
+          "automationLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "webhookLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emailLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "webhookMaxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emailMaxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "webhookDryRun": {
+            "type": "boolean"
+          },
+          "emailDryRun": {
+            "type": "boolean"
+          }
+        }
+      },
+      "AutomationWorkerSettingsResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "automationJobsEnabled": {
+            "type": "boolean"
+          },
+          "webhookDeliveriesEnabled": {
+            "type": "boolean"
+          },
+          "emailDeliveriesEnabled": {
+            "type": "boolean"
+          },
+          "automationLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "webhookLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emailLimit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "webhookMaxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "emailMaxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "webhookDryRun": {
+            "type": "boolean"
+          },
+          "emailDryRun": {
+            "type": "boolean"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
           }
         }
       },
@@ -15424,10 +16263,10 @@
       "CsrfToken": {
         "type": "object",
         "properties": {
-          "parameterName": {
+          "token": {
             "type": "string"
           },
-          "token": {
+          "parameterName": {
             "type": "string"
           },
           "headerName": {
