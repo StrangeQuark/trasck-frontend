@@ -1183,6 +1183,13 @@ export interface CursorPageResponseAuditLogEntryResponse {
   limit?: number;
 }
 
+export interface CursorPageResponseWorkItemResponse {
+  items?: WorkItemResponse[];
+  nextCursor?: string;
+  hasMore?: boolean;
+  limit?: number;
+}
+
 export interface CycleTimeMetricsResponse {
   completedWorkItems?: number;
   averageLeadTimeMinutes?: number;
@@ -1417,13 +1424,6 @@ export interface PublicProjectResponse {
   key?: string;
   description?: string;
   visibility?: string;
-}
-
-export interface CursorPageResponseWorkItemResponse {
-  items?: WorkItemResponse[];
-  nextCursor?: string;
-  hasMore?: boolean;
-  limit?: number;
 }
 
 export interface DashboardRenderResponse {
@@ -3025,6 +3025,19 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/saved-filters/{savedFilterId}/work-items": {
+    get: {
+      path: {
+      savedFilterId: string;
+    };
+      query: {
+      limit?: number;
+      cursor?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/reports/workspaces/{workspaceId}/dashboard-summary": {
     get: {
       path: {
@@ -3522,6 +3535,7 @@ export const apiOperations = {
   "listByTeam_1": { method: "get", path: "/api/v1/teams/{teamId}/report-query-catalog" },
   "listTeamViews": { method: "get", path: "/api/v1/teams/{teamId}/personalization/views" },
   "listByTeam_2": { method: "get", path: "/api/v1/teams/{teamId}/dashboards" },
+  "executeWorkItems": { method: "get", path: "/api/v1/saved-filters/{savedFilterId}/work-items" },
   "workspaceDashboardSummary": { method: "get", path: "/api/v1/reports/workspaces/{workspaceId}/dashboard-summary" },
   "workLogSummary": { method: "get", path: "/api/v1/reports/work-items/{workItemId}/work-log-summary" },
   "teamHistory": { method: "get", path: "/api/v1/reports/work-items/{workItemId}/team-history" },
