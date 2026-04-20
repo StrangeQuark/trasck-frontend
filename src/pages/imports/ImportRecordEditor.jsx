@@ -12,6 +12,7 @@ export const ImportRecordEditor = ({
   onSubmit,
   pending,
   records,
+  versions = [],
   selectedRecord,
 }) => (
   <form className="stack" onSubmit={onSubmit}>
@@ -31,5 +32,6 @@ export const ImportRecordEditor = ({
     </Field>
     <button className="secondary-button" disabled={pending || !form.recordId} type="submit"><FiCheck />Save record</button>
     <JsonPreview title="Selected Record" value={selectedRecord} />
+    <JsonPreview title="Record Versions" value={versions} />
   </form>
 );

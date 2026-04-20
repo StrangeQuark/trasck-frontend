@@ -44,6 +44,20 @@ export const createImportsService = (api) => ({
     });
   },
 
+  previewCloneRetargetTransformPresetVersion(presetId, versionId, request) {
+    return api.request('post', '/api/v1/import-transform-presets/{presetId}/versions/{versionId}/retarget-preview', {
+      path: { presetId, versionId },
+      body: request,
+    });
+  },
+
+  cloneRetargetTransformPresetVersion(presetId, versionId, request) {
+    return api.request('post', '/api/v1/import-transform-presets/{presetId}/versions/{versionId}/retarget', {
+      path: { presetId, versionId },
+      body: request,
+    });
+  },
+
   updateTransformPreset(presetId, request) {
     return api.request('patch', '/api/v1/import-transform-presets/{presetId}', {
       path: { presetId },
@@ -194,9 +208,10 @@ export const createImportsService = (api) => ({
     });
   },
 
-  listRecords(importJobId) {
+  listRecords(importJobId, filters = {}) {
     return api.request('get', '/api/v1/import-jobs/{importJobId}/records', {
       path: { importJobId },
+      query: filters,
     });
   },
 
@@ -209,6 +224,13 @@ export const createImportsService = (api) => ({
   resolveConflict(recordId, request) {
     return api.request('post', '/api/v1/import-job-records/{recordId}/resolve-conflict', {
       path: { recordId },
+      body: request,
+    });
+  },
+
+  resolveConflicts(importJobId, request) {
+    return api.request('post', '/api/v1/import-jobs/{importJobId}/conflicts/resolve', {
+      path: { importJobId },
       body: request,
     });
   },
@@ -227,15 +249,22 @@ export const createImportsService = (api) => ({
     });
   },
 
+  listRecordVersions(recordId) {
+    return api.request('get', '/api/v1/import-job-records/{recordId}/versions', {
+      path: { recordId },
+    });
+  },
+
   start(importJobId) {
     return api.request('post', '/api/v1/import-jobs/{importJobId}/start', {
       path: { importJobId },
     });
   },
 
-  complete(importJobId) {
+  complete(importJobId, request) {
     return api.request('post', '/api/v1/import-jobs/{importJobId}/complete', {
       path: { importJobId },
+      body: request,
     });
   },
 
