@@ -88,6 +88,34 @@ export interface WebhookResponse {
   enabled?: boolean;
 }
 
+export interface WebhookDeliveryWorkerRequest {
+  limit?: number;
+  maxAttempts?: number;
+  dryRun?: boolean;
+}
+
+export interface WebhookDeliveryResponse {
+  id?: string;
+  webhookId?: string;
+  eventType?: string;
+  payload?: unknown;
+  status?: string;
+  responseCode?: number;
+  responseBody?: string;
+  attemptCount?: number;
+  nextRetryAt?: string;
+  createdAt?: string;
+}
+
+export interface WebhookDeliveryWorkerResponse {
+  workspaceId?: string;
+  processed?: number;
+  delivered?: number;
+  failed?: number;
+  deadLettered?: number;
+  deliveries?: WebhookDeliveryResponse[];
+}
+
 export interface AdminCreateUserRequest {
   email?: string;
   username?: string;
@@ -549,6 +577,46 @@ export interface AutomationRuleResponse {
   updatedAt?: string;
   conditions?: AutomationConditionResponse[];
   actions?: AutomationActionResponse[];
+}
+
+export interface AutomationWorkerRunRequest {
+  limit?: number;
+}
+
+export interface AutomationExecutionJobResponse {
+  id?: string;
+  ruleId?: string;
+  workspaceId?: string;
+  sourceEntityType?: string;
+  sourceEntityId?: string;
+  status?: string;
+  payload?: unknown;
+  attempts?: number;
+  nextAttemptAt?: string;
+  startedAt?: string;
+  completedAt?: string;
+  failedAt?: string;
+  lastError?: string;
+  createdAt?: string;
+  logs?: AutomationExecutionLogResponse[];
+}
+
+export interface AutomationExecutionLogResponse {
+  id?: string;
+  jobId?: string;
+  actionId?: string;
+  status?: string;
+  message?: string;
+  metadata?: unknown;
+  createdAt?: string;
+}
+
+export interface AutomationWorkerRunResponse {
+  workspaceId?: string;
+  processed?: number;
+  succeeded?: number;
+  failed?: number;
+  jobs?: AutomationExecutionJobResponse[];
 }
 
 export interface AuditRetentionPruneResponse {
@@ -1258,6 +1326,19 @@ export interface ImportJobRecordRequest {
   rawPayload?: unknown;
 }
 
+export interface ImportParseRequest {
+  content?: string;
+  mapping?: unknown;
+  sourceType?: string;
+}
+
+export interface ImportParseResponse {
+  importJobId?: string;
+  provider?: string;
+  recordsParsed?: number;
+  records?: ImportJobRecordResponse[];
+}
+
 export interface DashboardWidgetRequest {
   widgetType?: string;
   title?: string;
@@ -1306,34 +1387,6 @@ export interface AutomationExecutionRequest {
   sourceEntityType?: string;
   sourceEntityId?: string;
   payload?: unknown;
-}
-
-export interface AutomationExecutionJobResponse {
-  id?: string;
-  ruleId?: string;
-  workspaceId?: string;
-  sourceEntityType?: string;
-  sourceEntityId?: string;
-  status?: string;
-  payload?: unknown;
-  attempts?: number;
-  nextAttemptAt?: string;
-  startedAt?: string;
-  completedAt?: string;
-  failedAt?: string;
-  lastError?: string;
-  createdAt?: string;
-  logs?: AutomationExecutionLogResponse[];
-}
-
-export interface AutomationExecutionLogResponse {
-  id?: string;
-  jobId?: string;
-  actionId?: string;
-  status?: string;
-  message?: string;
-  metadata?: unknown;
-  createdAt?: string;
 }
 
 export interface AutomationConditionRequest {
@@ -1504,19 +1557,6 @@ export interface CursorPageResponseAuditLogEntryResponse {
   nextCursor?: string;
   hasMore?: boolean;
   limit?: number;
-}
-
-export interface WebhookDeliveryResponse {
-  id?: string;
-  webhookId?: string;
-  eventType?: string;
-  payload?: unknown;
-  status?: string;
-  responseCode?: number;
-  responseBody?: string;
-  attemptCount?: number;
-  nextRetryAt?: string;
-  createdAt?: string;
 }
 
 export interface CursorPageResponseWorkItemResponse {
@@ -1776,9 +1816,23 @@ export interface DashboardWidgetRenderResponse {
   data?: unknown;
 }
 
+export interface BoardColumnWorkItemsResponse {
+  columnId?: string;
+  columnName?: string;
+  statusIds?: string[];
+  workItems?: WorkItemResponse[];
+}
+
+export interface BoardWorkItemsResponse {
+  boardId?: string;
+  projectId?: string;
+  limitPerColumn?: number;
+  columns?: BoardColumnWorkItemsResponse[];
+}
+
 export interface CsrfToken {
-  token?: string;
   parameterName?: string;
+  token?: string;
   headerName?: string;
 }
 
@@ -1889,6 +1943,16 @@ export interface ApiPaths {
     };
       query: undefined;
       body: WebhookRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/webhook-deliveries/process": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: WebhookDeliveryWorkerRequest;
       response: unknown;
     };
   };
@@ -2100,6 +2164,24 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/notification-defaults": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: NotificationPreferenceRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/labels": {
     get: {
       path: {
@@ -2227,6 +2309,16 @@ export interface ApiPaths {
     };
       query: undefined;
       body: AutomationRuleRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/automation-jobs/run-queued": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: AutomationWorkerRunRequest;
       response: unknown;
     };
   };
@@ -2852,6 +2944,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/import-jobs/{importJobId}/parse": {
+    post: {
+      path: {
+      importJobId: string;
+    };
+      query: undefined;
+      body: ImportParseRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/import-jobs/{importJobId}/fail": {
     post: {
       path: {
@@ -2973,6 +3075,16 @@ export interface ApiPaths {
     };
       query: undefined;
       body: AutomationActionRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/automation-jobs/{jobId}/run": {
+    post: {
+      path: {
+      jobId: string;
+    };
+      query: undefined;
+      body: undefined;
       response: unknown;
     };
   };
@@ -3478,6 +3590,24 @@ export interface ApiPaths {
     };
   };
   "/api/v1/notification-preferences/{preferenceId}": {
+    patch: {
+      path: {
+      preferenceId: string;
+    };
+      query: undefined;
+      body: NotificationPreferenceRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      preferenceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/notification-defaults/{preferenceId}": {
     patch: {
       path: {
       preferenceId: string;
@@ -4194,6 +4324,18 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/boards/{boardId}/work-items": {
+    get: {
+      path: {
+      boardId: string;
+    };
+      query: {
+      limitPerColumn?: number;
+    };
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/automation-rules/{ruleId}/jobs": {
     get: {
       path: {
@@ -4381,6 +4523,7 @@ export const apiOperations = {
   "removeProjectTeam": { method: "delete", path: "/api/v1/projects/{projectId}/teams/{teamId}" },
   "listWebhooks": { method: "get", path: "/api/v1/workspaces/{workspaceId}/webhooks" },
   "createWebhook": { method: "post", path: "/api/v1/workspaces/{workspaceId}/webhooks" },
+  "processWebhookDeliveries": { method: "post", path: "/api/v1/workspaces/{workspaceId}/webhook-deliveries/process" },
   "createUser": { method: "post", path: "/api/v1/workspaces/{workspaceId}/users" },
   "listTeams": { method: "get", path: "/api/v1/workspaces/{workspaceId}/teams" },
   "createTeam": { method: "post", path: "/api/v1/workspaces/{workspaceId}/teams" },
@@ -4404,6 +4547,8 @@ export const apiOperations = {
   "addFavorite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/personalization/favorites" },
   "listPreferences": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notification-preferences" },
   "upsertPreference": { method: "post", path: "/api/v1/workspaces/{workspaceId}/notification-preferences" },
+  "listDefaultPreferences": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notification-defaults" },
+  "createDefaultPreference": { method: "post", path: "/api/v1/workspaces/{workspaceId}/notification-defaults" },
   "listWorkspaceLabels": { method: "get", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "createWorkspaceLabel": { method: "post", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "invite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/invitations" },
@@ -4418,6 +4563,7 @@ export const apiOperations = {
   "createCustomField": { method: "post", path: "/api/v1/workspaces/{workspaceId}/custom-fields" },
   "listRules": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-rules" },
   "createRule": { method: "post", path: "/api/v1/workspaces/{workspaceId}/automation-rules" },
+  "runQueuedJobs": { method: "post", path: "/api/v1/workspaces/{workspaceId}/automation-jobs/run-queued" },
   "pruneRetentionCandidates": { method: "post", path: "/api/v1/workspaces/{workspaceId}/audit-retention-policy/prune" },
   "exportRetentionCandidates": { method: "post", path: "/api/v1/workspaces/{workspaceId}/audit-retention-policy/export" },
   "listProfiles": { method: "get", path: "/api/v1/workspaces/{workspaceId}/agents" },
@@ -4480,6 +4626,7 @@ export const apiOperations = {
   "startImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/start" },
   "listRecords": { method: "get", path: "/api/v1/import-jobs/{importJobId}/records" },
   "createRecord": { method: "post", path: "/api/v1/import-jobs/{importJobId}/records" },
+  "parseImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/parse" },
   "failImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/fail" },
   "completeImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/complete" },
   "cancelImportJob": { method: "post", path: "/api/v1/import-jobs/{importJobId}/cancel" },
@@ -4493,6 +4640,7 @@ export const apiOperations = {
   "executeRule": { method: "post", path: "/api/v1/automation-rules/{ruleId}/execute" },
   "createCondition": { method: "post", path: "/api/v1/automation-rules/{ruleId}/conditions" },
   "createAction": { method: "post", path: "/api/v1/automation-rules/{ruleId}/actions" },
+  "runJob": { method: "post", path: "/api/v1/automation-jobs/{jobId}/run" },
   "listPersonalTokens": { method: "get", path: "/api/v1/auth/tokens/personal" },
   "createPersonalToken": { method: "post", path: "/api/v1/auth/tokens/personal" },
   "register": { method: "post", path: "/api/v1/auth/register" },
@@ -4550,6 +4698,8 @@ export const apiOperations = {
   "markRead": { method: "patch", path: "/api/v1/notifications/{notificationId}/read" },
   "updatePreference": { method: "patch", path: "/api/v1/notification-preferences/{preferenceId}" },
   "deletePreference": { method: "delete", path: "/api/v1/notification-preferences/{preferenceId}" },
+  "updateDefaultPreference": { method: "patch", path: "/api/v1/notification-defaults/{preferenceId}" },
+  "deleteDefaultPreference": { method: "delete", path: "/api/v1/notification-defaults/{preferenceId}" },
   "getIteration": { method: "get", path: "/api/v1/iterations/{iterationId}" },
   "updateIteration": { method: "patch", path: "/api/v1/iterations/{iterationId}" },
   "cancelIteration": { method: "delete", path: "/api/v1/iterations/{iterationId}" },
@@ -4618,6 +4768,7 @@ export const apiOperations = {
   "getImportJob": { method: "get", path: "/api/v1/import-jobs/{importJobId}" },
   "render": { method: "get", path: "/api/v1/dashboards/{dashboardId}/render" },
   "listFieldConfigurationsForField": { method: "get", path: "/api/v1/custom-fields/{customFieldId}/field-configurations" },
+  "listBoardWorkItems": { method: "get", path: "/api/v1/boards/{boardId}/work-items" },
   "listJobs": { method: "get", path: "/api/v1/automation-rules/{ruleId}/jobs" },
   "getJob": { method: "get", path: "/api/v1/automation-jobs/{jobId}" },
   "me": { method: "get", path: "/api/v1/auth/me" },

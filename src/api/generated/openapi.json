@@ -7,7 +7,7 @@
   },
   "servers": [
     {
-      "url": "http://localhost:40331",
+      "url": "http://localhost:46303",
       "description": "Generated server url"
     }
   ],
@@ -384,6 +384,46 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/WebhookResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/webhook-deliveries/process": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "processWebhookDeliveries",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WebhookDeliveryWorkerRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WebhookDeliveryWorkerResponse"
                 }
               }
             }
@@ -1235,6 +1275,79 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/notification-defaults": {
+      "get": {
+        "tags": [
+          "notification-controller"
+        ],
+        "operationId": "listDefaultPreferences",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/NotificationPreferenceResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "notification-controller"
+        ],
+        "operationId": "createDefaultPreference",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationPreferenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferenceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/labels": {
       "get": {
         "tags": [
@@ -1756,6 +1869,46 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/AutomationRuleResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/automation-jobs/run-queued": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "runQueuedJobs",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AutomationWorkerRunRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationWorkerRunResponse"
                 }
               }
             }
@@ -4379,6 +4532,47 @@
         }
       }
     },
+    "/api/v1/import-jobs/{importJobId}/parse": {
+      "post": {
+        "tags": [
+          "import-job-controller"
+        ],
+        "operationId": "parseImportJob",
+        "parameters": [
+          {
+            "name": "importJobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ImportParseRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ImportParseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/import-jobs/{importJobId}/fail": {
       "post": {
         "tags": [
@@ -4847,6 +5041,37 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/AutomationActionResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/automation-jobs/{jobId}/run": {
+      "post": {
+        "tags": [
+          "automation-controller"
+        ],
+        "operationId": "runJob",
+        "parameters": [
+          {
+            "name": "jobId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AutomationExecutionJobResponse"
                 }
               }
             }
@@ -6703,6 +6928,69 @@
           "notification-controller"
         ],
         "operationId": "updatePreference",
+        "parameters": [
+          {
+            "name": "preferenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NotificationPreferenceRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationPreferenceResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/notification-defaults/{preferenceId}": {
+      "delete": {
+        "tags": [
+          "notification-controller"
+        ],
+        "operationId": "deleteDefaultPreference",
+        "parameters": [
+          {
+            "name": "preferenceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "notification-controller"
+        ],
+        "operationId": "updateDefaultPreference",
         "parameters": [
           {
             "name": "preferenceId",
@@ -9294,6 +9582,46 @@
         }
       }
     },
+    "/api/v1/boards/{boardId}/work-items": {
+      "get": {
+        "tags": [
+          "board-controller"
+        ],
+        "operationId": "listBoardWorkItems",
+        "parameters": [
+          {
+            "name": "boardId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "limitPerColumn",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "format": "int32"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/BoardWorkItemsResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/automation-rules/{ruleId}/jobs": {
       "get": {
         "tags": [
@@ -10021,6 +10349,92 @@
           "eventTypes": {},
           "enabled": {
             "type": "boolean"
+          }
+        }
+      },
+      "WebhookDeliveryWorkerRequest": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "maxAttempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "dryRun": {
+            "type": "boolean"
+          }
+        }
+      },
+      "WebhookDeliveryResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "webhookId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "eventType": {
+            "type": "string"
+          },
+          "payload": {},
+          "status": {
+            "type": "string"
+          },
+          "responseCode": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "responseBody": {
+            "type": "string"
+          },
+          "attemptCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextRetryAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "WebhookDeliveryWorkerResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "processed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "delivered": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deadLettered": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deliveries": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WebhookDeliveryResponse"
+            }
           }
         }
       },
@@ -11343,6 +11757,131 @@
             "type": "array",
             "items": {
               "$ref": "#/components/schemas/AutomationActionResponse"
+            }
+          }
+        }
+      },
+      "AutomationWorkerRunRequest": {
+        "type": "object",
+        "properties": {
+          "limit": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AutomationExecutionJobResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "ruleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "sourceEntityType": {
+            "type": "string"
+          },
+          "sourceEntityId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "payload": {},
+          "attempts": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "nextAttemptAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "completedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "failedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "lastError": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "logs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationExecutionLogResponse"
+            }
+          }
+        }
+      },
+      "AutomationExecutionLogResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "jobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "actionId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "metadata": {},
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "AutomationWorkerRunResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "processed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "succeeded": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "failed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "jobs": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AutomationExecutionJobResponse"
             }
           }
         }
@@ -13400,6 +13939,40 @@
           "rawPayload": {}
         }
       },
+      "ImportParseRequest": {
+        "type": "object",
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "mapping": {},
+          "sourceType": {
+            "type": "string"
+          }
+        }
+      },
+      "ImportParseResponse": {
+        "type": "object",
+        "properties": {
+          "importJobId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "provider": {
+            "type": "string"
+          },
+          "recordsParsed": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "records": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ImportJobRecordResponse"
+            }
+          }
+        }
+      },
       "DashboardWidgetRequest": {
         "type": "object",
         "properties": {
@@ -13522,95 +14095,6 @@
             "format": "uuid"
           },
           "payload": {}
-        }
-      },
-      "AutomationExecutionJobResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "ruleId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workspaceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "sourceEntityType": {
-            "type": "string"
-          },
-          "sourceEntityId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "payload": {},
-          "attempts": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "nextAttemptAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "startedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "completedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "failedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "lastError": {
-            "type": "string"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "logs": {
-            "type": "array",
-            "items": {
-              "$ref": "#/components/schemas/AutomationExecutionLogResponse"
-            }
-          }
-        }
-      },
-      "AutomationExecutionLogResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "jobId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "actionId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "status": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "metadata": {},
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          }
         }
       },
       "AutomationConditionRequest": {
@@ -14081,45 +14565,6 @@
           "limit": {
             "type": "integer",
             "format": "int32"
-          }
-        }
-      },
-      "WebhookDeliveryResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "webhookId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "eventType": {
-            "type": "string"
-          },
-          "payload": {},
-          "status": {
-            "type": "string"
-          },
-          "responseCode": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "responseBody": {
-            "type": "string"
-          },
-          "attemptCount": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "nextRetryAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
           }
         }
       },
@@ -14928,13 +15373,61 @@
           "data": {}
         }
       },
+      "BoardColumnWorkItemsResponse": {
+        "type": "object",
+        "properties": {
+          "columnId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "columnName": {
+            "type": "string"
+          },
+          "statusIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          "workItems": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/WorkItemResponse"
+            }
+          }
+        }
+      },
+      "BoardWorkItemsResponse": {
+        "type": "object",
+        "properties": {
+          "boardId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "limitPerColumn": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "columns": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/BoardColumnWorkItemsResponse"
+            }
+          }
+        }
+      },
       "CsrfToken": {
         "type": "object",
         "properties": {
-          "token": {
+          "parameterName": {
             "type": "string"
           },
-          "parameterName": {
+          "token": {
             "type": "string"
           },
           "headerName": {

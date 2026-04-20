@@ -184,6 +184,12 @@
   gap: 12px;
 }
 
+.nested-form {
+  margin-top: 16px;
+  border-top: 1px solid #e3e8ec;
+  padding-top: 16px;
+}
+
 .two-column,
 .data-columns.two {
   display: grid;
@@ -461,6 +467,10 @@ button:disabled {
   margin-top: 12px;
 }
 
+.data-columns.no-margin {
+  margin-top: 0;
+}
+
 .action-tile {
   justify-content: flex-start;
   min-height: 52px;
@@ -471,6 +481,10 @@ button:disabled {
   display: grid;
   grid-template-columns: minmax(220px, 1fr) minmax(220px, 1.4fr) repeat(3, auto) 38px;
   margin-top: 14px;
+}
+
+.compact-actions {
+  grid-template-columns: minmax(120px, 0.8fr) minmax(120px, 0.8fr) minmax(120px, 0.8fr) repeat(2, auto);
 }
 
 .toast-stack {
