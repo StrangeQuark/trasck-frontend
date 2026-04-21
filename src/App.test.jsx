@@ -28,6 +28,7 @@ describe('App', () => {
     expect(within(primaryNavigation).getByRole('link', { name: /Work/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /Planning/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /Agents/i })).toBeInTheDocument();
+    expect(within(primaryNavigation).getByRole('link', { name: /System/i })).toBeInTheDocument();
   });
 
   it.each([
@@ -54,5 +55,14 @@ describe('App', () => {
     expect(screen.getAllByRole('heading', { name: 'Conflict Review' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('heading', { name: 'Rerun Snapshot' }).length).toBeGreaterThan(0);
     expect(screen.getAllByRole('heading', { name: 'Record Review' }).length).toBeGreaterThan(0);
+  });
+
+  it('renders system administration controls', async () => {
+    window.history.pushState({}, '', '/system');
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'System Admins' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Workspace Security Policy' })).toBeInTheDocument();
   });
 });
