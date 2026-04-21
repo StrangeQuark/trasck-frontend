@@ -2676,7 +2676,7 @@
           {
             "name": "X-Trasck-Worker-Token",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -2741,7 +2741,7 @@
           {
             "name": "X-Trasck-Worker-Token",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -2807,7 +2807,7 @@
           {
             "name": "X-Trasck-Worker-Token",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -2873,7 +2873,7 @@
           {
             "name": "X-Trasck-Worker-Token",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -2939,7 +2939,7 @@
           {
             "name": "X-Trasck-Worker-Token",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -3004,7 +3004,7 @@
           {
             "name": "X-Trasck-Worker-Token",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -3061,7 +3061,7 @@
           {
             "name": "X-Trasck-Worker-Token",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -4087,6 +4087,57 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/TeamMembershipResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/system-admins": {
+      "get": {
+        "tags": [
+          "system-admin-controller"
+        ],
+        "operationId": "listSystemAdmins",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/SystemAdminResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "tags": [
+          "system-admin-controller"
+        ],
+        "operationId": "grantSystemAdmin",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SystemAdminRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemAdminResponse"
                 }
               }
             }
@@ -7386,7 +7437,7 @@
           {
             "name": "X-Trasck-Agent-Callback-Jwt",
             "in": "header",
-            "required": true,
+            "required": false,
             "schema": {
               "type": "string"
             }
@@ -7409,6 +7460,75 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/AgentTaskResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/security-policy": {
+      "get": {
+        "tags": [
+          "workspace-security-policy-controller"
+        ],
+        "operationId": "getPolicy",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSecurityPolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "workspace-security-policy-controller"
+        ],
+        "operationId": "updatePolicy",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceSecurityPolicyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/WorkspaceSecurityPolicyResponse"
                 }
               }
             }
@@ -8661,6 +8781,75 @@
               "*/*": {
                 "schema": {
                   "$ref": "#/components/schemas/ReleaseResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/security-policy": {
+      "get": {
+        "tags": [
+          "workspace-security-policy-controller"
+        ],
+        "operationId": "getProjectPolicy",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectSecurityPolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "workspace-security-policy-controller"
+        ],
+        "operationId": "updateProjectPolicy",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceSecurityPolicyRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectSecurityPolicyResponse"
                 }
               }
             }
@@ -12946,6 +13135,72 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/repository-connections/{connectionId}": {
+      "delete": {
+        "tags": [
+          "repository-connection-controller"
+        ],
+        "operationId": "deactivateRepositoryConnection",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "connectionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/labels/{labelId}": {
+      "delete": {
+        "tags": [
+          "work-item-controller"
+        ],
+        "operationId": "deleteWorkspaceLabel",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "labelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/work-items/{workItemId}/watchers/{userId}": {
       "delete": {
         "tags": [
@@ -13111,6 +13366,37 @@
         }
       }
     },
+    "/api/v1/system-admins/{userId}": {
+      "delete": {
+        "tags": [
+          "system-admin-controller"
+        ],
+        "operationId": "revokeSystemAdmin",
+        "parameters": [
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/SystemAdminResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/releases/{releaseId}/work-items/{workItemId}": {
       "delete": {
         "tags": [
@@ -13245,228 +13531,6 @@
         "responses": {
           "200": {
             "description": "OK"
-          }
-        }
-      }
-    },
-    "/api/v1/system-admins": {
-      "get": {
-        "tags": [
-          "system-admin-controller"
-        ],
-        "operationId": "listSystemAdmins",
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/SystemAdminResponse"
-                  }
-                }
-              }
-            }
-          }
-        }
-      },
-      "post": {
-        "tags": [
-          "system-admin-controller"
-        ],
-        "operationId": "grantSystemAdmin",
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/SystemAdminRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/SystemAdminResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/system-admins/{userId}": {
-      "delete": {
-        "tags": [
-          "system-admin-controller"
-        ],
-        "operationId": "revokeSystemAdmin",
-        "parameters": [
-          {
-            "name": "userId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/SystemAdminResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/workspaces/{workspaceId}/security-policy": {
-      "get": {
-        "tags": [
-          "workspace-security-policy-controller"
-        ],
-        "operationId": "getWorkspaceSecurityPolicy",
-        "parameters": [
-          {
-            "name": "workspaceId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkspaceSecurityPolicyResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "workspace-security-policy-controller"
-        ],
-        "operationId": "updateWorkspaceSecurityPolicy",
-        "parameters": [
-          {
-            "name": "workspaceId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkspaceSecurityPolicyRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/WorkspaceSecurityPolicyResponse"
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/api/v1/projects/{projectId}/security-policy": {
-      "get": {
-        "tags": [
-          "workspace-security-policy-controller"
-        ],
-        "operationId": "getProjectSecurityPolicy",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProjectSecurityPolicyResponse"
-                }
-              }
-            }
-          }
-        }
-      },
-      "patch": {
-        "tags": [
-          "workspace-security-policy-controller"
-        ],
-        "operationId": "updateProjectSecurityPolicy",
-        "parameters": [
-          {
-            "name": "projectId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "format": "uuid"
-            }
-          }
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/WorkspaceSecurityPolicyRequest"
-              }
-            }
-          },
-          "required": true
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "*/*": {
-                "schema": {
-                  "$ref": "#/components/schemas/ProjectSecurityPolicyResponse"
-                }
-              }
-            }
           }
         }
       }
@@ -17362,6 +17426,60 @@
           }
         }
       },
+      "SystemAdminRequest": {
+        "type": "object",
+        "properties": {
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      },
+      "SystemAdminResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "userId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "email": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "displayName": {
+            "type": "string"
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "grantedById": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "grantedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "revokedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "AdminUserRequest": {
         "type": "object",
         "properties": {
@@ -19267,6 +19385,81 @@
           }
         }
       },
+      "WorkspaceSecurityPolicyRequest": {
+        "type": "object",
+        "properties": {
+          "attachmentMaxUploadBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentMaxDownloadBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentAllowedContentTypes": {
+            "type": "string"
+          },
+          "exportMaxArtifactBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "exportAllowedContentTypes": {
+            "type": "string"
+          },
+          "importMaxParseBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "importAllowedContentTypes": {
+            "type": "string"
+          }
+        }
+      },
+      "WorkspaceSecurityPolicyResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "attachmentMaxUploadBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentMaxDownloadBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentAllowedContentTypes": {
+            "type": "string"
+          },
+          "exportMaxArtifactBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "exportAllowedContentTypes": {
+            "type": "string"
+          },
+          "importMaxParseBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "importAllowedContentTypes": {
+            "type": "string"
+          },
+          "customPolicy": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
       "ImportWorkspaceSettingsRequest": {
         "type": "object",
         "properties": {
@@ -19586,6 +19779,58 @@
             "format": "date"
           },
           "customFields": {}
+        }
+      },
+      "ProjectSecurityPolicyResponse": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "attachmentMaxUploadBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentMaxDownloadBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentAllowedContentTypes": {
+            "type": "string"
+          },
+          "exportMaxArtifactBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "exportAllowedContentTypes": {
+            "type": "string"
+          },
+          "importMaxParseBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "importAllowedContentTypes": {
+            "type": "string"
+          },
+          "workspaceCustomPolicy": {
+            "type": "boolean"
+          },
+          "customPolicy": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
         }
       },
       "NotificationResponse": {
@@ -21011,209 +21256,6 @@
             "type": "string"
           },
           "token": {
-            "type": "string"
-          }
-        }
-      },
-      "SystemAdminRequest": {
-        "type": "object",
-        "properties": {
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          }
-        }
-      },
-      "SystemAdminResponse": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "userId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "email": {
-            "type": "string"
-          },
-          "username": {
-            "type": "string"
-          },
-          "displayName": {
-            "type": "string"
-          },
-          "active": {
-            "type": "boolean"
-          },
-          "grantedById": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "grantedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "revokedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "WorkspaceSecurityPolicyRequest": {
-        "type": "object",
-        "properties": {
-          "attachmentMaxUploadBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "attachmentMaxDownloadBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "attachmentAllowedContentTypes": {
-            "type": "string"
-          },
-          "exportMaxArtifactBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "exportAllowedContentTypes": {
-            "type": "string"
-          },
-          "importMaxParseBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "importAllowedContentTypes": {
-            "type": "string"
-          }
-        }
-      },
-      "WorkspaceSecurityPolicyResponse": {
-        "type": "object",
-        "properties": {
-          "workspaceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "attachmentMaxUploadBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "attachmentMaxDownloadBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "attachmentAllowedContentTypes": {
-            "type": "string"
-          },
-          "exportMaxArtifactBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "exportAllowedContentTypes": {
-            "type": "string"
-          },
-          "importMaxParseBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "importAllowedContentTypes": {
-            "type": "string"
-          },
-          "customPolicy": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ProjectSecurityPolicyResponse": {
-        "type": "object",
-        "properties": {
-          "projectId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "workspaceId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "attachmentMaxUploadBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "attachmentMaxDownloadBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "attachmentAllowedContentTypes": {
-            "type": "string"
-          },
-          "exportMaxArtifactBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "exportAllowedContentTypes": {
-            "type": "string"
-          },
-          "importMaxParseBytes": {
-            "type": "integer",
-            "format": "int64"
-          },
-          "importAllowedContentTypes": {
-            "type": "string"
-          },
-          "workspaceCustomPolicy": {
-            "type": "boolean"
-          },
-          "customPolicy": {
-            "type": "boolean"
-          },
-          "createdAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "updatedAt": {
-            "type": "string",
-            "format": "date-time"
-          }
-        }
-      },
-      "ApiErrorResponse": {
-        "type": "object",
-        "properties": {
-          "timestamp": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "status": {
-            "type": "integer",
-            "format": "int32"
-          },
-          "error": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
-          },
-          "path": {
             "type": "string"
           }
         }
