@@ -2029,6 +2029,8 @@ export interface AgentTaskCallbackRequest {
 }
 
 export interface WorkspaceSecurityPolicyRequest {
+  anonymousReadEnabled?: boolean;
+  visibility?: string;
   attachmentMaxUploadBytes?: number;
   attachmentMaxDownloadBytes?: number;
   attachmentAllowedContentTypes?: string;
@@ -2040,6 +2042,7 @@ export interface WorkspaceSecurityPolicyRequest {
 
 export interface WorkspaceSecurityPolicyResponse {
   workspaceId?: string;
+  anonymousReadEnabled?: boolean;
   attachmentMaxUploadBytes?: number;
   attachmentMaxDownloadBytes?: number;
   attachmentAllowedContentTypes?: string;
@@ -2157,6 +2160,9 @@ export interface WorkItemUpdateRequest {
 export interface ProjectSecurityPolicyResponse {
   projectId?: string;
   workspaceId?: string;
+  visibility?: string;
+  workspaceAnonymousReadEnabled?: boolean;
+  publicReadEnabled?: boolean;
   attachmentMaxUploadBytes?: number;
   attachmentMaxDownloadBytes?: number;
   attachmentAllowedContentTypes?: string;
@@ -6031,6 +6037,17 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/users/{userId}": {
+    delete: {
+      path: {
+      workspaceId: string;
+      userId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/service-tokens/{tokenId}": {
     delete: {
       path: {
@@ -6058,6 +6075,17 @@ export interface ApiPaths {
       path: {
       workspaceId: string;
       labelId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/invitations/{invitationId}": {
+    delete: {
+      path: {
+      workspaceId: string;
+      invitationId: string;
     };
       query: undefined;
       body: undefined;
@@ -6529,9 +6557,11 @@ export const apiOperations = {
   "csrf": { method: "get", path: "/api/v1/auth/csrf" },
   "getTask": { method: "get", path: "/api/v1/agent-tasks/{taskId}" },
   "healthcheck": { method: "get", path: "/api/trasck/health" },
+  "removeWorkspaceUser": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/users/{userId}" },
   "revokeServiceToken": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/service-tokens/{tokenId}" },
   "deactivateRepositoryConnection": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/repository-connections/{connectionId}" },
   "deleteWorkspaceLabel": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/labels/{labelId}" },
+  "cancelInvitation": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/invitations/{invitationId}" },
   "removeWatcher": { method: "delete", path: "/api/v1/work-items/{workItemId}/watchers/{userId}" },
   "deleteLink": { method: "delete", path: "/api/v1/work-items/{workItemId}/links/{linkId}" },
   "removeLabel": { method: "delete", path: "/api/v1/work-items/{workItemId}/labels/{labelId}" },
