@@ -25,4 +25,17 @@ export const createSecurityService = (api) => ({
       body: request,
     });
   },
+
+  getProjectSecurityPolicy(projectId) {
+    return api.request('get', '/api/v1/projects/{projectId}/security-policy', {
+      path: { projectId },
+    });
+  },
+
+  updateProjectSecurityPolicy(projectId, request) {
+    return api.request('patch', '/api/v1/projects/{projectId}/security-policy', {
+      path: { projectId },
+      body: request,
+    });
+  },
 });
