@@ -13102,6 +13102,39 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/users/{userId}": {
+      "delete": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "removeWorkspaceUser",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "userId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/service-tokens/{tokenId}": {
       "delete": {
         "tags": [
@@ -13186,6 +13219,39 @@
           },
           {
             "name": "labelId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/invitations/{invitationId}": {
+      "delete": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "cancelInvitation",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "invitationId",
             "in": "path",
             "required": true,
             "schema": {
@@ -19388,6 +19454,12 @@
       "WorkspaceSecurityPolicyRequest": {
         "type": "object",
         "properties": {
+          "anonymousReadEnabled": {
+            "type": "boolean"
+          },
+          "visibility": {
+            "type": "string"
+          },
           "attachmentMaxUploadBytes": {
             "type": "integer",
             "format": "int64"
@@ -19421,6 +19493,9 @@
           "workspaceId": {
             "type": "string",
             "format": "uuid"
+          },
+          "anonymousReadEnabled": {
+            "type": "boolean"
           },
           "attachmentMaxUploadBytes": {
             "type": "integer",
@@ -19791,6 +19866,15 @@
           "workspaceId": {
             "type": "string",
             "format": "uuid"
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "workspaceAnonymousReadEnabled": {
+            "type": "boolean"
+          },
+          "publicReadEnabled": {
+            "type": "boolean"
           },
           "attachmentMaxUploadBytes": {
             "type": "integer",
