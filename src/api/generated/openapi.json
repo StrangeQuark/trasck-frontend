@@ -13400,6 +13400,76 @@
           }
         }
       }
+    },
+    "/api/v1/projects/{projectId}/security-policy": {
+      "get": {
+        "tags": [
+          "workspace-security-policy-controller"
+        ],
+        "operationId": "getProjectSecurityPolicy",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectSecurityPolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "tags": [
+          "workspace-security-policy-controller"
+        ],
+        "operationId": "updateProjectSecurityPolicy",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/WorkspaceSecurityPolicyRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProjectSecurityPolicyResponse"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -21060,6 +21130,58 @@
           },
           "importAllowedContentTypes": {
             "type": "string"
+          },
+          "customPolicy": {
+            "type": "boolean"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "ProjectSecurityPolicyResponse": {
+        "type": "object",
+        "properties": {
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "attachmentMaxUploadBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentMaxDownloadBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "attachmentAllowedContentTypes": {
+            "type": "string"
+          },
+          "exportMaxArtifactBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "exportAllowedContentTypes": {
+            "type": "string"
+          },
+          "importMaxParseBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "importAllowedContentTypes": {
+            "type": "string"
+          },
+          "workspaceCustomPolicy": {
+            "type": "boolean"
           },
           "customPolicy": {
             "type": "boolean"

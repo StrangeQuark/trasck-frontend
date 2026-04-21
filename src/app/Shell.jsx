@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FiActivity, FiBarChart2, FiBell, FiCheck, FiCpu, FiDatabase, FiFilter, FiKey, FiList, FiLogIn, FiShield, FiSliders, FiUploadCloud, FiUsers } from 'react-icons/fi';
+import { FiActivity, FiBarChart2, FiBell, FiCheck, FiCpu, FiDatabase, FiFilter, FiKey, FiList, FiLogIn, FiSettings, FiShield, FiSliders, FiUploadCloud, FiUsers } from 'react-icons/fi';
 import { normalizeBaseUrl } from '../api/client';
 import { InlineId } from '../components/InlineId';
 import { RouteLink } from '../components/RouteLink';
@@ -52,6 +52,7 @@ export const Shell = ({ children, context }) => {
         <RouteLink to="/agents" icon={<FiCpu />} label="Agents" />
         <RouteLink to="/tokens" icon={<FiKey />} label="Tokens" />
         <RouteLink to="/system" icon={<FiShield />} label="System" />
+        <RouteLink to="/project-settings" icon={<FiSettings />} label="Project" />
       </nav>
 
       <section className="context-strip">
