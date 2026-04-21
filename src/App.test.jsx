@@ -25,11 +25,12 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { name: 'Project Console' })).toBeInTheDocument();
     const primaryNavigation = screen.getByRole('navigation', { name: 'Primary' });
     expect(primaryNavigation).toBeInTheDocument();
-    expect(within(primaryNavigation).getByRole('link', { name: /Work/i })).toBeInTheDocument();
-    expect(within(primaryNavigation).getByRole('link', { name: /Planning/i })).toBeInTheDocument();
-    expect(within(primaryNavigation).getByRole('link', { name: /Agents/i })).toBeInTheDocument();
-    expect(within(primaryNavigation).getByRole('link', { name: /System/i })).toBeInTheDocument();
-    expect(within(primaryNavigation).getByRole('link', { name: /Project/i })).toBeInTheDocument();
+    expect(within(primaryNavigation).getByRole('link', { name: /^Work$/i })).toBeInTheDocument();
+    expect(within(primaryNavigation).getByRole('link', { name: /^Planning$/i })).toBeInTheDocument();
+    expect(within(primaryNavigation).getByRole('link', { name: /^Agents$/i })).toBeInTheDocument();
+    expect(within(primaryNavigation).getByRole('link', { name: /^System$/i })).toBeInTheDocument();
+    expect(within(primaryNavigation).getByRole('link', { name: /^Workspace$/i })).toBeInTheDocument();
+    expect(within(primaryNavigation).getByRole('link', { name: /^Project$/i })).toBeInTheDocument();
   });
 
   it.each([
@@ -74,5 +75,14 @@ describe('App', () => {
 
     expect(await screen.findByRole('heading', { level: 2, name: 'Project Security Policy' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Project Security State' })).toBeInTheDocument();
+  });
+
+  it('renders workspace member management controls', async () => {
+    window.history.pushState({}, '', '/workspace-settings');
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Workspace Members' })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 2, name: 'Workspace Invitations' })).toBeInTheDocument();
   });
 });

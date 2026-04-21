@@ -310,6 +310,12 @@ button:disabled {
   color: #21333f;
 }
 
+.secondary-button.danger {
+  border-color: #e6c6bd;
+  background: #fff1ed;
+  color: #9f3b2e;
+}
+
 .icon-button {
   display: inline-grid;
   width: 38px;

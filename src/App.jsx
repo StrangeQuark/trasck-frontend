@@ -32,6 +32,7 @@ import { SetupPage } from './pages/SetupPage';
 import { SystemAdminPage } from './pages/SystemAdminPage';
 import { TokenAdminPage } from './pages/TokenAdminPage';
 import { WorkPage } from './pages/WorkPage';
+import { WorkspaceSettingsPage } from './pages/WorkspaceSettingsPage';
 import './styles/app.css';
 
 const App = () => {
@@ -116,6 +117,7 @@ const App = () => {
             <Route path="/agents" element={<AgentsPage context={context} />} />
             <Route path="/tokens" element={<TokenAdminPage context={context} />} />
             <Route path="/system" element={<SystemAdminPage context={context} />} />
+            <Route path="/workspace-settings" element={<WorkspaceSettingsPage context={context} />} />
             <Route path="/project-settings" element={<ProjectSettingsPage context={context} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

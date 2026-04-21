@@ -98,6 +98,17 @@ export interface ProjectTeamResponse {
   createdAt?: string;
 }
 
+export interface ProgramProjectRequest {
+  position?: number;
+}
+
+export interface ProgramProjectResponse {
+  programId?: string;
+  projectId?: string;
+  position?: number;
+  createdAt?: string;
+}
+
 export interface WebhookRequest {
   name?: string;
   url?: string;
@@ -347,6 +358,29 @@ export interface ReportQueryCatalogResponse {
   updatedAt?: string;
 }
 
+export interface ProgramRequest {
+  name?: string;
+  description?: string;
+  status?: string;
+  roadmapConfig?: unknown;
+  reportConfig?: unknown;
+}
+
+export type JsonNode = unknown;
+
+export interface ProgramResponse {
+  id?: string;
+  workspaceId?: string;
+  name?: string;
+  description?: string;
+  status?: string;
+  roadmapConfig?: JsonNode;
+  reportConfig?: JsonNode;
+  projects?: ProgramProjectResponse[];
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface SavedViewRequest {
   name?: string;
   viewType?: string;
@@ -391,6 +425,29 @@ export interface FavoriteResponse {
   userId?: string;
   entityType?: string;
   entityId?: string;
+  createdAt?: string;
+}
+
+export interface NotificationRequest {
+  userId?: string;
+  type?: string;
+  title?: string;
+  body?: string;
+  targetType?: string;
+  targetId?: string;
+}
+
+export interface NotificationResponse {
+  id?: string;
+  userId?: string;
+  actorId?: string;
+  workspaceId?: string;
+  type?: string;
+  title?: string;
+  body?: string;
+  targetType?: string;
+  targetId?: string;
+  readAt?: string;
   createdAt?: string;
 }
 
@@ -2176,18 +2233,24 @@ export interface ProjectSecurityPolicyResponse {
   updatedAt?: string;
 }
 
-export interface NotificationResponse {
-  id?: string;
-  userId?: string;
-  actorId?: string;
+export interface WorkspaceMemberResponse {
+  membershipId?: string;
   workspaceId?: string;
-  type?: string;
-  title?: string;
-  body?: string;
-  targetType?: string;
-  targetId?: string;
-  readAt?: string;
+  userId?: string;
+  roleId?: string;
+  roleKey?: string;
+  roleName?: string;
+  status?: string;
+  invitedAt?: string;
+  joinedAt?: string;
   createdAt?: string;
+  email?: string;
+  username?: string;
+  displayName?: string;
+  accountType?: string;
+  emailVerified?: boolean;
+  active?: boolean;
+  lastLoginAt?: string;
 }
 
 export interface ActivityEventResponse {
@@ -2207,6 +2270,26 @@ export interface CursorPageResponseActivityEventResponse {
   nextCursor?: string;
   hasMore?: boolean;
   limit?: number;
+}
+
+export interface WorkspaceInvitationResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  email?: string;
+  roleId?: string;
+  roleKey?: string;
+  roleName?: string;
+  projectRoleId?: string;
+  projectRoleKey?: string;
+  projectRoleName?: string;
+  status?: string;
+  invitedById?: string;
+  acceptedById?: string;
+  expiresAt?: string;
+  acceptedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CursorPageResponseExportJobResponse {
@@ -2741,6 +2824,26 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/programs/{programId}/projects/{projectId}": {
+    put: {
+      path: {
+      programId: string;
+      projectId: string;
+    };
+      query: undefined;
+      body: ProgramProjectRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      programId: string;
+      projectId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/webhooks": {
     get: {
       path: {
@@ -2770,6 +2873,16 @@ export interface ApiPaths {
     };
   };
   "/api/v1/workspaces/{workspaceId}/users": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: {
+      status?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
     post: {
       path: {
       workspaceId: string;
@@ -2905,6 +3018,24 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/programs": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: ProgramRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/personalization/views": {
     get: {
       path: {
@@ -2956,6 +3087,24 @@ export interface ApiPaths {
     };
       query: undefined;
       body: FavoriteRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/notifications": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: NotificationRequest;
       response: unknown;
     };
   };
@@ -3014,6 +3163,16 @@ export interface ApiPaths {
     };
   };
   "/api/v1/workspaces/{workspaceId}/invitations": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: {
+      status?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
     post: {
       path: {
       workspaceId: string;
@@ -4868,6 +5027,32 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/programs/{programId}": {
+    get: {
+      path: {
+      programId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      programId: string;
+    };
+      query: undefined;
+      body: ProgramRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      programId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/personalization/views/{viewId}": {
     get: {
       path: {
@@ -5364,16 +5549,6 @@ export interface ApiPaths {
       response: unknown;
     };
   };
-  "/api/v1/workspaces/{workspaceId}/notifications": {
-    get: {
-      path: {
-      workspaceId: string;
-    };
-      query: undefined;
-      body: undefined;
-      response: unknown;
-    };
-  };
   "/api/v1/workspaces/{workspaceId}/import-samples": {
     get: {
       path: {
@@ -5836,6 +6011,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/programs/{programId}/projects": {
+    get: {
+      path: {
+      programId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/import-transform-presets/{presetId}/versions": {
     get: {
       path: {
@@ -6222,9 +6407,12 @@ export const apiOperations = {
   "updateSnapshotRetentionPolicy": { method: "put", path: "/api/v1/reports/workspaces/{workspaceId}/snapshot-retention-policy" },
   "assignProjectTeam": { method: "put", path: "/api/v1/projects/{projectId}/teams/{teamId}" },
   "removeProjectTeam": { method: "delete", path: "/api/v1/projects/{projectId}/teams/{teamId}" },
+  "assignProgramProject": { method: "put", path: "/api/v1/programs/{programId}/projects/{projectId}" },
+  "removeProgramProject": { method: "delete", path: "/api/v1/programs/{programId}/projects/{projectId}" },
   "listWebhooks": { method: "get", path: "/api/v1/workspaces/{workspaceId}/webhooks" },
   "createWebhook": { method: "post", path: "/api/v1/workspaces/{workspaceId}/webhooks" },
   "processWebhookDeliveries": { method: "post", path: "/api/v1/workspaces/{workspaceId}/webhook-deliveries/process" },
+  "listWorkspaceUsers": { method: "get", path: "/api/v1/workspaces/{workspaceId}/users" },
   "createUser": { method: "post", path: "/api/v1/workspaces/{workspaceId}/users" },
   "listTeams": { method: "get", path: "/api/v1/workspaces/{workspaceId}/teams" },
   "createTeam": { method: "post", path: "/api/v1/workspaces/{workspaceId}/teams" },
@@ -6240,18 +6428,23 @@ export const apiOperations = {
   "createRepositoryConnection": { method: "post", path: "/api/v1/workspaces/{workspaceId}/repository-connections" },
   "list_1": { method: "get", path: "/api/v1/workspaces/{workspaceId}/report-query-catalog" },
   "create_1": { method: "post", path: "/api/v1/workspaces/{workspaceId}/report-query-catalog" },
+  "listPrograms": { method: "get", path: "/api/v1/workspaces/{workspaceId}/programs" },
+  "createProgram": { method: "post", path: "/api/v1/workspaces/{workspaceId}/programs" },
   "listViews": { method: "get", path: "/api/v1/workspaces/{workspaceId}/personalization/views" },
   "createView": { method: "post", path: "/api/v1/workspaces/{workspaceId}/personalization/views" },
   "listRecentItems": { method: "get", path: "/api/v1/workspaces/{workspaceId}/personalization/recent-items" },
   "recordRecentItem": { method: "post", path: "/api/v1/workspaces/{workspaceId}/personalization/recent-items" },
   "listFavorites": { method: "get", path: "/api/v1/workspaces/{workspaceId}/personalization/favorites" },
   "addFavorite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/personalization/favorites" },
+  "listNotifications": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notifications" },
+  "createNotification": { method: "post", path: "/api/v1/workspaces/{workspaceId}/notifications" },
   "listPreferences": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notification-preferences" },
   "upsertPreference": { method: "post", path: "/api/v1/workspaces/{workspaceId}/notification-preferences" },
   "listDefaultPreferences": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notification-defaults" },
   "createDefaultPreference": { method: "post", path: "/api/v1/workspaces/{workspaceId}/notification-defaults" },
   "listWorkspaceLabels": { method: "get", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "createWorkspaceLabel": { method: "post", path: "/api/v1/workspaces/{workspaceId}/labels" },
+  "listInvitations": { method: "get", path: "/api/v1/workspaces/{workspaceId}/invitations" },
   "invite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/invitations" },
   "listTransformPresets": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
   "createTransformPreset": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
@@ -6443,6 +6636,9 @@ export const apiOperations = {
   "deleteRelease": { method: "delete", path: "/api/v1/releases/{releaseId}" },
   "getProjectPolicy": { method: "get", path: "/api/v1/projects/{projectId}/security-policy" },
   "updateProjectPolicy": { method: "patch", path: "/api/v1/projects/{projectId}/security-policy" },
+  "getProgram": { method: "get", path: "/api/v1/programs/{programId}" },
+  "updateProgram": { method: "patch", path: "/api/v1/programs/{programId}" },
+  "archiveProgram": { method: "delete", path: "/api/v1/programs/{programId}" },
   "getView": { method: "get", path: "/api/v1/personalization/views/{viewId}" },
   "updateView": { method: "patch", path: "/api/v1/personalization/views/{viewId}" },
   "deleteView": { method: "delete", path: "/api/v1/personalization/views/{viewId}" },
@@ -6496,7 +6692,6 @@ export const apiOperations = {
   "updateProfile": { method: "patch", path: "/api/v1/agents/{profileId}" },
   "updateProvider": { method: "patch", path: "/api/v1/agent-providers/{providerId}" },
   "projectActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity" },
-  "listNotifications": { method: "get", path: "/api/v1/workspaces/{workspaceId}/notifications" },
   "listImportSamples": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-samples" },
   "listWorkspaceConflictResolutionJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs" },
   "listExportJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/export-jobs" },
@@ -6537,6 +6732,7 @@ export const apiOperations = {
   "listByProject_2": { method: "get", path: "/api/v1/projects/{projectId}/report-query-catalog" },
   "listProjectViews": { method: "get", path: "/api/v1/projects/{projectId}/personalization/views" },
   "listByProject_3": { method: "get", path: "/api/v1/projects/{projectId}/dashboards" },
+  "listProgramProjects": { method: "get", path: "/api/v1/programs/{programId}/projects" },
   "listTransformPresetVersions": { method: "get", path: "/api/v1/import-transform-presets/{presetId}/versions" },
   "getImportJob": { method: "get", path: "/api/v1/import-jobs/{importJobId}" },
   "listJobVersionDiffs": { method: "get", path: "/api/v1/import-jobs/{importJobId}/version-diffs" },

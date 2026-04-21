@@ -13,6 +13,46 @@ export const createSecurityService = (api) => ({
     });
   },
 
+  listWorkspaceInvitations(workspaceId, query = {}) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/invitations', {
+      path: { workspaceId },
+      query,
+    });
+  },
+
+  inviteWorkspaceUser(workspaceId, request) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/invitations', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
+  cancelWorkspaceInvitation(workspaceId, invitationId) {
+    return api.request('delete', '/api/v1/workspaces/{workspaceId}/invitations/{invitationId}', {
+      path: { workspaceId, invitationId },
+    });
+  },
+
+  listWorkspaceUsers(workspaceId, query = {}) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/users', {
+      path: { workspaceId },
+      query,
+    });
+  },
+
+  createWorkspaceUser(workspaceId, request) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/users', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
+  removeWorkspaceUser(workspaceId, userId) {
+    return api.request('delete', '/api/v1/workspaces/{workspaceId}/users/{userId}', {
+      path: { workspaceId, userId },
+    });
+  },
+
   getWorkspaceSecurityPolicy(workspaceId) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/security-policy', {
       path: { workspaceId },

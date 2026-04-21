@@ -52,6 +52,7 @@ export const Shell = ({ children, context }) => {
         <RouteLink to="/agents" icon={<FiCpu />} label="Agents" />
         <RouteLink to="/tokens" icon={<FiKey />} label="Tokens" />
         <RouteLink to="/system" icon={<FiShield />} label="System" />
+        <RouteLink to="/workspace-settings" icon={<FiUsers />} label="Workspace" />
         <RouteLink to="/project-settings" icon={<FiSettings />} label="Project" />
       </nav>
 
