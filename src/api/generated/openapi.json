@@ -15495,6 +15495,9 @@
           "secretConfigured": {
             "type": "boolean"
           },
+          "secretKeyId": {
+            "type": "string"
+          },
           "eventTypes": {},
           "enabled": {
             "type": "boolean"
