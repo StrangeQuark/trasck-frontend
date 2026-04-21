@@ -227,4 +227,16 @@ export const createSecurityService = (api) => ({
       path: { projectId, workItemId },
     });
   },
+
+  listPublicProjectWorkItemComments(projectId, workItemId) {
+    return api.request('get', '/api/v1/public/projects/{projectId}/work-items/{workItemId}/comments', {
+      path: { projectId, workItemId },
+    });
+  },
+
+  listPublicProjectWorkItemAttachments(projectId, workItemId) {
+    return api.request('get', '/api/v1/public/projects/{projectId}/work-items/{workItemId}/attachments', {
+      path: { projectId, workItemId },
+    });
+  },
 });

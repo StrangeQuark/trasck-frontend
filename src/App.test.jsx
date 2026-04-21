@@ -1,4 +1,4 @@
-import { render, screen, within } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
 
@@ -94,7 +94,31 @@ describe('App', () => {
     window.history.pushState({}, '', '/public/projects/00000000-0000-0000-0000-000000000099');
     fetch.mockImplementation(async (url) => {
       const requestUrl = String(url);
-      if (requestUrl.includes('/api/v1/public/projects/00000000-0000-0000-0000-000000000099/work-items/00000000-0000-0000-0000-000000000199')) {
+      if (requestUrl.includes('/api/v1/public/projects/00000000-0000-0000-0000-000000000099/work-items/00000000-0000-0000-0000-000000000199/comments')) {
+        return new Response(JSON.stringify([{
+          id: '00000000-0000-0000-0000-000000000299',
+          workItemId: '00000000-0000-0000-0000-000000000199',
+          bodyMarkdown: 'Public collaboration note',
+          createdAt: '2026-04-21T20:00:00Z',
+        }]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (requestUrl.includes('/api/v1/public/projects/00000000-0000-0000-0000-000000000099/work-items/00000000-0000-0000-0000-000000000199/attachments')) {
+        return new Response(JSON.stringify([{
+          id: '00000000-0000-0000-0000-000000000399',
+          workItemId: '00000000-0000-0000-0000-000000000199',
+          filename: 'public-notes.txt',
+          contentType: 'text/plain',
+          sizeBytes: 32,
+          downloadUrl: '/api/v1/public/projects/00000000-0000-0000-0000-000000000099/work-items/00000000-0000-0000-0000-000000000199/attachments/00000000-0000-0000-0000-000000000399/download?token=test',
+        }]), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (requestUrl.endsWith('/api/v1/public/projects/00000000-0000-0000-0000-000000000099/work-items/00000000-0000-0000-0000-000000000199')) {
         return new Response(JSON.stringify({
           id: '00000000-0000-0000-0000-000000000199',
           projectId: '00000000-0000-0000-0000-000000000099',
@@ -148,5 +172,8 @@ describe('App', () => {
     expect(await screen.findByRole('heading', { level: 2, name: 'Public Project Preview' })).toBeInTheDocument();
     expect(screen.getByText('Public Trasck')).toBeInTheDocument();
     expect(screen.getByText('Public story')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Public story'));
+    expect(await screen.findByText('Public collaboration note')).toBeInTheDocument();
+    expect(screen.getByText('public-notes.txt')).toBeInTheDocument();
   });
 });

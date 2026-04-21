@@ -2691,6 +2691,25 @@ export interface PublicWorkItemResponse {
   updatedAt?: string;
 }
 
+export interface PublicWorkItemCommentResponse {
+  id?: string;
+  workItemId?: string;
+  bodyMarkdown?: string;
+  createdAt?: string;
+}
+
+export interface PublicWorkItemAttachmentResponse {
+  id?: string;
+  workItemId?: string;
+  filename?: string;
+  contentType?: string;
+  sizeBytes?: number;
+  checksum?: string;
+  createdAt?: string;
+  downloadUrl?: string;
+  downloadUrlExpiresAt?: string;
+}
+
 export interface ImportTransformPresetVersionResponse {
   id?: string;
   presetId?: string;
@@ -6272,6 +6291,42 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/public/projects/{projectId}/work-items/{workItemId}/comments": {
+    get: {
+      path: {
+      projectId: string;
+      workItemId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/public/projects/{projectId}/work-items/{workItemId}/attachments": {
+    get: {
+      path: {
+      projectId: string;
+      workItemId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/public/projects/{projectId}/work-items/{workItemId}/attachments/{attachmentId}/download": {
+    get: {
+      path: {
+      projectId: string;
+      workItemId: string;
+      attachmentId: string;
+    };
+      query: {
+      token: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/projects/{projectId}/teams": {
     get: {
       path: {
@@ -7088,6 +7143,9 @@ export const apiOperations = {
   "getPublicProject": { method: "get", path: "/api/v1/public/projects/{projectId}" },
   "listPublicProjectWorkItems": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items" },
   "getPublicProjectWorkItem": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items/{workItemId}" },
+  "listPublicProjectWorkItemComments": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items/{workItemId}/comments" },
+  "listPublicProjectWorkItemAttachments": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items/{workItemId}/attachments" },
+  "downloadPublicProjectWorkItemAttachment": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items/{workItemId}/attachments/{attachmentId}/download" },
   "listProjectTeams": { method: "get", path: "/api/v1/projects/{projectId}/teams" },
   "listByProject_1": { method: "get", path: "/api/v1/projects/{projectId}/saved-filters" },
   "listProjectRoleVersions": { method: "get", path: "/api/v1/projects/{projectId}/roles/{roleId}/versions" },
