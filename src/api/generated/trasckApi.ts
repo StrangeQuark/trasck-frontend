@@ -2615,6 +2615,22 @@ export interface WorkspaceSecurityPolicyResponse {
   updatedAt?: string;
 }
 
+export interface ProjectSecurityPolicyResponse {
+  projectId?: string;
+  workspaceId?: string;
+  attachmentMaxUploadBytes?: number;
+  attachmentMaxDownloadBytes?: number;
+  attachmentAllowedContentTypes?: string;
+  exportMaxArtifactBytes?: number;
+  exportAllowedContentTypes?: string;
+  importMaxParseBytes?: number;
+  importAllowedContentTypes?: string;
+  workspaceCustomPolicy?: boolean;
+  customPolicy?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ApiErrorResponse {
   timestamp?: string;
   status?: number;
@@ -6133,6 +6149,24 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/projects/{projectId}/security-policy": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: WorkspaceSecurityPolicyRequest;
+      response: unknown;
+    };
+  };
 }
 
 export const apiOperations = {
@@ -6491,6 +6525,8 @@ export const apiOperations = {
   "revokeSystemAdmin": { method: "delete", path: "/api/v1/system-admins/{userId}" },
   "getWorkspaceSecurityPolicy": { method: "get", path: "/api/v1/workspaces/{workspaceId}/security-policy" },
   "updateWorkspaceSecurityPolicy": { method: "patch", path: "/api/v1/workspaces/{workspaceId}/security-policy" },
+  "getProjectSecurityPolicy": { method: "get", path: "/api/v1/projects/{projectId}/security-policy" },
+  "updateProjectSecurityPolicy": { method: "patch", path: "/api/v1/projects/{projectId}/security-policy" },
 } as const;
 
 export type ApiOperationId = keyof typeof apiOperations;

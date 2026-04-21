@@ -26,6 +26,7 @@ import { ImportsPage } from './pages/imports/ImportsPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { BoardDetailPage, ReleaseDetailPage, RoadmapDetailPage } from './pages/planning/PlanningDetailPages';
 import { PlanningPage } from './pages/planning/PlanningPage';
+import { ProjectSettingsPage } from './pages/ProjectSettingsPage';
 import { SearchPage } from './pages/SearchPage';
 import { SetupPage } from './pages/SetupPage';
 import { SystemAdminPage } from './pages/SystemAdminPage';
@@ -115,6 +116,7 @@ const App = () => {
             <Route path="/agents" element={<AgentsPage context={context} />} />
             <Route path="/tokens" element={<TokenAdminPage context={context} />} />
             <Route path="/system" element={<SystemAdminPage context={context} />} />
+            <Route path="/project-settings" element={<ProjectSettingsPage context={context} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Shell>
