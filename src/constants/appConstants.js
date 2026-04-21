@@ -2,7 +2,7 @@ export const defaultSetupForm = {
   email: 'admin@trasck.local',
   username: 'admin',
   displayName: 'Trasck Admin',
-  password: 'trasck-password',
+  password: 'correct-horse-battery-staple',
   organizationName: 'Trasck Local',
   organizationSlug: 'trasck-local',
   workspaceName: 'Trasck Workspace',
