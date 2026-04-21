@@ -9,6 +9,7 @@ import { createDashboardsService } from './api/services/dashboardsService';
 import { createImportsService } from './api/services/importsService';
 import { createPlanningService } from './api/services/planningService';
 import { createSearchService } from './api/services/searchService';
+import { createSecurityService } from './api/services/securityService';
 import { createWorkItemsService } from './api/services/workItemsService';
 import { Shell } from './app/Shell';
 import { ToastStack } from './components/ToastStack';
@@ -27,6 +28,7 @@ import { BoardDetailPage, ReleaseDetailPage, RoadmapDetailPage } from './pages/p
 import { PlanningPage } from './pages/planning/PlanningPage';
 import { SearchPage } from './pages/SearchPage';
 import { SetupPage } from './pages/SetupPage';
+import { SystemAdminPage } from './pages/SystemAdminPage';
 import { TokenAdminPage } from './pages/TokenAdminPage';
 import { WorkPage } from './pages/WorkPage';
 import './styles/app.css';
@@ -57,6 +59,7 @@ const App = () => {
     imports: createImportsService(api),
     planning: createPlanningService(api),
     search: createSearchService(api),
+    security: createSecurityService(api),
     workItems: createWorkItemsService(api),
   }), [api]);
 
@@ -111,6 +114,7 @@ const App = () => {
             <Route path="/filters" element={<SearchPage context={context} />} />
             <Route path="/agents" element={<AgentsPage context={context} />} />
             <Route path="/tokens" element={<TokenAdminPage context={context} />} />
+            <Route path="/system" element={<SystemAdminPage context={context} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Shell>

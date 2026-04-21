@@ -2573,6 +2573,56 @@ export interface CsrfTokenResponse {
   token?: string;
 }
 
+export interface SystemAdminRequest {
+  userId?: string;
+}
+
+export interface SystemAdminResponse {
+  id?: string;
+  userId?: string;
+  email?: string;
+  username?: string;
+  displayName?: string;
+  active?: boolean;
+  grantedById?: string;
+  grantedAt?: string;
+  revokedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface WorkspaceSecurityPolicyRequest {
+  attachmentMaxUploadBytes?: number;
+  attachmentMaxDownloadBytes?: number;
+  attachmentAllowedContentTypes?: string;
+  exportMaxArtifactBytes?: number;
+  exportAllowedContentTypes?: string;
+  importMaxParseBytes?: number;
+  importAllowedContentTypes?: string;
+}
+
+export interface WorkspaceSecurityPolicyResponse {
+  workspaceId?: string;
+  attachmentMaxUploadBytes?: number;
+  attachmentMaxDownloadBytes?: number;
+  attachmentAllowedContentTypes?: string;
+  exportMaxArtifactBytes?: number;
+  exportAllowedContentTypes?: string;
+  importMaxParseBytes?: number;
+  importAllowedContentTypes?: string;
+  customPolicy?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface ApiErrorResponse {
+  timestamp?: string;
+  status?: number;
+  error?: string;
+  message?: string;
+  path?: string;
+}
+
 export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 export interface CursorPage<T> {
@@ -6041,6 +6091,48 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/system-admins": {
+    get: {
+      path: undefined;
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: undefined;
+      query: undefined;
+      body: SystemAdminRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/system-admins/{userId}": {
+    delete: {
+      path: {
+      userId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/security-policy": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: WorkspaceSecurityPolicyRequest;
+      response: unknown;
+    };
+  };
 }
 
 export const apiOperations = {
@@ -6394,6 +6486,11 @@ export const apiOperations = {
   "deleteFavorite": { method: "delete", path: "/api/v1/personalization/favorites/{favoriteId}" },
   "removeWorkItem": { method: "delete", path: "/api/v1/iterations/{iterationId}/work-items/{workItemId}" },
   "revokePersonalToken": { method: "delete", path: "/api/v1/auth/tokens/{tokenId}" },
+  "listSystemAdmins": { method: "get", path: "/api/v1/system-admins" },
+  "grantSystemAdmin": { method: "post", path: "/api/v1/system-admins" },
+  "revokeSystemAdmin": { method: "delete", path: "/api/v1/system-admins/{userId}" },
+  "getWorkspaceSecurityPolicy": { method: "get", path: "/api/v1/workspaces/{workspaceId}/security-policy" },
+  "updateWorkspaceSecurityPolicy": { method: "patch", path: "/api/v1/workspaces/{workspaceId}/security-policy" },
 } as const;
 
 export type ApiOperationId = keyof typeof apiOperations;

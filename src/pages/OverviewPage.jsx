@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { FiBarChart2, FiBell, FiCpu, FiFilter, FiKey, FiLayers, FiList, FiLogIn, FiSliders, FiUploadCloud, FiUsers } from 'react-icons/fi';
+import { FiBarChart2, FiBell, FiCpu, FiFilter, FiKey, FiLayers, FiList, FiLogIn, FiShield, FiSliders, FiUploadCloud, FiUsers } from 'react-icons/fi';
 import { Panel } from '../components/Panel';
 import { SummaryRows } from '../components/SummaryRows';
 
@@ -31,6 +31,7 @@ export const OverviewPage = ({ context }) => (
         <NavLink className="action-tile" to="/imports"><FiUploadCloud /> Imports</NavLink>
         <NavLink className="action-tile" to="/agents"><FiCpu /> Agents</NavLink>
         <NavLink className="action-tile" to="/tokens"><FiKey /> API tokens</NavLink>
+        <NavLink className="action-tile" to="/system"><FiShield /> System</NavLink>
       </div>
     </Panel>
   </div>
