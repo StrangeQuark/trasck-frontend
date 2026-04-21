@@ -2253,6 +2253,17 @@ export interface WorkspaceMemberResponse {
   lastLoginAt?: string;
 }
 
+export interface RoleResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  key?: string;
+  name?: string;
+  scope?: string;
+  description?: string;
+  systemRole?: boolean;
+}
+
 export interface ActivityEventResponse {
   id?: string;
   domainEventId?: string;
@@ -5535,6 +5546,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/roles": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity": {
     get: {
       path: {
@@ -5962,6 +5983,16 @@ export interface ApiPaths {
     };
   };
   "/api/v1/projects/{projectId}/saved-filters": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/projects/{projectId}/roles": {
     get: {
       path: {
       projectId: string;
@@ -6691,6 +6722,7 @@ export const apiOperations = {
   "deleteAction": { method: "delete", path: "/api/v1/automation-rules/{ruleId}/actions/{actionId}" },
   "updateProfile": { method: "patch", path: "/api/v1/agents/{profileId}" },
   "updateProvider": { method: "patch", path: "/api/v1/agent-providers/{providerId}" },
+  "listWorkspaceRoles": { method: "get", path: "/api/v1/workspaces/{workspaceId}/roles" },
   "projectActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity" },
   "listImportSamples": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-samples" },
   "listWorkspaceConflictResolutionJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs" },
@@ -6728,6 +6760,7 @@ export const apiOperations = {
   "getPublicProject": { method: "get", path: "/api/v1/public/projects/{projectId}" },
   "listProjectTeams": { method: "get", path: "/api/v1/projects/{projectId}/teams" },
   "listByProject_1": { method: "get", path: "/api/v1/projects/{projectId}/saved-filters" },
+  "listProjectRoles": { method: "get", path: "/api/v1/projects/{projectId}/roles" },
   "listProjectRoadmaps": { method: "get", path: "/api/v1/projects/{projectId}/roadmaps" },
   "listByProject_2": { method: "get", path: "/api/v1/projects/{projectId}/report-query-catalog" },
   "listProjectViews": { method: "get", path: "/api/v1/projects/{projectId}/personalization/views" },

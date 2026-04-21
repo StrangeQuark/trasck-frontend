@@ -11065,6 +11065,40 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/roles": {
+      "get": {
+        "tags": [
+          "role-controller"
+        ],
+        "operationId": "listWorkspaceRoles",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity": {
       "get": {
         "tags": [
@@ -12678,6 +12712,40 @@
                   "type": "array",
                   "items": {
                     "$ref": "#/components/schemas/SavedFilterResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/projects/{projectId}/roles": {
+      "get": {
+        "tags": [
+          "role-controller"
+        ],
+        "operationId": "listProjectRoles",
+        "parameters": [
+          {
+            "name": "projectId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/RoleResponse"
                   }
                 }
               }
@@ -20537,6 +20605,38 @@
           "lastLoginAt": {
             "type": "string",
             "format": "date-time"
+          }
+        }
+      },
+      "RoleResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "projectId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "key": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "scope": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "systemRole": {
+            "type": "boolean"
           }
         }
       },

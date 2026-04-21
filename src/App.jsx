@@ -27,6 +27,7 @@ import { OverviewPage } from './pages/OverviewPage';
 import { BoardDetailPage, ReleaseDetailPage, RoadmapDetailPage } from './pages/planning/PlanningDetailPages';
 import { PlanningPage } from './pages/planning/PlanningPage';
 import { ProjectSettingsPage } from './pages/ProjectSettingsPage';
+import { PublicProjectPreviewPage } from './pages/PublicProjectPreviewPage';
 import { SearchPage } from './pages/SearchPage';
 import { SetupPage } from './pages/SetupPage';
 import { SystemAdminPage } from './pages/SystemAdminPage';
@@ -119,6 +120,7 @@ const App = () => {
             <Route path="/system" element={<SystemAdminPage context={context} />} />
             <Route path="/workspace-settings" element={<WorkspaceSettingsPage context={context} />} />
             <Route path="/project-settings" element={<ProjectSettingsPage context={context} />} />
+            <Route path="/public/projects/:projectId" element={<PublicProjectPreviewPage context={context} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Shell>

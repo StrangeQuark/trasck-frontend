@@ -37,7 +37,7 @@ The dev server runs on `http://localhost:8080`. The backend defaults to `http://
 <br>
 
 ### Implemented Console Surfaces
-The current route-based console includes setup/auth, work items, planning, configuration, automation, imports, dashboards, filters, agents, token administration, system administration, Workspace Settings for member/invitation management, and Project Settings for project security policy.
+The current route-based console includes setup/auth, work items, planning, configuration, automation, imports, dashboards, filters, agents, token administration, system administration, Workspace Settings for security policy plus member/invitation management with role pickers, Project Settings for project security/public-read policy, and an anonymous public project preview route.
 <br>
 
 ### Container Security Headers

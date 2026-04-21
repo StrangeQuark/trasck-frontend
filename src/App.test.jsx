@@ -65,15 +65,16 @@ describe('App', () => {
     render(<App />);
 
     expect(await screen.findByRole('heading', { level: 2, name: 'System Admins' })).toBeInTheDocument();
-    expect(screen.getByRole('heading', { level: 2, name: 'Workspace Security Policy' })).toBeInTheDocument();
   });
 
   it('renders project security policy controls', async () => {
     window.history.pushState({}, '', '/project-settings');
+    window.localStorage.setItem('trasck.projectId', '00000000-0000-0000-0000-000000000099');
 
     render(<App />);
 
     expect(await screen.findByRole('heading', { level: 2, name: 'Project Security Policy' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /Public Preview/i })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Project Security State' })).toBeInTheDocument();
   });
 
@@ -82,7 +83,36 @@ describe('App', () => {
 
     render(<App />);
 
+    expect(await screen.findByRole('heading', { level: 2, name: 'Workspace Security Policy' })).toBeInTheDocument();
     expect(await screen.findByRole('heading', { level: 2, name: 'Workspace Members' })).toBeInTheDocument();
     expect(screen.getByRole('heading', { level: 2, name: 'Workspace Invitations' })).toBeInTheDocument();
+  });
+
+  it('renders anonymous public project preview route', async () => {
+    window.history.pushState({}, '', '/public/projects/00000000-0000-0000-0000-000000000099');
+    fetch.mockImplementation(async (url) => {
+      if (String(url).includes('/api/v1/public/projects/')) {
+        return new Response(JSON.stringify({
+          id: '00000000-0000-0000-0000-000000000099',
+          workspaceId: '00000000-0000-0000-0000-000000000101',
+          name: 'Public Trasck',
+          key: 'PTR',
+          description: 'Public project preview',
+          visibility: 'public',
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      return new Response(JSON.stringify({ message: 'Unauthorized' }), {
+        status: 401,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+
+    render(<App />);
+
+    expect(await screen.findByRole('heading', { level: 2, name: 'Public Project Preview' })).toBeInTheDocument();
+    expect(screen.getByText('Public Trasck')).toBeInTheDocument();
   });
 });
