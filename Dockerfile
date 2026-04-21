@@ -2,12 +2,14 @@
 FROM node:22-alpine AS builder
 
 ARG VITE_API_URL
+ARG VITE_TRASCK_API_BASE_URL
 ENV VITE_API_URL=$VITE_API_URL
+ENV VITE_TRASCK_API_BASE_URL=$VITE_TRASCK_API_BASE_URL
 
 WORKDIR /trasck-frontend
 
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm ci
 
 COPY public ./public
 COPY src ./src
