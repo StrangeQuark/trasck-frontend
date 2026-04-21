@@ -36,6 +36,10 @@ npm run dev
 The dev server runs on `http://localhost:8080`. The backend defaults to `http://localhost:6100`; override it with `VITE_TRASCK_API_BASE_URL` or the existing `VITE_API_URL`.
 <br>
 
+### Implemented Console Surfaces
+The current route-based console includes setup/auth, work items, planning, configuration, automation, imports, dashboards, filters, agents, token administration, system administration, Workspace Settings for member/invitation management, and Project Settings for project security policy.
+<br>
+
 ### Container Security Headers
 The production nginx image uses `nginx.conf.template` and runtime environment variables for CSP-related directives:
 

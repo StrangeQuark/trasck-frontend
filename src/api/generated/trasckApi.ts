@@ -2233,6 +2233,26 @@ export interface ProjectSecurityPolicyResponse {
   updatedAt?: string;
 }
 
+export interface WorkspaceMemberResponse {
+  membershipId?: string;
+  workspaceId?: string;
+  userId?: string;
+  roleId?: string;
+  roleKey?: string;
+  roleName?: string;
+  status?: string;
+  invitedAt?: string;
+  joinedAt?: string;
+  createdAt?: string;
+  email?: string;
+  username?: string;
+  displayName?: string;
+  accountType?: string;
+  emailVerified?: boolean;
+  active?: boolean;
+  lastLoginAt?: string;
+}
+
 export interface ActivityEventResponse {
   id?: string;
   domainEventId?: string;
@@ -2250,6 +2270,26 @@ export interface CursorPageResponseActivityEventResponse {
   nextCursor?: string;
   hasMore?: boolean;
   limit?: number;
+}
+
+export interface WorkspaceInvitationResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  email?: string;
+  roleId?: string;
+  roleKey?: string;
+  roleName?: string;
+  projectRoleId?: string;
+  projectRoleKey?: string;
+  projectRoleName?: string;
+  status?: string;
+  invitedById?: string;
+  acceptedById?: string;
+  expiresAt?: string;
+  acceptedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface CursorPageResponseExportJobResponse {
@@ -2833,6 +2873,16 @@ export interface ApiPaths {
     };
   };
   "/api/v1/workspaces/{workspaceId}/users": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: {
+      status?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
     post: {
       path: {
       workspaceId: string;
@@ -3113,6 +3163,16 @@ export interface ApiPaths {
     };
   };
   "/api/v1/workspaces/{workspaceId}/invitations": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: {
+      status?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
     post: {
       path: {
       workspaceId: string;
@@ -6352,6 +6412,7 @@ export const apiOperations = {
   "listWebhooks": { method: "get", path: "/api/v1/workspaces/{workspaceId}/webhooks" },
   "createWebhook": { method: "post", path: "/api/v1/workspaces/{workspaceId}/webhooks" },
   "processWebhookDeliveries": { method: "post", path: "/api/v1/workspaces/{workspaceId}/webhook-deliveries/process" },
+  "listWorkspaceUsers": { method: "get", path: "/api/v1/workspaces/{workspaceId}/users" },
   "createUser": { method: "post", path: "/api/v1/workspaces/{workspaceId}/users" },
   "listTeams": { method: "get", path: "/api/v1/workspaces/{workspaceId}/teams" },
   "createTeam": { method: "post", path: "/api/v1/workspaces/{workspaceId}/teams" },
@@ -6383,6 +6444,7 @@ export const apiOperations = {
   "createDefaultPreference": { method: "post", path: "/api/v1/workspaces/{workspaceId}/notification-defaults" },
   "listWorkspaceLabels": { method: "get", path: "/api/v1/workspaces/{workspaceId}/labels" },
   "createWorkspaceLabel": { method: "post", path: "/api/v1/workspaces/{workspaceId}/labels" },
+  "listInvitations": { method: "get", path: "/api/v1/workspaces/{workspaceId}/invitations" },
   "invite": { method: "post", path: "/api/v1/workspaces/{workspaceId}/invitations" },
   "listTransformPresets": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
   "createTransformPreset": { method: "post", path: "/api/v1/workspaces/{workspaceId}/import-transform-presets" },
