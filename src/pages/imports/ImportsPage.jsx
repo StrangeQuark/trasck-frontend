@@ -99,6 +99,7 @@ export const ImportsPage = ({ context }) => {
   });
   const [parseForm, setParseForm] = useState({
     sourceType: '',
+    contentType: 'text/csv',
     content: 'key,title,type\nTRASCK-1,Imported story,story',
   });
   const [materializeForm, setMaterializeForm] = useState({ limit: '25', updateExisting: 'false' });
@@ -288,6 +289,7 @@ export const ImportsPage = ({ context }) => {
     const parsed = await action.run(() => context.services.imports.parse(importJobId, {
       content: parseForm.content,
       sourceType: parseForm.sourceType || undefined,
+      contentType: parseForm.contentType || undefined,
     }), 'Import parsed');
     if (parsed) {
       setParseResult(parsed);
@@ -770,6 +772,7 @@ export const ImportsPage = ({ context }) => {
         <form className="stack" onSubmit={parseJob}>
           <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={setImportJobId} />
           <TextField label="Source type" value={parseForm.sourceType} onChange={(sourceType) => setParseForm({ ...parseForm, sourceType })} />
+          <SelectField label="Content type" value={parseForm.contentType} onChange={(contentType) => setParseForm({ ...parseForm, contentType })} options={['text/csv', 'application/json', 'text/plain']} />
           <Field label="Content">
             <textarea value={parseForm.content} onChange={(event) => setParseForm({ ...parseForm, content: event.target.value })} rows={8} spellCheck="false" />
           </Field>

@@ -397,7 +397,7 @@ export const AutomationPage = ({ context }) => {
         <form className="stack" onSubmit={createWebhook}>
           <TextField label="Name" value={webhookForm.name} onChange={(name) => setWebhookForm({ ...webhookForm, name })} />
           <TextField label="URL" value={webhookForm.url} onChange={(url) => setWebhookForm({ ...webhookForm, url })} />
-          <TextField label="Secret" value={webhookForm.secret} onChange={(secret) => setWebhookForm({ ...webhookForm, secret })} />
+          <TextField label="Secret" type="password" value={webhookForm.secret} onChange={(secret) => setWebhookForm({ ...webhookForm, secret })} />
           <Field label="Event types JSON">
             <textarea value={webhookForm.eventTypesText} onChange={(event) => setWebhookForm({ ...webhookForm, eventTypesText: event.target.value })} rows={4} spellCheck="false" />
           </Field>

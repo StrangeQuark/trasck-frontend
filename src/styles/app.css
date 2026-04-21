@@ -459,6 +459,39 @@ button:disabled {
   padding: 12px;
 }
 
+.secret-reveal {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid #dfe4e8;
+  border-radius: 8px;
+  padding: 14px;
+  background: #f8fafb;
+}
+
+.secret-reveal h3,
+.secret-reveal p {
+  margin: 0;
+}
+
+.secret-reveal p {
+  color: #5f6b75;
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.secret-value {
+  display: block;
+  min-height: 42px;
+  overflow: auto;
+  border: 1px solid #dfe4e8;
+  border-radius: 7px;
+  background: #101820;
+  color: #d8eef3;
+  padding: 10px 12px;
+  white-space: nowrap;
+}
+
 .table-wrap {
   min-width: 0;
   overflow-x: auto;

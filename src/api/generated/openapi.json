@@ -18429,6 +18429,9 @@
           "mapping": {},
           "sourceType": {
             "type": "string"
+          },
+          "contentType": {
+            "type": "string"
           }
         }
       },

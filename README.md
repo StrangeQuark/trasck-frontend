@@ -36,6 +36,18 @@ npm run dev
 The dev server runs on `http://localhost:8080`. The backend defaults to `http://localhost:6100`; override it with `VITE_TRASCK_API_BASE_URL` or the existing `VITE_API_URL`.
 <br>
 
+### Container Security Headers
+The production nginx image uses `nginx.conf.template` and runtime environment variables for CSP-related directives:
+
+- `NGINX_SERVER_NAME`
+- `TRASCK_CSP_CONNECT_SRC`
+- `TRASCK_CSP_IMG_SRC`
+- `TRASCK_CSP_STYLE_SRC`
+- `TRASCK_CSP_SCRIPT_SRC`
+
+The defaults are local-development values. Set deployed browser/API origins explicitly before using the image outside local testing.
+<br>
+
 ### API Client Generation
 The frontend keeps a generated TypeScript API client under `src/api/generated`. Start the Trasck backend, then regenerate the client when the backend OpenAPI contract changes:
 
