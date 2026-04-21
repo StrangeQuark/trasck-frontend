@@ -5,6 +5,7 @@ import { ErrorLine } from '../components/ErrorLine';
 import { Field } from '../components/Field';
 import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
+import { RoleManagementPanel } from '../components/RoleManagementPanel';
 import { StatusPill } from '../components/StatusPill';
 import { SummaryRows } from '../components/SummaryRows';
 import { TextField } from '../components/TextField';
@@ -379,6 +380,13 @@ export const WorkspaceSettingsPage = ({ context }) => {
           </form>
         </div>
       </Panel>
+
+      <RoleManagementPanel
+        context={context}
+        onRolesChanged={loadWorkspaceSettings}
+        scope="workspace"
+        scopeId={context.workspaceId}
+      />
 
       <Panel title="Workspace Management State" icon={<FiUsers />} wide>
         <ErrorLine message={action.error} />
