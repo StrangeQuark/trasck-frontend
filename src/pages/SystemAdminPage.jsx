@@ -21,8 +21,10 @@ const DEFAULT_POLICY_FORM = {
 export const SystemAdminPage = ({ context }) => {
   const [admins, setAdmins] = useState([]);
   const [policy, setPolicy] = useState(null);
+  const [projectPolicy, setProjectPolicy] = useState(null);
   const [grantUserId, setGrantUserId] = useState('');
   const [policyForm, setPolicyForm] = useState(DEFAULT_POLICY_FORM);
+  const [projectPolicyForm, setProjectPolicyForm] = useState(DEFAULT_POLICY_FORM);
   const action = useApiAction(context.addToast);
 
   const loadAdmins = async () => {
@@ -43,11 +45,28 @@ export const SystemAdminPage = ({ context }) => {
     }
   };
 
+  const loadProjectPolicy = async () => {
+    if (!context.projectId) {
+      return;
+    }
+    const loaded = await action.run(() => context.services.security.getProjectSecurityPolicy(context.projectId));
+    if (loaded) {
+      setProjectPolicy(loaded);
+      setProjectPolicyForm(policyToForm(loaded));
+    }
+  };
+
   useEffect(() => {
     if (context.workspaceId) {
       loadPolicy();
     }
   }, [context.workspaceId]);
+
+  useEffect(() => {
+    if (context.projectId) {
+      loadProjectPolicy();
+    }
+  }, [context.projectId]);
 
   const grantAdmin = async (event) => {
     event.preventDefault();
@@ -74,6 +93,18 @@ export const SystemAdminPage = ({ context }) => {
     if (saved) {
       setPolicy(saved);
       setPolicyForm(policyToForm(saved));
+    }
+  };
+
+  const saveProjectPolicy = async (event) => {
+    event.preventDefault();
+    const saved = await action.run(
+      () => context.services.security.updateProjectSecurityPolicy(context.projectId, policyRequest(projectPolicyForm)),
+      'Project security policy saved',
+    );
+    if (saved) {
+      setProjectPolicy(saved);
+      setProjectPolicyForm(policyToForm(saved));
     }
   };
 
@@ -120,11 +151,33 @@ export const SystemAdminPage = ({ context }) => {
         </form>
       </Panel>
 
+      <Panel title="Project Security Policy" icon={<FiShield />}>
+        <form className="stack" onSubmit={saveProjectPolicy}>
+          <SummaryRows rows={[
+            ['Project', context.projectId],
+            ['Workspace policy', projectPolicy?.workspaceCustomPolicy ? 'Custom' : 'Default'],
+            ['Project policy', projectPolicy?.customPolicy ? 'Custom' : 'Inherited'],
+          ]} />
+          <TextField label="Attachment max upload bytes" value={projectPolicyForm.attachmentMaxUploadBytes} onChange={(attachmentMaxUploadBytes) => setProjectPolicyForm({ ...projectPolicyForm, attachmentMaxUploadBytes })} />
+          <TextField label="Attachment max download bytes" value={projectPolicyForm.attachmentMaxDownloadBytes} onChange={(attachmentMaxDownloadBytes) => setProjectPolicyForm({ ...projectPolicyForm, attachmentMaxDownloadBytes })} />
+          <TextField label="Attachment content types" value={projectPolicyForm.attachmentAllowedContentTypes} onChange={(attachmentAllowedContentTypes) => setProjectPolicyForm({ ...projectPolicyForm, attachmentAllowedContentTypes })} />
+          <TextField label="Export max bytes" value={projectPolicyForm.exportMaxArtifactBytes} onChange={(exportMaxArtifactBytes) => setProjectPolicyForm({ ...projectPolicyForm, exportMaxArtifactBytes })} />
+          <TextField label="Export content types" value={projectPolicyForm.exportAllowedContentTypes} onChange={(exportAllowedContentTypes) => setProjectPolicyForm({ ...projectPolicyForm, exportAllowedContentTypes })} />
+          <TextField label="Import max parse bytes" value={projectPolicyForm.importMaxParseBytes} onChange={(importMaxParseBytes) => setProjectPolicyForm({ ...projectPolicyForm, importMaxParseBytes })} />
+          <TextField label="Import content types" value={projectPolicyForm.importAllowedContentTypes} onChange={(importAllowedContentTypes) => setProjectPolicyForm({ ...projectPolicyForm, importAllowedContentTypes })} />
+          <div className="button-row wrap">
+            <button className="secondary-button" disabled={action.pending || !context.projectId} onClick={loadProjectPolicy} type="button"><FiRefreshCw />Load</button>
+            <button className="primary-button" disabled={action.pending || !context.projectId} type="submit"><FiSave />Save</button>
+          </div>
+        </form>
+      </Panel>
+
       <Panel title="Security State" icon={<FiShield />} wide>
         <ErrorLine message={action.error} />
         <div className="data-columns">
           <JsonPreview title="System Admins" value={admins} />
           <JsonPreview title="Workspace Policy" value={policy} />
+          <JsonPreview title="Project Policy" value={projectPolicy} />
         </div>
       </Panel>
     </div>
