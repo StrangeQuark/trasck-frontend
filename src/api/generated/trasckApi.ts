@@ -153,6 +153,7 @@ export interface WebhookResponse {
   name?: string;
   url?: string;
   secretConfigured?: boolean;
+  secretKeyId?: string;
   eventTypes?: unknown;
   enabled?: boolean;
 }
