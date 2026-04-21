@@ -159,7 +159,7 @@ export const WebhookDetailPage = ({ context }) => {
         <form className="stack" onSubmit={save}>
           <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
           <TextField label="URL" value={form.url} onChange={(url) => setForm({ ...form, url })} />
-          <TextField label="Secret" value={form.secret} onChange={(secret) => setForm({ ...form, secret })} />
+          <TextField label="Secret" type="password" value={form.secret} onChange={(secret) => setForm({ ...form, secret })} />
           <SelectField label="Enabled" value={form.enabled} onChange={(enabled) => setForm({ ...form, enabled })} options={['true', 'false']} />
           <Field label="Event types JSON">
             <textarea value={form.eventTypesText} onChange={(event) => setForm({ ...form, eventTypesText: event.target.value })} rows={6} spellCheck="false" />

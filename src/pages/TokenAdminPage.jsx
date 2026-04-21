@@ -3,6 +3,7 @@ import { FiEye, FiKey, FiPlus, FiRefreshCw, FiSettings } from 'react-icons/fi';
 import { ErrorLine } from '../components/ErrorLine';
 import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
+import { SecretReveal } from '../components/SecretReveal';
 import { TextField } from '../components/TextField';
 import { useApiAction } from '../hooks/useApiAction';
 
@@ -83,6 +84,12 @@ export const TokenAdminPage = ({ context }) => {
         </div>
         <ErrorLine message={action.error} />
         <div className="data-columns">
+          <SecretReveal
+            label="New Token Value"
+            prefix={createdToken?.tokenPrefix}
+            value={createdToken?.token}
+            onClear={() => setCreatedToken(null)}
+          />
           <JsonPreview title="New Token" value={createdToken} />
           <JsonPreview title="Personal" value={personalTokens} />
           <JsonPreview title="Service" value={serviceTokens} />

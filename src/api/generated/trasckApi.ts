@@ -1778,6 +1778,7 @@ export interface ImportParseRequest {
   content?: string;
   mapping?: unknown;
   sourceType?: string;
+  contentType?: string;
 }
 
 export interface ImportMaterializeRequest {
