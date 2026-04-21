@@ -7,6 +7,36 @@ export type ISODate = string;
 export type ISODateTime = string;
 export type JsonValue = null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue };
 
+export interface RolePermissionUpdateRequest {
+  permissionKeys?: string[];
+  confirmed?: boolean;
+  previewToken?: string;
+}
+
+export interface RoleImpactSummary {
+  activeMembers?: number;
+  pendingInvitations?: number;
+  affectedUsers?: number;
+  affectsCurrentUser?: boolean;
+}
+
+export interface RoleResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  key?: string;
+  name?: string;
+  scope?: string;
+  description?: string;
+  systemRole?: boolean;
+  status?: string;
+  archivedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  permissionKeys?: string[];
+  impactSummary?: RoleImpactSummary;
+}
+
 export interface EmailProviderSettingsRequest {
   provider?: string;
   fromEmail?: string;
@@ -272,6 +302,30 @@ export interface SavedFilterResponse {
   query?: unknown;
   createdAt?: string;
   updatedAt?: string;
+}
+
+export interface RoleRequest {
+  key?: string;
+  name?: string;
+  description?: string;
+  permissionKeys?: string[];
+}
+
+export interface RolePermissionPreviewRequest {
+  permissionKeys?: string[];
+}
+
+export interface RoleImpactPreviewResponse {
+  roleId?: string;
+  currentPermissionKeys?: string[];
+  requestedPermissionKeys?: string[];
+  addedPermissionKeys?: string[];
+  removedPermissionKeys?: string[];
+  impactSummary?: RoleImpactSummary;
+  removesAdministrativePermission?: boolean;
+  confirmationRequired?: boolean;
+  confirmationText?: string;
+  previewToken?: string;
 }
 
 export interface RoadmapRequest {
@@ -2112,6 +2166,11 @@ export interface WorkspaceSecurityPolicyResponse {
   updatedAt?: string;
 }
 
+export interface RoleUpdateRequest {
+  name?: string;
+  description?: string;
+}
+
 export interface ImportWorkspaceSettingsRequest {
   sampleJobsEnabled?: boolean;
 }
@@ -2253,15 +2312,31 @@ export interface WorkspaceMemberResponse {
   lastLoginAt?: string;
 }
 
-export interface RoleResponse {
+export interface RoleVersionResponse {
   id?: string;
+  roleId?: string;
   workspaceId?: string;
   projectId?: string;
-  key?: string;
+  versionNumber?: number;
   name?: string;
+  key?: string;
   scope?: string;
   description?: string;
   systemRole?: boolean;
+  status?: string;
+  permissionKeys?: unknown;
+  changeType?: string;
+  changeNote?: string;
+  createdById?: string;
+  createdAt?: string;
+}
+
+export interface PermissionResponse {
+  id?: string;
+  key?: string;
+  name?: string;
+  description?: string;
+  category?: string;
 }
 
 export interface ActivityEventResponse {
@@ -2769,6 +2844,17 @@ export interface CursorPage<T> {
 }
 
 export interface ApiPaths {
+  "/api/v1/workspaces/{workspaceId}/roles/{roleId}/permissions": {
+    put: {
+      path: {
+      workspaceId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: RolePermissionUpdateRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/email-provider-settings": {
     get: {
       path: {
@@ -2861,6 +2947,17 @@ export interface ApiPaths {
       query: undefined;
       body: undefined;
       response: void;
+    };
+  };
+  "/api/v1/projects/{projectId}/roles/{roleId}/permissions": {
+    put: {
+      path: {
+      projectId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: RolePermissionUpdateRequest;
+      response: unknown;
     };
   };
   "/api/v1/programs/{programId}/projects/{projectId}": {
@@ -3000,6 +3097,47 @@ export interface ApiPaths {
     };
       query: undefined;
       body: SavedFilterRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/roles": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: RoleRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/roles/{roleId}/versions/{versionId}/rollback": {
+    post: {
+      path: {
+      workspaceId: string;
+      roleId: string;
+      versionId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/roles/{roleId}/permission-preview": {
+    post: {
+      path: {
+      workspaceId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: RolePermissionPreviewRequest;
       response: unknown;
     };
   };
@@ -4011,6 +4149,47 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/projects/{projectId}/roles": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    post: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: RoleRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/projects/{projectId}/roles/{roleId}/versions/{versionId}/rollback": {
+    post: {
+      path: {
+      projectId: string;
+      roleId: string;
+      versionId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/projects/{projectId}/roles/{roleId}/permission-preview": {
+    post: {
+      path: {
+      projectId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: RolePermissionPreviewRequest;
+      response: unknown;
+    };
+  };
   "/api/v1/projects/{projectId}/releases": {
     get: {
       path: {
@@ -4712,6 +4891,35 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/roles/{roleId}": {
+    get: {
+      path: {
+      workspaceId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      workspaceId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: RoleUpdateRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      workspaceId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/import-settings": {
     get: {
       path: {
@@ -5064,6 +5272,35 @@ export interface ApiPaths {
       query: undefined;
       body: WorkspaceSecurityPolicyRequest;
       response: unknown;
+    };
+  };
+  "/api/v1/projects/{projectId}/roles/{roleId}": {
+    get: {
+      path: {
+      projectId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+    patch: {
+      path: {
+      projectId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: RoleUpdateRequest;
+      response: unknown;
+    };
+    delete: {
+      path: {
+      projectId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: void;
     };
   };
   "/api/v1/programs/{programId}": {
@@ -5574,7 +5811,18 @@ export interface ApiPaths {
       response: unknown;
     };
   };
-  "/api/v1/workspaces/{workspaceId}/roles": {
+  "/api/v1/workspaces/{workspaceId}/roles/{roleId}/versions": {
+    get: {
+      path: {
+      workspaceId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/roles/permissions": {
     get: {
       path: {
       workspaceId: string;
@@ -6044,7 +6292,18 @@ export interface ApiPaths {
       response: unknown;
     };
   };
-  "/api/v1/projects/{projectId}/roles": {
+  "/api/v1/projects/{projectId}/roles/{roleId}/versions": {
+    get: {
+      path: {
+      projectId: string;
+      roleId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/projects/{projectId}/roles/permissions": {
     get: {
       path: {
       projectId: string;
@@ -6480,6 +6739,7 @@ export interface ApiPaths {
 }
 
 export const apiOperations = {
+  "updateWorkspaceRolePermissions": { method: "put", path: "/api/v1/workspaces/{workspaceId}/roles/{roleId}/permissions" },
   "getEmailProviderSettings": { method: "get", path: "/api/v1/workspaces/{workspaceId}/email-provider-settings" },
   "updateEmailProviderSettings": { method: "put", path: "/api/v1/workspaces/{workspaceId}/email-provider-settings" },
   "getRetentionPolicy": { method: "get", path: "/api/v1/workspaces/{workspaceId}/audit-retention-policy" },
@@ -6490,6 +6750,7 @@ export const apiOperations = {
   "updateSnapshotRetentionPolicy": { method: "put", path: "/api/v1/reports/workspaces/{workspaceId}/snapshot-retention-policy" },
   "assignProjectTeam": { method: "put", path: "/api/v1/projects/{projectId}/teams/{teamId}" },
   "removeProjectTeam": { method: "delete", path: "/api/v1/projects/{projectId}/teams/{teamId}" },
+  "updateProjectRolePermissions": { method: "put", path: "/api/v1/projects/{projectId}/roles/{roleId}/permissions" },
   "assignProgramProject": { method: "put", path: "/api/v1/programs/{programId}/projects/{projectId}" },
   "removeProgramProject": { method: "delete", path: "/api/v1/programs/{programId}/projects/{projectId}" },
   "listWebhooks": { method: "get", path: "/api/v1/workspaces/{workspaceId}/webhooks" },
@@ -6505,6 +6766,10 @@ export const apiOperations = {
   "createScreen": { method: "post", path: "/api/v1/workspaces/{workspaceId}/screens" },
   "list": { method: "get", path: "/api/v1/workspaces/{workspaceId}/saved-filters" },
   "create": { method: "post", path: "/api/v1/workspaces/{workspaceId}/saved-filters" },
+  "listWorkspaceRoles": { method: "get", path: "/api/v1/workspaces/{workspaceId}/roles" },
+  "createWorkspaceRole": { method: "post", path: "/api/v1/workspaces/{workspaceId}/roles" },
+  "rollbackWorkspaceRole": { method: "post", path: "/api/v1/workspaces/{workspaceId}/roles/{roleId}/versions/{versionId}/rollback" },
+  "previewWorkspaceRolePermissions": { method: "post", path: "/api/v1/workspaces/{workspaceId}/roles/{roleId}/permission-preview" },
   "listWorkspaceRoadmaps": { method: "get", path: "/api/v1/workspaces/{workspaceId}/roadmaps" },
   "createRoadmap": { method: "post", path: "/api/v1/workspaces/{workspaceId}/roadmaps" },
   "listRepositoryConnections": { method: "get", path: "/api/v1/workspaces/{workspaceId}/repository-connections" },
@@ -6607,6 +6872,10 @@ export const apiOperations = {
   "addReleaseWorkItem": { method: "post", path: "/api/v1/releases/{releaseId}/work-items" },
   "listByProject": { method: "get", path: "/api/v1/projects/{projectId}/work-items" },
   "create_3": { method: "post", path: "/api/v1/projects/{projectId}/work-items" },
+  "listProjectRoles": { method: "get", path: "/api/v1/projects/{projectId}/roles" },
+  "createProjectRole": { method: "post", path: "/api/v1/projects/{projectId}/roles" },
+  "rollbackProjectRole": { method: "post", path: "/api/v1/projects/{projectId}/roles/{roleId}/versions/{versionId}/rollback" },
+  "previewProjectRolePermissions": { method: "post", path: "/api/v1/projects/{projectId}/roles/{roleId}/permission-preview" },
   "listReleases": { method: "get", path: "/api/v1/projects/{projectId}/releases" },
   "createRelease": { method: "post", path: "/api/v1/projects/{projectId}/releases" },
   "listIterations": { method: "get", path: "/api/v1/projects/{projectId}/iterations" },
@@ -6680,6 +6949,9 @@ export const apiOperations = {
   "callback": { method: "post", path: "/api/v1/agent-callbacks/{providerKey}" },
   "getPolicy": { method: "get", path: "/api/v1/workspaces/{workspaceId}/security-policy" },
   "updatePolicy": { method: "patch", path: "/api/v1/workspaces/{workspaceId}/security-policy" },
+  "getWorkspaceRole": { method: "get", path: "/api/v1/workspaces/{workspaceId}/roles/{roleId}" },
+  "updateWorkspaceRole": { method: "patch", path: "/api/v1/workspaces/{workspaceId}/roles/{roleId}" },
+  "archiveWorkspaceRole": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/roles/{roleId}" },
   "getImportSettings": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-settings" },
   "updateImportSettings": { method: "patch", path: "/api/v1/workspaces/{workspaceId}/import-settings" },
   "getWorkerSettings": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-worker-settings" },
@@ -6719,6 +6991,9 @@ export const apiOperations = {
   "deleteRelease": { method: "delete", path: "/api/v1/releases/{releaseId}" },
   "getProjectPolicy": { method: "get", path: "/api/v1/projects/{projectId}/security-policy" },
   "updateProjectPolicy": { method: "patch", path: "/api/v1/projects/{projectId}/security-policy" },
+  "getProjectRole": { method: "get", path: "/api/v1/projects/{projectId}/roles/{roleId}" },
+  "updateProjectRole": { method: "patch", path: "/api/v1/projects/{projectId}/roles/{roleId}" },
+  "archiveProjectRole": { method: "delete", path: "/api/v1/projects/{projectId}/roles/{roleId}" },
   "getProgram": { method: "get", path: "/api/v1/programs/{programId}" },
   "updateProgram": { method: "patch", path: "/api/v1/programs/{programId}" },
   "archiveProgram": { method: "delete", path: "/api/v1/programs/{programId}" },
@@ -6774,7 +7049,8 @@ export const apiOperations = {
   "deleteAction": { method: "delete", path: "/api/v1/automation-rules/{ruleId}/actions/{actionId}" },
   "updateProfile": { method: "patch", path: "/api/v1/agents/{profileId}" },
   "updateProvider": { method: "patch", path: "/api/v1/agent-providers/{providerId}" },
-  "listWorkspaceRoles": { method: "get", path: "/api/v1/workspaces/{workspaceId}/roles" },
+  "listWorkspaceRoleVersions": { method: "get", path: "/api/v1/workspaces/{workspaceId}/roles/{roleId}/versions" },
+  "listWorkspaceRolePermissions": { method: "get", path: "/api/v1/workspaces/{workspaceId}/roles/permissions" },
   "projectActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity" },
   "listImportSamples": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-samples" },
   "listWorkspaceConflictResolutionJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs" },
@@ -6814,7 +7090,8 @@ export const apiOperations = {
   "getPublicProjectWorkItem": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items/{workItemId}" },
   "listProjectTeams": { method: "get", path: "/api/v1/projects/{projectId}/teams" },
   "listByProject_1": { method: "get", path: "/api/v1/projects/{projectId}/saved-filters" },
-  "listProjectRoles": { method: "get", path: "/api/v1/projects/{projectId}/roles" },
+  "listProjectRoleVersions": { method: "get", path: "/api/v1/projects/{projectId}/roles/{roleId}/versions" },
+  "listProjectRolePermissions": { method: "get", path: "/api/v1/projects/{projectId}/roles/permissions" },
   "listProjectRoadmaps": { method: "get", path: "/api/v1/projects/{projectId}/roadmaps" },
   "listByProject_2": { method: "get", path: "/api/v1/projects/{projectId}/report-query-catalog" },
   "listProjectViews": { method: "get", path: "/api/v1/projects/{projectId}/personalization/views" },

@@ -3,6 +3,7 @@ import { FiExternalLink, FiRefreshCw, FiSave, FiShield } from 'react-icons/fi';
 import { ErrorLine } from '../components/ErrorLine';
 import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
+import { RoleManagementPanel } from '../components/RoleManagementPanel';
 import { SelectField } from '../components/SelectField';
 import { SummaryRows } from '../components/SummaryRows';
 import { TextField } from '../components/TextField';
@@ -86,6 +87,13 @@ export const ProjectSettingsPage = ({ context }) => {
           </div>
         </form>
       </Panel>
+
+      <RoleManagementPanel
+        context={context}
+        onRolesChanged={loadPolicy}
+        scope="project"
+        scopeId={context.projectId}
+      />
 
       <Panel title="Project Security State" icon={<FiShield />} wide>
         <ErrorLine message={action.error} />
