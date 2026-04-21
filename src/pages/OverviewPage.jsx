@@ -20,6 +20,7 @@ export const OverviewPage = ({ context }) => (
       <div className="action-grid">
         <NavLink className="action-tile" to="/work"><FiList /> Work items</NavLink>
         <NavLink className="action-tile" to="/planning"><FiUsers /> Teams</NavLink>
+        <NavLink className="action-tile" to="/programs"><FiLayers /> Programs</NavLink>
         <NavLink className="action-tile" to="/configuration"><FiSliders /> Config</NavLink>
         <NavLink className="action-tile" to="/filters"><FiFilter /> Filters</NavLink>
         <NavLink className="action-tile" to="/dashboards"><FiBarChart2 /> Dashboards</NavLink>

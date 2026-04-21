@@ -8,6 +8,7 @@ import { createConfigurationService } from './api/services/configurationService'
 import { createDashboardsService } from './api/services/dashboardsService';
 import { createImportsService } from './api/services/importsService';
 import { createPlanningService } from './api/services/planningService';
+import { createProgramsService } from './api/services/programsService';
 import { createSearchService } from './api/services/searchService';
 import { createSecurityService } from './api/services/securityService';
 import { createWorkItemsService } from './api/services/workItemsService';
@@ -27,6 +28,8 @@ import { OverviewPage } from './pages/OverviewPage';
 import { BoardDetailPage, ReleaseDetailPage, RoadmapDetailPage } from './pages/planning/PlanningDetailPages';
 import { PlanningPage } from './pages/planning/PlanningPage';
 import { ProjectSettingsPage } from './pages/ProjectSettingsPage';
+import { ProgramsPage } from './pages/ProgramsPage';
+import { PublicProjectPreviewPage } from './pages/PublicProjectPreviewPage';
 import { SearchPage } from './pages/SearchPage';
 import { SetupPage } from './pages/SetupPage';
 import { SystemAdminPage } from './pages/SystemAdminPage';
@@ -60,6 +63,7 @@ const App = () => {
     dashboards: createDashboardsService(api),
     imports: createImportsService(api),
     planning: createPlanningService(api),
+    programs: createProgramsService(api),
     search: createSearchService(api),
     security: createSecurityService(api),
     workItems: createWorkItemsService(api),
@@ -100,6 +104,7 @@ const App = () => {
             <Route path="/auth" element={<AuthPage context={context} />} />
             <Route path="/work" element={<WorkPage context={context} />} />
             <Route path="/planning" element={<PlanningPage context={context} />} />
+            <Route path="/programs" element={<ProgramsPage context={context} />} />
             <Route path="/planning/boards/:boardId" element={<BoardDetailPage context={context} />} />
             <Route path="/planning/releases/:releaseId" element={<ReleaseDetailPage context={context} />} />
             <Route path="/planning/roadmaps/:roadmapId" element={<RoadmapDetailPage context={context} />} />
@@ -119,6 +124,7 @@ const App = () => {
             <Route path="/system" element={<SystemAdminPage context={context} />} />
             <Route path="/workspace-settings" element={<WorkspaceSettingsPage context={context} />} />
             <Route path="/project-settings" element={<ProjectSettingsPage context={context} />} />
+            <Route path="/public/projects/:projectId" element={<PublicProjectPreviewPage context={context} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </Shell>

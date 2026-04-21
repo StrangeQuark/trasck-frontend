@@ -13,6 +13,18 @@ export const createSecurityService = (api) => ({
     });
   },
 
+  listWorkspaceRoles(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/roles', {
+      path: { workspaceId },
+    });
+  },
+
+  listProjectRoles(projectId) {
+    return api.request('get', '/api/v1/projects/{projectId}/roles', {
+      path: { projectId },
+    });
+  },
+
   listWorkspaceInvitations(workspaceId, query = {}) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/invitations', {
       path: { workspaceId },
@@ -76,6 +88,25 @@ export const createSecurityService = (api) => ({
     return api.request('patch', '/api/v1/projects/{projectId}/security-policy', {
       path: { projectId },
       body: request,
+    });
+  },
+
+  getPublicProject(projectId) {
+    return api.request('get', '/api/v1/public/projects/{projectId}', {
+      path: { projectId },
+    });
+  },
+
+  listPublicProjectWorkItems(projectId, query = {}) {
+    return api.request('get', '/api/v1/public/projects/{projectId}/work-items', {
+      path: { projectId },
+      query,
+    });
+  },
+
+  getPublicProjectWorkItem(projectId, workItemId) {
+    return api.request('get', '/api/v1/public/projects/{projectId}/work-items/{workItemId}', {
+      path: { projectId, workItemId },
     });
   },
 });

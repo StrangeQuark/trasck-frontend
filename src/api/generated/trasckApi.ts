@@ -2253,6 +2253,17 @@ export interface WorkspaceMemberResponse {
   lastLoginAt?: string;
 }
 
+export interface RoleResponse {
+  id?: string;
+  workspaceId?: string;
+  projectId?: string;
+  key?: string;
+  name?: string;
+  scope?: string;
+  description?: string;
+  systemRole?: boolean;
+}
+
 export interface ActivityEventResponse {
   id?: string;
   domainEventId?: string;
@@ -2575,6 +2586,34 @@ export interface PublicProjectResponse {
   key?: string;
   description?: string;
   visibility?: string;
+}
+
+export interface CursorPageResponsePublicWorkItemResponse {
+  items?: PublicWorkItemResponse[];
+  nextCursor?: string;
+  hasMore?: boolean;
+  limit?: number;
+}
+
+export interface PublicWorkItemResponse {
+  id?: string;
+  projectId?: string;
+  typeId?: string;
+  parentId?: string;
+  statusId?: string;
+  priorityId?: string;
+  teamId?: string;
+  key?: string;
+  title?: string;
+  descriptionMarkdown?: string;
+  descriptionDocument?: unknown;
+  visibility?: string;
+  estimatePoints?: number;
+  startDate?: string;
+  dueDate?: string;
+  resolvedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export interface ImportTransformPresetVersionResponse {
@@ -5535,6 +5574,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/roles": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity": {
     get: {
       path: {
@@ -5951,6 +6000,30 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/public/projects/{projectId}/work-items": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: {
+      limit?: number;
+      cursor?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/public/projects/{projectId}/work-items/{workItemId}": {
+    get: {
+      path: {
+      projectId: string;
+      workItemId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/projects/{projectId}/teams": {
     get: {
       path: {
@@ -5962,6 +6035,16 @@ export interface ApiPaths {
     };
   };
   "/api/v1/projects/{projectId}/saved-filters": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/projects/{projectId}/roles": {
     get: {
       path: {
       projectId: string;
@@ -6691,6 +6774,7 @@ export const apiOperations = {
   "deleteAction": { method: "delete", path: "/api/v1/automation-rules/{ruleId}/actions/{actionId}" },
   "updateProfile": { method: "patch", path: "/api/v1/agents/{profileId}" },
   "updateProvider": { method: "patch", path: "/api/v1/agent-providers/{providerId}" },
+  "listWorkspaceRoles": { method: "get", path: "/api/v1/workspaces/{workspaceId}/roles" },
   "projectActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/projects/{projectId}/activity" },
   "listImportSamples": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-samples" },
   "listWorkspaceConflictResolutionJobs": { method: "get", path: "/api/v1/workspaces/{workspaceId}/import-conflict-resolution-jobs" },
@@ -6726,8 +6810,11 @@ export const apiOperations = {
   "programDashboardSummary": { method: "get", path: "/api/v1/reports/programs/{programId}/dashboard-summary" },
   "iterationReport": { method: "get", path: "/api/v1/reports/iterations/{iterationId}/report" },
   "getPublicProject": { method: "get", path: "/api/v1/public/projects/{projectId}" },
+  "listPublicProjectWorkItems": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items" },
+  "getPublicProjectWorkItem": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items/{workItemId}" },
   "listProjectTeams": { method: "get", path: "/api/v1/projects/{projectId}/teams" },
   "listByProject_1": { method: "get", path: "/api/v1/projects/{projectId}/saved-filters" },
+  "listProjectRoles": { method: "get", path: "/api/v1/projects/{projectId}/roles" },
   "listProjectRoadmaps": { method: "get", path: "/api/v1/projects/{projectId}/roadmaps" },
   "listByProject_2": { method: "get", path: "/api/v1/projects/{projectId}/report-query-catalog" },
   "listProjectViews": { method: "get", path: "/api/v1/projects/{projectId}/personalization/views" },

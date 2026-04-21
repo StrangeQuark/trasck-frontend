@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { FiActivity, FiBarChart2, FiBell, FiCheck, FiCpu, FiDatabase, FiFilter, FiKey, FiList, FiLogIn, FiSettings, FiShield, FiSliders, FiUploadCloud, FiUsers } from 'react-icons/fi';
+import { FiActivity, FiBarChart2, FiBell, FiCheck, FiCpu, FiDatabase, FiFilter, FiKey, FiLayers, FiList, FiLogIn, FiSettings, FiShield, FiSliders, FiUploadCloud, FiUsers } from 'react-icons/fi';
 import { normalizeBaseUrl } from '../api/client';
 import { InlineId } from '../components/InlineId';
 import { RouteLink } from '../components/RouteLink';
@@ -44,6 +44,7 @@ export const Shell = ({ children, context }) => {
         <RouteLink to="/auth" icon={<FiLogIn />} label="Auth" />
         <RouteLink to="/work" icon={<FiList />} label="Work" />
         <RouteLink to="/planning" icon={<FiUsers />} label="Planning" />
+        <RouteLink to="/programs" icon={<FiLayers />} label="Programs" />
         <RouteLink to="/configuration" icon={<FiSliders />} label="Config" />
         <RouteLink to="/automation" icon={<FiBell />} label="Automation" />
         <RouteLink to="/imports" icon={<FiUploadCloud />} label="Imports" />

@@ -1,13 +1,15 @@
 import { useEffect, useState } from 'react';
-import { FiMail, FiRefreshCw, FiSlash, FiTrash2, FiUserPlus, FiUsers } from 'react-icons/fi';
+import { FiMail, FiRefreshCw, FiSave, FiShield, FiSlash, FiTrash2, FiUserPlus, FiUsers } from 'react-icons/fi';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorLine } from '../components/ErrorLine';
+import { Field } from '../components/Field';
 import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
 import { StatusPill } from '../components/StatusPill';
 import { SummaryRows } from '../components/SummaryRows';
 import { TextField } from '../components/TextField';
 import { useApiAction } from '../hooks/useApiAction';
+import { DEFAULT_POLICY_FORM, policyToForm, workspacePolicyRequest } from '../utils/securityPolicies';
 
 const INVITATION_STATUS_OPTIONS = ['pending', 'accepted', 'revoked', 'all'];
 const MEMBER_STATUS_OPTIONS = ['active', 'removed', 'all'];
@@ -35,7 +37,11 @@ export const WorkspaceSettingsPage = ({ context }) => {
   const [invitations, setInvitations] = useState([]);
   const [memberStatus, setMemberStatus] = useState('active');
   const [members, setMembers] = useState([]);
+  const [policy, setPolicy] = useState(null);
+  const [policyForm, setPolicyForm] = useState(DEFAULT_POLICY_FORM);
+  const [projectRoles, setProjectRoles] = useState([]);
   const [userForm, setUserForm] = useState(defaultUserForm);
+  const [workspaceRoles, setWorkspaceRoles] = useState([]);
   const [lastResult, setLastResult] = useState(null);
   const action = useApiAction(context.addToast);
 
@@ -43,15 +49,22 @@ export const WorkspaceSettingsPage = ({ context }) => {
     if (!context.workspaceId) {
       setInvitations([]);
       setMembers([]);
+      setPolicy(null);
+      setWorkspaceRoles([]);
       return;
     }
     const loaded = await action.run(() => Promise.all([
       context.services.security.listWorkspaceInvitations(context.workspaceId, { status: invitationStatus }),
       context.services.security.listWorkspaceUsers(context.workspaceId, { status: memberStatus }),
+      context.services.security.listWorkspaceRoles(context.workspaceId),
+      context.services.security.getWorkspaceSecurityPolicy(context.workspaceId),
     ]));
     if (loaded) {
       setInvitations(loaded[0] || []);
       setMembers(loaded[1] || []);
+      setWorkspaceRoles(loaded[2] || []);
+      setPolicy(loaded[3] || null);
+      setPolicyForm(policyToForm(loaded[3]));
     }
   };
 
@@ -60,6 +73,37 @@ export const WorkspaceSettingsPage = ({ context }) => {
       loadWorkspaceSettings();
     }
   }, [context.workspaceId, invitationStatus, memberStatus]);
+
+  useEffect(() => {
+    const projectId = effectiveInvitationProjectId(invitationForm, context.projectId);
+    if (!isLikelyUuid(projectId)) {
+      setProjectRoles([]);
+      if (invitationForm.projectRoleId) {
+        setInvitationForm((current) => ({ ...current, projectRoleId: '' }));
+      }
+      return;
+    }
+    action.run(() => context.services.security.listProjectRoles(projectId))
+      .then((loaded) => setProjectRoles(loaded || []));
+  }, [context.projectId, invitationForm.projectId]);
+
+  const saveWorkspacePolicy = async (event) => {
+    event.preventDefault();
+    if (!policy?.anonymousReadEnabled && policyForm.anonymousReadEnabled) {
+      const confirmed = window.confirm('Enable anonymous reads for public projects in this workspace?');
+      if (!confirmed) {
+        return;
+      }
+    }
+    const saved = await action.run(
+      () => context.services.security.updateWorkspaceSecurityPolicy(context.workspaceId, workspacePolicyRequest(policyForm)),
+      'Workspace security policy saved',
+    );
+    if (saved) {
+      setPolicy(saved);
+      setPolicyForm(policyToForm(saved));
+    }
+  };
 
   const inviteUser = async (event) => {
     event.preventDefault();
@@ -112,11 +156,47 @@ export const WorkspaceSettingsPage = ({ context }) => {
 
   return (
     <div className="content-grid">
+      <Panel title="Workspace Security Policy" icon={<FiShield />}>
+        <form className="stack" onSubmit={saveWorkspacePolicy}>
+          <SummaryRows rows={[
+            ['Workspace', context.workspaceId],
+            ['Anonymous read', policy?.anonymousReadEnabled ? 'Enabled' : 'Disabled'],
+            ['Custom policy', policy?.customPolicy ? 'Yes' : 'No'],
+          ]} />
+          <label className="checkbox-row">
+            <input
+              type="checkbox"
+              checked={policyForm.anonymousReadEnabled}
+              onChange={(event) => setPolicyForm({ ...policyForm, anonymousReadEnabled: event.target.checked })}
+            />
+            Anonymous read enabled
+          </label>
+          <TextField label="Attachment max upload bytes" value={policyForm.attachmentMaxUploadBytes} onChange={(attachmentMaxUploadBytes) => setPolicyForm({ ...policyForm, attachmentMaxUploadBytes })} />
+          <TextField label="Attachment max download bytes" value={policyForm.attachmentMaxDownloadBytes} onChange={(attachmentMaxDownloadBytes) => setPolicyForm({ ...policyForm, attachmentMaxDownloadBytes })} />
+          <TextField label="Attachment content types" value={policyForm.attachmentAllowedContentTypes} onChange={(attachmentAllowedContentTypes) => setPolicyForm({ ...policyForm, attachmentAllowedContentTypes })} />
+          <TextField label="Export max bytes" value={policyForm.exportMaxArtifactBytes} onChange={(exportMaxArtifactBytes) => setPolicyForm({ ...policyForm, exportMaxArtifactBytes })} />
+          <TextField label="Export content types" value={policyForm.exportAllowedContentTypes} onChange={(exportAllowedContentTypes) => setPolicyForm({ ...policyForm, exportAllowedContentTypes })} />
+          <TextField label="Import max parse bytes" value={policyForm.importMaxParseBytes} onChange={(importMaxParseBytes) => setPolicyForm({ ...policyForm, importMaxParseBytes })} />
+          <TextField label="Import content types" value={policyForm.importAllowedContentTypes} onChange={(importAllowedContentTypes) => setPolicyForm({ ...policyForm, importAllowedContentTypes })} />
+          <div className="button-row wrap">
+            <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadWorkspaceSettings} type="button">
+              <FiRefreshCw />
+              Load
+            </button>
+            <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit">
+              <FiSave />
+              Save
+            </button>
+          </div>
+        </form>
+      </Panel>
+
       <Panel title="Workspace Members" icon={<FiUsers />} wide>
         <div className="stack">
           <SummaryRows rows={[
             ['Workspace', context.workspaceId],
             ['Loaded members', members.length],
+            ['Workspace roles', workspaceRoles.length],
           ]} />
 
           <div className="table-actions">
@@ -184,7 +264,12 @@ export const WorkspaceSettingsPage = ({ context }) => {
               <TextField label="Username" value={userForm.username} onChange={(username) => setUserForm({ ...userForm, username })} />
               <TextField label="Display name" value={userForm.displayName} onChange={(displayName) => setUserForm({ ...userForm, displayName })} />
               <TextField label="Password" type="password" value={userForm.password} onChange={(password) => setUserForm({ ...userForm, password })} />
-              <TextField label="Workspace role ID" value={userForm.roleId} onChange={(roleId) => setUserForm({ ...userForm, roleId })} />
+              <RoleSelect
+                label="User workspace role"
+                roles={workspaceRoles}
+                value={userForm.roleId}
+                onChange={(roleId) => setUserForm({ ...userForm, roleId })}
+              />
               <label className="checkbox-row">
                 <input type="checkbox" checked={userForm.emailVerified} onChange={(event) => setUserForm({ ...userForm, emailVerified: event.target.checked })} />
                 Email verified
@@ -256,9 +341,35 @@ export const WorkspaceSettingsPage = ({ context }) => {
           <form className="stack nested-form" onSubmit={inviteUser}>
             <div className="two-column">
               <TextField label="Invitation email" value={invitationForm.email} onChange={(email) => setInvitationForm({ ...invitationForm, email })} />
-              <TextField label="Workspace role ID" value={invitationForm.roleId} onChange={(roleId) => setInvitationForm({ ...invitationForm, roleId })} />
-              <TextField label="Project ID" value={invitationForm.projectId} onChange={(projectId) => setInvitationForm({ ...invitationForm, projectId })} />
-              <TextField label="Project role ID" value={invitationForm.projectRoleId} onChange={(projectRoleId) => setInvitationForm({ ...invitationForm, projectRoleId })} />
+              <RoleSelect
+                label="Invitation workspace role"
+                roles={workspaceRoles}
+                value={invitationForm.roleId}
+                onChange={(roleId) => setInvitationForm({ ...invitationForm, roleId })}
+              />
+              <TextField
+                label="Project ID"
+                value={invitationForm.projectId}
+                onChange={(projectId) => setInvitationForm({
+                  ...invitationForm,
+                  projectId,
+                  projectRoleId: isLikelyUuid(effectiveInvitationProjectId({ ...invitationForm, projectId }, context.projectId))
+                    ? invitationForm.projectRoleId
+                    : '',
+                })}
+              />
+              <RoleSelect
+                defaultLabel="No project membership"
+                disabled={!isLikelyUuid(effectiveInvitationProjectId(invitationForm, context.projectId))}
+                label="Project role"
+                roles={projectRoles}
+                value={invitationForm.projectRoleId}
+                onChange={(projectRoleId) => setInvitationForm({
+                  ...invitationForm,
+                  projectId: invitationForm.projectId || context.projectId || '',
+                  projectRoleId,
+                })}
+              />
               <TextField label="Expires at ISO" value={invitationForm.expiresAt} onChange={(expiresAt) => setInvitationForm({ ...invitationForm, expiresAt })} />
             </div>
             <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit">
@@ -272,6 +383,9 @@ export const WorkspaceSettingsPage = ({ context }) => {
       <Panel title="Workspace Management State" icon={<FiUsers />} wide>
         <ErrorLine message={action.error} />
         <div className="data-columns">
+          <JsonPreview title="Workspace Policy" value={policy} />
+          <JsonPreview title="Workspace Roles" value={workspaceRoles} />
+          <JsonPreview title="Project Roles" value={projectRoles} />
           <JsonPreview title="Members" value={members} />
           <JsonPreview title="Invitations" value={invitations} />
           <JsonPreview title="Last Result" value={lastResult} />
@@ -288,6 +402,23 @@ const compactRequest = (value) => Object.fromEntries(
 );
 
 const roleLabel = (record) => record.roleName || record.roleKey || record.roleId || 'Default';
+
+const RoleSelect = ({ defaultLabel = 'Default workspace member role', disabled = false, label, onChange, roles, value }) => (
+  <Field label={label}>
+    <select aria-label={label} disabled={disabled} value={value || ''} onChange={(event) => onChange(event.target.value)}>
+      <option value="">{defaultLabel}</option>
+      {roles.map((role) => (
+        <option key={role.id} value={role.id}>
+          {role.name || role.key || role.id}
+        </option>
+      ))}
+    </select>
+  </Field>
+);
+
+const effectiveInvitationProjectId = (form, contextProjectId) => (form.projectId || contextProjectId || '').trim();
+
+const isLikelyUuid = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value || '');
 
 const formatTimestamp = (value) => {
   if (!value) {
