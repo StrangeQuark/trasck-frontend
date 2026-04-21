@@ -15498,6 +15498,17 @@
           "secretKeyId": {
             "type": "string"
           },
+          "previousSecretKeyId": {
+            "type": "string"
+          },
+          "secretRotatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "previousSecretExpiresAt": {
+            "type": "string",
+            "format": "date-time"
+          },
           "eventTypes": {},
           "enabled": {
             "type": "boolean"
@@ -15532,6 +15543,9 @@
             "format": "uuid"
           },
           "eventType": {
+            "type": "string"
+          },
+          "signatureKeyId": {
             "type": "string"
           },
           "payload": {},

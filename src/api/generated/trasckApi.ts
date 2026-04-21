@@ -154,6 +154,9 @@ export interface WebhookResponse {
   url?: string;
   secretConfigured?: boolean;
   secretKeyId?: string;
+  previousSecretKeyId?: string;
+  secretRotatedAt?: string;
+  previousSecretExpiresAt?: string;
   eventTypes?: unknown;
   enabled?: boolean;
 }
@@ -168,6 +171,7 @@ export interface WebhookDeliveryResponse {
   id?: string;
   webhookId?: string;
   eventType?: string;
+  signatureKeyId?: string;
   payload?: unknown;
   status?: string;
   responseCode?: number;
