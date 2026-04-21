@@ -96,4 +96,17 @@ export const createSecurityService = (api) => ({
       path: { projectId },
     });
   },
+
+  listPublicProjectWorkItems(projectId, query = {}) {
+    return api.request('get', '/api/v1/public/projects/{projectId}/work-items', {
+      path: { projectId },
+      query,
+    });
+  },
+
+  getPublicProjectWorkItem(projectId, workItemId) {
+    return api.request('get', '/api/v1/public/projects/{projectId}/work-items/{workItemId}', {
+      path: { projectId, workItemId },
+    });
+  },
 });

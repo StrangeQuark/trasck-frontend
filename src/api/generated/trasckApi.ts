@@ -2588,6 +2588,34 @@ export interface PublicProjectResponse {
   visibility?: string;
 }
 
+export interface CursorPageResponsePublicWorkItemResponse {
+  items?: PublicWorkItemResponse[];
+  nextCursor?: string;
+  hasMore?: boolean;
+  limit?: number;
+}
+
+export interface PublicWorkItemResponse {
+  id?: string;
+  projectId?: string;
+  typeId?: string;
+  parentId?: string;
+  statusId?: string;
+  priorityId?: string;
+  teamId?: string;
+  key?: string;
+  title?: string;
+  descriptionMarkdown?: string;
+  descriptionDocument?: unknown;
+  visibility?: string;
+  estimatePoints?: number;
+  startDate?: string;
+  dueDate?: string;
+  resolvedAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface ImportTransformPresetVersionResponse {
   id?: string;
   presetId?: string;
@@ -5972,6 +6000,30 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/public/projects/{projectId}/work-items": {
+    get: {
+      path: {
+      projectId: string;
+    };
+      query: {
+      limit?: number;
+      cursor?: string;
+    };
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/public/projects/{projectId}/work-items/{workItemId}": {
+    get: {
+      path: {
+      projectId: string;
+      workItemId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/projects/{projectId}/teams": {
     get: {
       path: {
@@ -6758,6 +6810,8 @@ export const apiOperations = {
   "programDashboardSummary": { method: "get", path: "/api/v1/reports/programs/{programId}/dashboard-summary" },
   "iterationReport": { method: "get", path: "/api/v1/reports/iterations/{iterationId}/report" },
   "getPublicProject": { method: "get", path: "/api/v1/public/projects/{projectId}" },
+  "listPublicProjectWorkItems": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items" },
+  "getPublicProjectWorkItem": { method: "get", path: "/api/v1/public/projects/{projectId}/work-items/{workItemId}" },
   "listProjectTeams": { method: "get", path: "/api/v1/projects/{projectId}/teams" },
   "listByProject_1": { method: "get", path: "/api/v1/projects/{projectId}/saved-filters" },
   "listProjectRoles": { method: "get", path: "/api/v1/projects/{projectId}/roles" },

@@ -27,6 +27,7 @@ describe('App', () => {
     expect(primaryNavigation).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Work$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Planning$/i })).toBeInTheDocument();
+    expect(within(primaryNavigation).getByRole('link', { name: /^Programs$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Agents$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^System$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Workspace$/i })).toBeInTheDocument();
@@ -34,6 +35,7 @@ describe('App', () => {
   });
 
   it.each([
+    ['/programs', 'Program Portfolio'],
     ['/configuration/custom-fields/00000000-0000-0000-0000-000000000001', 'Custom Field Detail'],
     ['/configuration/screens/00000000-0000-0000-0000-000000000002', 'Screen Detail'],
     ['/planning/boards/00000000-0000-0000-0000-000000000003', 'Board Detail'],
@@ -91,7 +93,38 @@ describe('App', () => {
   it('renders anonymous public project preview route', async () => {
     window.history.pushState({}, '', '/public/projects/00000000-0000-0000-0000-000000000099');
     fetch.mockImplementation(async (url) => {
-      if (String(url).includes('/api/v1/public/projects/')) {
+      const requestUrl = String(url);
+      if (requestUrl.includes('/api/v1/public/projects/00000000-0000-0000-0000-000000000099/work-items/00000000-0000-0000-0000-000000000199')) {
+        return new Response(JSON.stringify({
+          id: '00000000-0000-0000-0000-000000000199',
+          projectId: '00000000-0000-0000-0000-000000000099',
+          key: 'PTR-1',
+          title: 'Public story',
+          descriptionMarkdown: 'Visible work item',
+          visibility: 'inherited',
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (requestUrl.includes('/api/v1/public/projects/00000000-0000-0000-0000-000000000099/work-items')) {
+        return new Response(JSON.stringify({
+          items: [{
+            id: '00000000-0000-0000-0000-000000000199',
+            projectId: '00000000-0000-0000-0000-000000000099',
+            key: 'PTR-1',
+            title: 'Public story',
+            visibility: 'inherited',
+          }],
+          nextCursor: null,
+          hasMore: false,
+          limit: 25,
+        }), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' },
+        });
+      }
+      if (requestUrl.includes('/api/v1/public/projects/')) {
         return new Response(JSON.stringify({
           id: '00000000-0000-0000-0000-000000000099',
           workspaceId: '00000000-0000-0000-0000-000000000101',
@@ -114,5 +147,6 @@ describe('App', () => {
 
     expect(await screen.findByRole('heading', { level: 2, name: 'Public Project Preview' })).toBeInTheDocument();
     expect(screen.getByText('Public Trasck')).toBeInTheDocument();
+    expect(screen.getByText('Public story')).toBeInTheDocument();
   });
 });
