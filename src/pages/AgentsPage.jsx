@@ -8,6 +8,7 @@ import { RecordSelect } from '../components/RecordSelect';
 import { SelectField } from '../components/SelectField';
 import { TextField } from '../components/TextField';
 import { useApiAction } from '../hooks/useApiAction';
+import { firstId } from '../utils/forms';
 
 export const AgentsPage = ({ context }) => {
   const [providers, setProviders] = useState([]);
@@ -32,6 +33,9 @@ export const AgentsPage = ({ context }) => {
   const [taskForm, setTaskForm] = useState({ workItemId: '', agentProfileId: '', repositoryConnectionIds: '', instructions: 'Review this work item and prepare an implementation plan.', message: 'Adding context from the frontend console.' });
   const [attemptForm, setAttemptForm] = useState({ attemptType: 'all', status: 'all', retentionDays: '30' });
   const action = useApiAction(context.addToast);
+  const providerStatus = (provider) => provider.enabled === false ? 'deactivated' : 'active';
+  const profileStatus = (profile) => profile.status || 'unknown';
+  const statusClass = (status) => status === 'active' ? 'status-pill active' : 'status-pill';
 
   const providerRuntimeConfig = () => ({
     runtime: {
@@ -287,6 +291,56 @@ export const AgentsPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadDispatchAttempts} type="button">Attempts</button>
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={exportDispatchAttempts} type="button">Export attempts</button>
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={pruneDispatchAttempts} type="button">Prune attempts</button>
+        </div>
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Provider</th>
+                <th>Type</th>
+                <th>Dispatch</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {providers.map((provider) => {
+                const status = providerStatus(provider);
+                return (
+                  <tr key={provider.id}>
+                    <td>{provider.displayName || provider.providerKey}</td>
+                    <td>{provider.providerType}</td>
+                    <td>{provider.dispatchMode}</td>
+                    <td><span className={statusClass(status)}>{status}</span></td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+        <div className="table-wrap">
+          <table className="data-table">
+            <thead>
+              <tr>
+                <th>Profile</th>
+                <th>Provider</th>
+                <th>Status</th>
+                <th>Max tasks</th>
+              </tr>
+            </thead>
+            <tbody>
+              {profiles.map((profile) => {
+                const status = profileStatus(profile);
+                return (
+                  <tr key={profile.id}>
+                    <td>{profile.displayName}</td>
+                    <td>{profile.providerId}</td>
+                    <td><span className={statusClass(status)}>{status}</span></td>
+                    <td>{profile.maxConcurrentTasks}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
         </div>
         <div className="table-wrap">
           <table className="data-table">

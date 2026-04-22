@@ -140,8 +140,8 @@ export class TrasckApiClient {
     const upperMethod = method.toUpperCase();
     if (isUnsafeMethod(upperMethod)) {
       const csrfToken = await this.getCsrfToken?.();
-      if (csrfToken && !headers.has('X-CSRF-TOKEN')) {
-        headers.set('X-CSRF-TOKEN', csrfToken);
+      if (csrfToken && !headers.has('X-XSRF-TOKEN')) {
+        headers.set('X-XSRF-TOKEN', csrfToken);
       }
     }
 

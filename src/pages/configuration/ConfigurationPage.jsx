@@ -9,6 +9,7 @@ import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
+import { firstId, parseJsonOrThrow } from '../../utils/forms';
 
 export const ConfigurationPage = ({ context }) => {
   const [customFields, setCustomFields] = useState([]);

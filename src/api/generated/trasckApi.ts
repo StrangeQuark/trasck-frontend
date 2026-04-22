@@ -4770,6 +4770,16 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/agents/{profileId}/deactivate": {
+    post: {
+      path: {
+      profileId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/agent-tasks/{taskId}/worker-dispatch": {
     post: {
       path: {
@@ -4837,6 +4847,16 @@ export interface ApiPaths {
     };
       query: undefined;
       body: AgentRuntimePreviewRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/agent-providers/{providerId}/deactivate": {
+    post: {
+      path: {
+      providerId: string;
+    };
+      query: undefined;
+      body: undefined;
       response: unknown;
     };
   };
@@ -6996,6 +7016,7 @@ export const apiOperations = {
   "oauthLogin": { method: "post", path: "/api/v1/auth/oauth/login" },
   "logout": { method: "post", path: "/api/v1/auth/logout" },
   "login": { method: "post", path: "/api/v1/auth/login" },
+  "deactivateProfile": { method: "post", path: "/api/v1/agents/{profileId}/deactivate" },
   "workerDispatch": { method: "post", path: "/api/v1/agent-tasks/{taskId}/worker-dispatch" },
   "retryTask": { method: "post", path: "/api/v1/agent-tasks/{taskId}/retry" },
   "requestChanges": { method: "post", path: "/api/v1/agent-tasks/{taskId}/request-changes" },
@@ -7003,6 +7024,7 @@ export const apiOperations = {
   "cancelTask": { method: "post", path: "/api/v1/agent-tasks/{taskId}/cancel" },
   "acceptResult": { method: "post", path: "/api/v1/agent-tasks/{taskId}/accept-result" },
   "previewRuntime": { method: "post", path: "/api/v1/agent-providers/{providerId}/runtime-preview" },
+  "deactivateProvider": { method: "post", path: "/api/v1/agent-providers/{providerId}/deactivate" },
   "listCredentials": { method: "get", path: "/api/v1/agent-providers/{providerId}/credentials" },
   "createCredential": { method: "post", path: "/api/v1/agent-providers/{providerId}/credentials" },
   "deactivateCredential": { method: "post", path: "/api/v1/agent-providers/{providerId}/credentials/{credentialId}/deactivate" },
@@ -7269,8 +7291,8 @@ export class TrasckApiClient {
     const upperMethod = method.toUpperCase();
     if (isUnsafeMethod(upperMethod)) {
       const csrfToken = await this.getCsrfToken?.();
-      if (csrfToken && !headers.has('X-CSRF-TOKEN')) {
-        headers.set('X-CSRF-TOKEN', csrfToken);
+      if (csrfToken && !headers.has('X-XSRF-TOKEN')) {
+        headers.set('X-XSRF-TOKEN', csrfToken);
       }
     }
 
