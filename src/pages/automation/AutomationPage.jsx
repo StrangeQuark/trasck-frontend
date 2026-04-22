@@ -35,7 +35,7 @@ export const AutomationPage = ({ context }) => {
   const [workItems, setWorkItems] = useState([]);
   const [preferenceForm, setPreferenceForm] = useState({ channel: 'in_app', eventType: 'work_item.updated', enabled: 'true', configText: '{}' });
   const [defaultPreferenceForm, setDefaultPreferenceForm] = useState({ channel: 'in_app', eventType: 'automation.rule_queued', enabled: 'true', configText: '{}' });
-  const [webhookForm, setWebhookForm] = useState({ name: 'Automation Webhook', url: 'https://example.com/hooks/trasck', secret: '', eventTypesText: JSON.stringify(['automation.rule_executed'], null, 2), enabled: 'true' });
+  const [webhookForm, setWebhookForm] = useState({ name: 'Automation Webhook', url: 'https://example.com/hooks/trasck', secret: '', previousSecretOverlapSeconds: '', eventTypesText: JSON.stringify(['automation.rule_executed'], null, 2), enabled: 'true' });
   const [ruleForm, setRuleForm] = useState({ name: 'Notify on update', triggerType: 'manual', triggerConfigText: '{}' });
   const [conditionForm, setConditionForm] = useState({ conditionType: 'always', configText: '{}', position: '1' });
   const [actionForm, setActionForm] = useState({ actionType: 'email', executionMode: 'async', configText: JSON.stringify({ toEmail: 'admin@trasck.local', subject: 'Automation ran', body: 'Trasck queued the email delivery action.' }, null, 2), position: '1' });
@@ -163,6 +163,7 @@ export const AutomationPage = ({ context }) => {
       name: webhookForm.name,
       url: webhookForm.url,
       secret: webhookForm.secret || undefined,
+      previousSecretOverlapSeconds: numberOrUndefined(webhookForm.previousSecretOverlapSeconds),
       eventTypes: parseJsonOrThrow(webhookForm.eventTypesText),
       enabled: webhookForm.enabled === 'true',
     }), 'Webhook created');
@@ -398,6 +399,7 @@ export const AutomationPage = ({ context }) => {
           <TextField label="Name" value={webhookForm.name} onChange={(name) => setWebhookForm({ ...webhookForm, name })} />
           <TextField label="URL" value={webhookForm.url} onChange={(url) => setWebhookForm({ ...webhookForm, url })} />
           <TextField label="Secret" type="password" value={webhookForm.secret} onChange={(secret) => setWebhookForm({ ...webhookForm, secret })} />
+          <TextField label="Secret overlap seconds" type="number" value={webhookForm.previousSecretOverlapSeconds} onChange={(previousSecretOverlapSeconds) => setWebhookForm({ ...webhookForm, previousSecretOverlapSeconds })} />
           <Field label="Event types JSON">
             <textarea value={webhookForm.eventTypesText} onChange={(event) => setWebhookForm({ ...webhookForm, eventTypesText: event.target.value })} rows={4} spellCheck="false" />
           </Field>

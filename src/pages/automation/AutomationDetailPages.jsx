@@ -10,6 +10,7 @@ import { Panel } from '../../components/Panel';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
+import { numberOrUndefined } from '../../utils/forms';
 
 export const AutomationRuleDetailPage = ({ context }) => {
   const { ruleId } = useParams();
@@ -109,7 +110,7 @@ export const WebhookDetailPage = ({ context }) => {
   const action = useApiAction(context.addToast);
   const [webhook, setWebhook] = useState(null);
   const [deliveries, setDeliveries] = useState([]);
-  const [form, setForm] = useState({ name: '', url: '', secret: '', eventTypesText: '[]', enabled: 'true' });
+  const [form, setForm] = useState({ name: '', url: '', secret: '', previousSecretOverlapSeconds: '', eventTypesText: '[]', enabled: 'true' });
 
   const load = async () => {
     const rows = await action.run(() => context.services.automation.listWebhooks(context.workspaceId));
@@ -123,6 +124,7 @@ export const WebhookDetailPage = ({ context }) => {
           name: selected.name || '',
           url: selected.url || '',
           secret: '',
+          previousSecretOverlapSeconds: selected.previousSecretOverlapSeconds ? String(selected.previousSecretOverlapSeconds) : '',
           eventTypesText: toJsonText(selected.eventTypes || []),
           enabled: String(selected.enabled ?? true),
         });
@@ -140,6 +142,7 @@ export const WebhookDetailPage = ({ context }) => {
       name: form.name,
       url: form.url,
       secret: form.secret || undefined,
+      previousSecretOverlapSeconds: numberOrUndefined(form.previousSecretOverlapSeconds),
       eventTypes: parseJsonOrThrow(form.eventTypesText),
       enabled: form.enabled === 'true',
     }), 'Webhook saved');
@@ -160,6 +163,7 @@ export const WebhookDetailPage = ({ context }) => {
           <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
           <TextField label="URL" value={form.url} onChange={(url) => setForm({ ...form, url })} />
           <TextField label="Secret" type="password" value={form.secret} onChange={(secret) => setForm({ ...form, secret })} />
+          <TextField label="Secret overlap seconds" type="number" value={form.previousSecretOverlapSeconds} onChange={(previousSecretOverlapSeconds) => setForm({ ...form, previousSecretOverlapSeconds })} />
           <SelectField label="Enabled" value={form.enabled} onChange={(enabled) => setForm({ ...form, enabled })} options={['true', 'false']} />
           <Field label="Event types JSON">
             <textarea value={form.eventTypesText} onChange={(event) => setForm({ ...form, eventTypesText: event.target.value })} rows={6} spellCheck="false" />

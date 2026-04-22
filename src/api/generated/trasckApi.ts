@@ -143,6 +143,7 @@ export interface WebhookRequest {
   name?: string;
   url?: string;
   secret?: string;
+  previousSecretOverlapSeconds?: number;
   eventTypes?: unknown;
   enabled?: boolean;
 }
@@ -157,6 +158,7 @@ export interface WebhookResponse {
   previousSecretKeyId?: string;
   secretRotatedAt?: string;
   previousSecretExpiresAt?: string;
+  previousSecretOverlapSeconds?: number;
   eventTypes?: unknown;
   enabled?: boolean;
 }
