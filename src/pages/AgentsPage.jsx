@@ -97,6 +97,15 @@ export const AgentsPage = ({ context }) => {
     }
   };
 
+  const deactivateProvider = async () => {
+    if (!profileForm.providerId) {
+      action.setError('Provider is required');
+      return;
+    }
+    await action.run(() => context.services.agents.deactivateProvider(profileForm.providerId), 'Provider deactivated');
+    await load();
+  };
+
   const createProfile = async (event) => {
     event.preventDefault();
     const profile = await action.run(() => context.services.agents.createProfile(context.workspaceId, {
@@ -111,6 +120,15 @@ export const AgentsPage = ({ context }) => {
       setTaskForm({ ...taskForm, agentProfileId: profile.id || taskForm.agentProfileId });
       await load();
     }
+  };
+
+  const deactivateProfile = async () => {
+    if (!taskForm.agentProfileId) {
+      action.setError('Agent profile is required');
+      return;
+    }
+    await action.run(() => context.services.agents.deactivateProfile(taskForm.agentProfileId), 'Agent profile deactivated');
+    await load();
   };
 
   const createRepository = async (event) => {
@@ -214,6 +232,7 @@ export const AgentsPage = ({ context }) => {
           <TextField label="Hosted API URL" value={providerForm.hostedApiBaseUrl} onChange={(hostedApiBaseUrl) => setProviderForm({ ...providerForm, hostedApiBaseUrl })} />
           <TextField label="CLI profile" value={providerForm.cliWorkerCommandProfile} onChange={(cliWorkerCommandProfile) => setProviderForm({ ...providerForm, cliWorkerCommandProfile })} />
           <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create provider</button>
+          <button className="secondary-button danger" disabled={action.pending || !profileForm.providerId} onClick={deactivateProvider} type="button"><FiX />Deactivate provider</button>
         </form>
       </Panel>
       <Panel title="Profile" icon={<FiUsers />}>
@@ -225,6 +244,7 @@ export const AgentsPage = ({ context }) => {
           <TextField label="Project IDs" value={profileForm.projectIds} onChange={(projectIds) => setProfileForm({ ...profileForm, projectIds })} />
           <button className="primary-button" disabled={action.pending || !profileForm.providerId} type="submit"><FiPlus />Create profile</button>
           <button className="secondary-button" disabled={action.pending || !profileForm.providerId} onClick={previewRuntime} type="button"><FiEye />Preview runtime</button>
+          <button className="secondary-button danger" disabled={action.pending || !taskForm.agentProfileId} onClick={deactivateProfile} type="button"><FiX />Deactivate profile</button>
         </form>
       </Panel>
       <Panel title="Repository" icon={<FiDatabase />}>

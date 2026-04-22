@@ -12,6 +12,12 @@ export const createAgentsService = (api) => ({
     });
   },
 
+  deactivateProvider(providerId) {
+    return api.request('post', '/api/v1/agent-providers/{providerId}/deactivate', {
+      path: { providerId },
+    });
+  },
+
   previewRuntime(providerId, request = {}) {
     return api.request('post', '/api/v1/agent-providers/{providerId}/runtime-preview', {
       path: { providerId },
@@ -50,6 +56,12 @@ export const createAgentsService = (api) => ({
     return api.request('post', '/api/v1/workspaces/{workspaceId}/agents', {
       path: { workspaceId },
       body: request,
+    });
+  },
+
+  deactivateProfile(profileId) {
+    return api.request('post', '/api/v1/agents/{profileId}/deactivate', {
+      path: { profileId },
     });
   },
 
