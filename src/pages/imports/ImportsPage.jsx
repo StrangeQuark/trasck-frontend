@@ -10,7 +10,7 @@ import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
-import { firstId, numberOrUndefined, parseJson, parseJsonOrThrow, pick } from '../../utils/forms';
+import { csv, firstId, numberOrUndefined, parseJsonOrThrow, pick } from '../../utils/forms';
 import { ImportConflictDetails } from './ImportConflictDetails';
 import { ImportRecordEditor } from './ImportRecordEditor';
 import {
@@ -21,6 +21,7 @@ import {
 } from './ImportReviewTables';
 import { TransformPipelineEditor } from './TransformPipelineEditor';
 import { importRecordFormToRequest, importRecordToForm } from './importRecordForms';
+import { importJobIsReviewable, selectedSourceType, sourceTypeOptionsForProvider } from './importJobState';
 
 const selectedIdOrFirst = (records, selectedId) => {
   const rows = records || [];
@@ -46,6 +47,25 @@ const pageItems = (page) => (Array.isArray(page) ? page : page?.items || []);
 const openConflictCompletionPhrase = 'COMPLETE WITH OPEN CONFLICTS';
 const filteredConflictResolutionPhrase = 'RESOLVE FILTERED CONFLICTS';
 
+const mappingTemplateFieldMapping = (form) => Object.fromEntries(
+  Object.entries({
+    title: csv(form.titleFields),
+    descriptionMarkdown: csv(form.descriptionFields),
+    statusKey: csv(form.statusFields),
+    typeKey: csv(form.typeFields),
+  }).filter(([, values]) => values.length > 0),
+);
+
+const mappingTemplateDefaults = (form) => ({
+  ...(form.defaultDescription ? { descriptionMarkdown: form.defaultDescription } : {}),
+  ...(form.defaultVisibility ? { visibility: form.defaultVisibility } : {}),
+  ...(form.defaultTypeKey ? { typeKey: form.defaultTypeKey } : {}),
+});
+
+const compactPayload = (payload) => Object.fromEntries(
+  Object.entries(payload).filter(([, value]) => value !== undefined && value !== null && String(value).trim() !== ''),
+);
+
 export const ImportsPage = ({ context }) => {
   const [jobs, setJobs] = useState([]);
   const [importJobId, setImportJobId] = useState('');
@@ -59,6 +79,7 @@ export const ImportsPage = ({ context }) => {
   const [transformPresets, setTransformPresets] = useState([]);
   const [transformPresetId, setTransformPresetId] = useState('');
   const [transformPresetVersions, setTransformPresetVersions] = useState([]);
+  const [workItems, setWorkItems] = useState([]);
   const [records, setRecords] = useState([]);
   const [recordVersions, setRecordVersions] = useState([]);
   const [recordVersionDiffs, setRecordVersionDiffs] = useState([]);
@@ -79,15 +100,20 @@ export const ImportsPage = ({ context }) => {
   const [selectedJob, setSelectedJob] = useState(null);
   const [parseResult, setParseResult] = useState(null);
   const [materializeResult, setMaterializeResult] = useState(null);
-  const [jobForm, setJobForm] = useState({ provider: 'csv', configText: JSON.stringify({ targetProjectId: '' }, null, 2) });
+  const [jobForm, setJobForm] = useState({ provider: 'csv', sourceLabel: '', scenario: '' });
   const [templateForm, setTemplateForm] = useState({
     name: 'Default work item mapping',
     provider: 'csv',
     sourceType: 'row',
     workItemTypeKey: 'story',
     transformPresetId: '',
-    fieldMappingText: JSON.stringify({ title: ['title', 'summary', 'fields.summary', 'Name'], descriptionMarkdown: ['description', 'fields.description', 'Description'] }, null, 2),
-    defaultsText: JSON.stringify({ descriptionMarkdown: 'Imported through Trasck' }, null, 2),
+    titleFields: 'title, summary, fields.summary, Name',
+    descriptionFields: 'description, fields.description, Description',
+    statusFields: '',
+    typeFields: '',
+    defaultDescription: 'Imported through Trasck',
+    defaultVisibility: 'inherited',
+    defaultTypeKey: 'story',
     transformationConfigText: JSON.stringify({ title: ['trim', 'collapse_whitespace'] }, null, 2),
     enabled: 'true',
   });
@@ -103,7 +129,16 @@ export const ImportsPage = ({ context }) => {
     content: 'key,title,type\nTRASCK-1,Imported story,story',
   });
   const [materializeForm, setMaterializeForm] = useState({ limit: '25', updateExisting: 'false' });
-  const [recordForm, setRecordForm] = useState({ sourceType: 'issue', sourceId: 'MANUAL-1', targetType: 'work_item', targetId: '', rawPayloadText: '{}' });
+  const [recordForm, setRecordForm] = useState({
+    sourceType: 'row',
+    sourceId: 'MANUAL-1',
+    targetType: 'work_item',
+    targetWorkItemId: '',
+    payloadTitle: 'Manual import record',
+    payloadDescription: 'Created through the import UI',
+    payloadStatus: 'Open',
+    payloadType: 'Story',
+  });
   const [recordEditForm, setRecordEditForm] = useState(importRecordToForm());
   const [recordFilters, setRecordFilters] = useState({ status: '', conflictStatus: '', sourceType: '' });
   const [cloneForm, setCloneForm] = useState({ versionId: '', name: '', enabled: 'true' });
@@ -134,36 +169,53 @@ export const ImportsPage = ({ context }) => {
     }
   };
 
+  const selectImportJob = (nextImportJobId) => {
+    setImportJobId(nextImportJobId);
+    setSelectedJob(jobs.find((job) => job.id === nextImportJobId) || null);
+    setRecords([]);
+    setConflicts([]);
+    setConflictResolutionJobs([]);
+    setJobVersionDiffs(null);
+    setMaterializationRuns([]);
+    setRecordVersions([]);
+    setRecordVersionDiffs([]);
+    setRecordEditForm(importRecordToForm());
+  };
+
   const load = async (selection = {}) => {
     if (!context.workspaceId) {
       action.setError('Workspace ID is required');
       return;
     }
     const result = await action.run(async () => {
-      const [jobRows, importSettingsRow, sampleRows, templateRows, presetRows] = await Promise.all([
+      const [jobRows, importSettingsRow, sampleRows, templateRows, presetRows, workItemPage] = await Promise.all([
         context.services.imports.listJobs(context.workspaceId),
         context.services.imports.getSettings(context.workspaceId),
         context.services.imports.listSamples(context.workspaceId).catch(() => []),
         context.services.imports.listMappingTemplates(context.workspaceId),
         context.services.imports.listTransformPresets(context.workspaceId),
+        context.projectId ? context.services.workItems.listByProject(context.projectId, { limit: 50 }) : Promise.resolve({ items: [] }),
       ]);
       const nextJobId = selection.importJobId || importJobId || firstId(jobRows);
       const nextTemplateId = selection.mappingTemplateId || mappingTemplateId || firstId(templateRows);
       const nextPresetId = selection.transformPresetId || transformPresetId || firstId(presetRows);
-      const [job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows, workspaceResolutionJobRows, exportJobPage, projectImportMetrics, workspaceImportMetrics] = await Promise.all([
+      const [job, versionRows, workspaceResolutionJobRows, exportJobPage, projectImportMetrics, workspaceImportMetrics] = await Promise.all([
         nextJobId ? context.services.imports.getJob(nextJobId) : Promise.resolve(null),
-        nextJobId ? context.services.imports.listRecords(nextJobId, filterRequest(recordFilters)) : Promise.resolve([]),
-        nextJobId ? context.services.imports.listConflicts(nextJobId) : Promise.resolve([]),
-        nextJobId ? context.services.imports.listConflictResolutionJobs(nextJobId) : Promise.resolve([]),
-        nextJobId ? context.services.imports.listJobVersionDiffs(nextJobId) : Promise.resolve(null),
-        nextJobId ? context.services.imports.listMaterializationRuns(nextJobId) : Promise.resolve([]),
         nextPresetId ? context.services.imports.listTransformPresetVersions(nextPresetId) : Promise.resolve([]),
         context.services.imports.listWorkspaceConflictResolutionJobs(context.workspaceId, { status: conflictResolutionJobStatus || undefined }),
         context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }),
         context.projectId ? context.services.dashboards.projectImportCompletions(context.projectId) : Promise.resolve(null),
         context.services.dashboards.workspaceImportCompletions(context.workspaceId),
       ]);
-      return { jobRows, importSettingsRow, sampleRows, templateRows, presetRows, nextJobId, nextTemplateId, nextPresetId, job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows, workspaceResolutionJobRows, exportJobPage, projectImportMetrics, workspaceImportMetrics };
+      const reviewable = importJobIsReviewable(job);
+      const [recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows] = reviewable ? await Promise.all([
+        context.services.imports.listRecords(nextJobId, filterRequest(recordFilters)),
+        context.services.imports.listConflicts(nextJobId),
+        context.services.imports.listConflictResolutionJobs(nextJobId),
+        context.services.imports.listJobVersionDiffs(nextJobId),
+        context.services.imports.listMaterializationRuns(nextJobId),
+      ]) : [[], [], [], null, []];
+      return { jobRows, importSettingsRow, sampleRows, templateRows, presetRows, workItemPage, nextJobId, nextTemplateId, nextPresetId, job, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, versionRows, workspaceResolutionJobRows, exportJobPage, projectImportMetrics, workspaceImportMetrics };
     });
     if (result) {
       setJobs(result.jobRows || []);
@@ -173,6 +225,7 @@ export const ImportsPage = ({ context }) => {
       setSampleForm((current) => ({ ...current, sampleKey: current.sampleKey || result.sampleRows?.[0]?.key || 'csv' }));
       setTemplates(result.templateRows || []);
       setTransformPresets(result.presetRows || []);
+      setWorkItems(result.workItemPage?.items || []);
       setImportJobId(result.nextJobId || '');
       setMappingTemplateId(result.nextTemplateId || '');
       setTransformPresetId(result.nextPresetId || '');
@@ -204,8 +257,9 @@ export const ImportsPage = ({ context }) => {
     const job = await action.run(() => context.services.imports.createJob(context.workspaceId, {
       provider: jobForm.provider,
       config: {
-        ...parseJsonOrThrow(jobForm.configText),
-        targetProjectId: context.projectId || parseJson(jobForm.configText, {}).targetProjectId,
+        targetProjectId: context.projectId || undefined,
+        ...(jobForm.sourceLabel ? { source: jobForm.sourceLabel } : {}),
+        ...(jobForm.scenario ? { scenario: jobForm.scenario } : {}),
       },
     }), 'Import job created');
     if (job) {
@@ -258,8 +312,8 @@ export const ImportsPage = ({ context }) => {
       projectId: context.projectId || undefined,
       workItemTypeKey: templateForm.workItemTypeKey,
       transformPresetId: templateForm.transformPresetId || undefined,
-      fieldMapping: parseJsonOrThrow(templateForm.fieldMappingText),
-      defaults: parseJsonOrThrow(templateForm.defaultsText),
+      fieldMapping: mappingTemplateFieldMapping(templateForm),
+      defaults: mappingTemplateDefaults(templateForm),
       transformationConfig: parseJsonOrThrow(templateForm.transformationConfigText),
       enabled: templateForm.enabled === 'true',
     }), 'Mapping template created');
@@ -288,7 +342,7 @@ export const ImportsPage = ({ context }) => {
     event.preventDefault();
     const parsed = await action.run(() => context.services.imports.parse(importJobId, {
       content: parseForm.content,
-      sourceType: parseForm.sourceType || undefined,
+      sourceType: parseForm.sourceType || selectedSourceType(selectedJob?.provider || jobForm.provider, parseForm.sourceType),
       contentType: parseForm.contentType || undefined,
     }), 'Import parsed');
     if (parsed) {
@@ -317,8 +371,14 @@ export const ImportsPage = ({ context }) => {
       sourceType: recordForm.sourceType,
       sourceId: recordForm.sourceId,
       targetType: recordForm.targetType || undefined,
-      targetId: recordForm.targetId || undefined,
-      rawPayload: parseJsonOrThrow(recordForm.rawPayloadText),
+      targetId: recordForm.targetWorkItemId || undefined,
+      rawPayload: compactPayload({
+        title: recordForm.payloadTitle,
+        summary: recordForm.payloadTitle,
+        description: recordForm.payloadDescription,
+        status: recordForm.payloadStatus,
+        type: recordForm.payloadType,
+      }),
     }), 'Record created');
     if (record) {
       setRecordEditForm(importRecordToForm(record));
@@ -652,18 +712,23 @@ export const ImportsPage = ({ context }) => {
       action.setError('Import job is required');
       return;
     }
-    const result = await action.run(() => Promise.all([
-      context.services.imports.getJob(importJobId),
-      context.services.imports.listRecords(importJobId, filterRequest(recordFilters)),
-      context.services.imports.listConflicts(importJobId),
-      context.services.imports.listConflictResolutionJobs(importJobId),
-      context.services.imports.listJobVersionDiffs(importJobId),
-      context.services.imports.listMaterializationRuns(importJobId),
-      context.workspaceId ? context.services.imports.listWorkspaceConflictResolutionJobs(context.workspaceId, { status: conflictResolutionJobStatus || undefined }) : Promise.resolve([]),
-      context.workspaceId ? context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }) : Promise.resolve({ items: [] }),
-      context.projectId ? context.services.dashboards.projectImportCompletions(context.projectId) : Promise.resolve(null),
-      context.workspaceId ? context.services.dashboards.workspaceImportCompletions(context.workspaceId) : Promise.resolve(null),
-    ]));
+    const result = await action.run(async () => {
+      const [job, workspaceResolutionJobRows, exportJobPage, projectImportMetrics, workspaceImportMetrics] = await Promise.all([
+        context.services.imports.getJob(importJobId),
+        context.workspaceId ? context.services.imports.listWorkspaceConflictResolutionJobs(context.workspaceId, { status: conflictResolutionJobStatus || undefined }) : Promise.resolve([]),
+        context.workspaceId ? context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }) : Promise.resolve({ items: [] }),
+        context.projectId ? context.services.dashboards.projectImportCompletions(context.projectId) : Promise.resolve(null),
+        context.workspaceId ? context.services.dashboards.workspaceImportCompletions(context.workspaceId) : Promise.resolve(null),
+      ]);
+      const [rows, conflictRows, resolutionJobRows, jobDiffRows, runs] = importJobIsReviewable(job) ? await Promise.all([
+        context.services.imports.listRecords(importJobId, filterRequest(recordFilters)),
+        context.services.imports.listConflicts(importJobId),
+        context.services.imports.listConflictResolutionJobs(importJobId),
+        context.services.imports.listJobVersionDiffs(importJobId),
+        context.services.imports.listMaterializationRuns(importJobId),
+      ]) : [[], [], [], null, []];
+      return [job, rows, conflictRows, resolutionJobRows, jobDiffRows, runs, workspaceResolutionJobRows, exportJobPage, projectImportMetrics, workspaceImportMetrics];
+    });
     if (result) {
       const [job, rows, conflictRows, resolutionJobRows, jobDiffRows, runs, workspaceResolutionJobRows, exportJobPage, projectImportMetrics, workspaceImportMetrics] = result;
       setSelectedJob(job || null);
@@ -731,14 +796,27 @@ export const ImportsPage = ({ context }) => {
     await loadRecords();
   };
 
+  const parseSourceTypeOptions = sourceTypeOptionsForProvider(selectedJob?.provider || jobForm.provider);
+  const templateSourceTypeOptions = sourceTypeOptionsForProvider(templateForm.provider);
+  const recordSourceTypeOptions = sourceTypeOptionsForProvider(selectedJob?.provider || jobForm.provider);
+
   return (
     <div className="content-grid">
       <Panel title="Import Job" icon={<FiUploadCloud />}>
         <form className="stack" onSubmit={createJob}>
-          <SelectField label="Provider" value={jobForm.provider} onChange={(provider) => setJobForm({ ...jobForm, provider })} options={['csv', 'jira', 'rally']} />
-          <Field label="Config JSON">
-            <textarea value={jobForm.configText} onChange={(event) => setJobForm({ ...jobForm, configText: event.target.value })} rows={6} spellCheck="false" />
-          </Field>
+          <SelectField
+            label="Provider"
+            value={jobForm.provider}
+            onChange={(provider) => {
+              setJobForm({ ...jobForm, provider });
+              setParseForm((current) => ({ ...current, sourceType: selectedSourceType(provider, current.sourceType) }));
+              setTemplateForm((current) => ({ ...current, provider, sourceType: selectedSourceType(provider, current.sourceType) }));
+              setRecordForm((current) => ({ ...current, sourceType: selectedSourceType(provider, current.sourceType) }));
+            }}
+            options={['csv', 'jira', 'rally']}
+          />
+          <TextField label="Source label" value={jobForm.sourceLabel} onChange={(sourceLabel) => setJobForm({ ...jobForm, sourceLabel })} />
+          <TextField label="Scenario" value={jobForm.scenario} onChange={(scenario) => setJobForm({ ...jobForm, scenario })} />
           <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create job</button>
         </form>
       </Panel>
@@ -770,8 +848,8 @@ export const ImportsPage = ({ context }) => {
       </Panel>
       <Panel title="Parse" icon={<FiDatabase />}>
         <form className="stack" onSubmit={parseJob}>
-          <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={setImportJobId} />
-          <TextField label="Source type" value={parseForm.sourceType} onChange={(sourceType) => setParseForm({ ...parseForm, sourceType })} />
+          <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={selectImportJob} />
+          <SelectField label="Source type" value={selectedSourceType(selectedJob?.provider || jobForm.provider, parseForm.sourceType)} onChange={(sourceType) => setParseForm({ ...parseForm, sourceType })} options={parseSourceTypeOptions} />
           <SelectField label="Content type" value={parseForm.contentType} onChange={(contentType) => setParseForm({ ...parseForm, contentType })} options={['text/csv', 'application/json', 'text/plain']} />
           <Field label="Content">
             <textarea value={parseForm.content} onChange={(event) => setParseForm({ ...parseForm, content: event.target.value })} rows={8} spellCheck="false" />
@@ -792,25 +870,28 @@ export const ImportsPage = ({ context }) => {
         <form className="stack" onSubmit={createTemplate}>
           <TextField label="Name" value={templateForm.name} onChange={(name) => setTemplateForm({ ...templateForm, name })} />
           <div className="two-column compact">
-            <SelectField label="Provider" value={templateForm.provider} onChange={(provider) => setTemplateForm({ ...templateForm, provider })} options={['csv', 'jira', 'rally']} />
-            <TextField label="Source type" value={templateForm.sourceType} onChange={(sourceType) => setTemplateForm({ ...templateForm, sourceType })} />
+            <SelectField label="Provider" value={templateForm.provider} onChange={(provider) => setTemplateForm({ ...templateForm, provider, sourceType: selectedSourceType(provider, templateForm.sourceType) })} options={['csv', 'jira', 'rally']} />
+            <SelectField label="Source type" value={selectedSourceType(templateForm.provider, templateForm.sourceType)} onChange={(sourceType) => setTemplateForm({ ...templateForm, sourceType })} options={templateSourceTypeOptions} />
             <TextField label="Type key" value={templateForm.workItemTypeKey} onChange={(workItemTypeKey) => setTemplateForm({ ...templateForm, workItemTypeKey })} />
             <RecordSelect label="Preset" records={transformPresets} value={templateForm.transformPresetId} onChange={(presetId) => setTemplateForm({ ...templateForm, transformPresetId: presetId })} includeBlank />
             <SelectField label="Enabled" value={templateForm.enabled} onChange={(enabled) => setTemplateForm({ ...templateForm, enabled })} options={['true', 'false']} />
           </div>
-          <Field label="Field mapping JSON">
-            <textarea value={templateForm.fieldMappingText} onChange={(event) => setTemplateForm({ ...templateForm, fieldMappingText: event.target.value })} rows={6} spellCheck="false" />
-          </Field>
-          <Field label="Defaults JSON">
-            <textarea value={templateForm.defaultsText} onChange={(event) => setTemplateForm({ ...templateForm, defaultsText: event.target.value })} rows={4} spellCheck="false" />
-          </Field>
+          <div className="two-column compact">
+            <TextField label="Title fields" value={templateForm.titleFields} onChange={(titleFields) => setTemplateForm({ ...templateForm, titleFields })} />
+            <TextField label="Description fields" value={templateForm.descriptionFields} onChange={(descriptionFields) => setTemplateForm({ ...templateForm, descriptionFields })} />
+            <TextField label="Status fields" value={templateForm.statusFields} onChange={(statusFields) => setTemplateForm({ ...templateForm, statusFields })} />
+            <TextField label="Type fields" value={templateForm.typeFields} onChange={(typeFields) => setTemplateForm({ ...templateForm, typeFields })} />
+            <TextField label="Default type" value={templateForm.defaultTypeKey} onChange={(defaultTypeKey) => setTemplateForm({ ...templateForm, defaultTypeKey })} />
+            <SelectField label="Default visibility" value={templateForm.defaultVisibility} onChange={(defaultVisibility) => setTemplateForm({ ...templateForm, defaultVisibility })} options={['inherited', 'private', 'workspace', 'public']} />
+          </div>
+          <TextField label="Default description" value={templateForm.defaultDescription} onChange={(defaultDescription) => setTemplateForm({ ...templateForm, defaultDescription })} />
           <TransformPipelineEditor label="Template transformations" value={templateForm.transformationConfigText} onChange={(transformationConfigText) => setTemplateForm({ ...templateForm, transformationConfigText })} />
           <button className="primary-button" disabled={action.pending || !context.workspaceId || !context.projectId} type="submit"><FiPlus />Create template</button>
         </form>
       </Panel>
       <Panel title="Materialize" icon={<FiArrowRight />}>
         <form className="stack" onSubmit={materializeJob}>
-          <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={setImportJobId} />
+          <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={selectImportJob} />
           <RecordSelect label="Template" records={templates} value={mappingTemplateId} onChange={setMappingTemplateId} />
           <div className="two-column compact">
             <TextField label="Limit" type="number" value={materializeForm.limit} onChange={(limit) => setMaterializeForm({ ...materializeForm, limit })} />
@@ -821,16 +902,22 @@ export const ImportsPage = ({ context }) => {
       </Panel>
       <Panel title="Manual Record" icon={<FiPlus />}>
         <form className="stack" onSubmit={createRecord}>
-          <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={setImportJobId} />
-          <TextField label="Source type" value={recordForm.sourceType} onChange={(sourceType) => setRecordForm({ ...recordForm, sourceType })} />
+          <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={selectImportJob} />
+          <SelectField label="Source type" value={selectedSourceType(selectedJob?.provider || jobForm.provider, recordForm.sourceType)} onChange={(sourceType) => setRecordForm({ ...recordForm, sourceType })} options={recordSourceTypeOptions} />
           <TextField label="Source ID" value={recordForm.sourceId} onChange={(sourceId) => setRecordForm({ ...recordForm, sourceId })} />
-          <TextField label="Target type" value={recordForm.targetType} onChange={(targetType) => setRecordForm({ ...recordForm, targetType })} />
-          <TextField label="Target ID" value={recordForm.targetId} onChange={(targetId) => setRecordForm({ ...recordForm, targetId })} />
+          <SelectField label="Target type" value={recordForm.targetType} onChange={(targetType) => setRecordForm({ ...recordForm, targetType })} options={['work_item']} />
+          <RecordSelect label="Target work item" records={workItems} value={recordForm.targetWorkItemId} onChange={(targetWorkItemId) => setRecordForm({ ...recordForm, targetWorkItemId })} includeBlank />
+          <TextField label="Payload title" value={recordForm.payloadTitle} onChange={(payloadTitle) => setRecordForm({ ...recordForm, payloadTitle })} />
+          <TextField label="Payload description" value={recordForm.payloadDescription} onChange={(payloadDescription) => setRecordForm({ ...recordForm, payloadDescription })} />
+          <div className="two-column compact">
+            <TextField label="Payload status" value={recordForm.payloadStatus} onChange={(payloadStatus) => setRecordForm({ ...recordForm, payloadStatus })} />
+            <TextField label="Payload type" value={recordForm.payloadType} onChange={(payloadType) => setRecordForm({ ...recordForm, payloadType })} />
+          </div>
           <button className="primary-button" disabled={action.pending || !importJobId} type="submit"><FiPlus />Add record</button>
         </form>
       </Panel>
       <Panel title="Lifecycle" icon={<FiActivity />}>
-        <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={setImportJobId} />
+        <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={selectImportJob} />
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={() => jobCommand(context.services.imports.start, 'Import started')} type="button">Start</button>
@@ -868,7 +955,7 @@ export const ImportsPage = ({ context }) => {
           <div className="data-columns three no-margin">
             <SelectField label="Status" value={recordFilters.status} onChange={(status) => { setFilteredConflictPreview(null); setRecordFilters({ ...recordFilters, status }); }} options={['', 'pending', 'imported', 'failed', 'skipped', 'conflict']} />
             <SelectField label="Conflict" value={recordFilters.conflictStatus} onChange={(conflictStatus) => { setFilteredConflictPreview(null); setRecordFilters({ ...recordFilters, conflictStatus }); }} options={['', 'open', 'resolved']} />
-            <TextField label="Source type" value={recordFilters.sourceType} onChange={(sourceType) => { setFilteredConflictPreview(null); setRecordFilters({ ...recordFilters, sourceType }); }} />
+            <SelectField label="Source type" value={recordFilters.sourceType} onChange={(sourceType) => { setFilteredConflictPreview(null); setRecordFilters({ ...recordFilters, sourceType }); }} options={['', ...recordSourceTypeOptions]} />
           </div>
           <button className="secondary-button" disabled={action.pending || !importJobId} type="submit"><FiRefreshCw />Apply filters</button>
         </form>

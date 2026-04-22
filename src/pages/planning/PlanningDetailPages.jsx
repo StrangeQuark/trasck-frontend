@@ -4,7 +4,6 @@ import { FiActivity, FiBarChart2, FiCheck, FiEye, FiList, FiRefreshCw, FiSliders
 import { BoardCardColumns } from '../../components/BoardCardColumns';
 import { DetailLayout } from '../../components/DetailLayout';
 import { ErrorLine } from '../../components/ErrorLine';
-import { Field } from '../../components/Field';
 import { JsonPreview } from '../../components/JsonPreview';
 import { JsonRecordEditor } from '../../components/JsonRecordEditor';
 import { Panel } from '../../components/Panel';
@@ -12,7 +11,7 @@ import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
-import { parseJsonOrThrow, pick, toJsonText } from '../../utils/forms';
+import { csv, pick } from '../../utils/forms';
 
 export const BoardDetailPage = ({ context }) => {
   const { boardId } = useParams();
@@ -23,7 +22,7 @@ export const BoardDetailPage = ({ context }) => {
   const [swimlanes, setSwimlanes] = useState([]);
   const [cards, setCards] = useState(null);
   const [moveForm, setMoveForm] = useState({ workItemId: '', targetColumnId: '', previousWorkItemId: '', nextWorkItemId: '', transitionKey: '' });
-  const [form, setForm] = useState({ name: '', type: 'kanban', filterConfigText: '{}', active: 'true' });
+  const [form, setForm] = useState({ name: '', type: 'kanban', projectScoped: 'true', active: 'true' });
 
   const load = async () => {
     const result = await action.run(() => Promise.all([
@@ -48,7 +47,7 @@ export const BoardDetailPage = ({ context }) => {
       setForm({
         name: boardRow.name || '',
         type: boardRow.type || 'kanban',
-        filterConfigText: toJsonText(boardRow.filterConfig || {}),
+        projectScoped: String(boardRow.filterConfig?.projectScoped ?? true),
         active: String(boardRow.active ?? true),
       });
     }
@@ -63,7 +62,7 @@ export const BoardDetailPage = ({ context }) => {
     const saved = await action.run(() => context.services.planning.updateBoard(boardId, {
       name: form.name,
       type: form.type,
-      filterConfig: parseJsonOrThrow(form.filterConfigText),
+      filterConfig: { projectScoped: form.projectScoped === 'true' },
       active: form.active === 'true',
     }), 'Board saved');
     if (saved) {
@@ -105,9 +104,7 @@ export const BoardDetailPage = ({ context }) => {
           <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
           <SelectField label="Type" value={form.type} onChange={(type) => setForm({ ...form, type })} options={['kanban', 'scrum']} />
           <SelectField label="Active" value={form.active} onChange={(active) => setForm({ ...form, active })} options={['true', 'false']} />
-          <Field label="Filter JSON">
-            <textarea value={form.filterConfigText} onChange={(event) => setForm({ ...form, filterConfigText: event.target.value })} rows={7} spellCheck="false" />
-          </Field>
+          <SelectField label="Project scoped" value={form.projectScoped} onChange={(projectScoped) => setForm({ ...form, projectScoped })} options={['true', 'false']} />
           <div className="button-row wrap">
             <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
             <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive board" type="button"><FiX /></button>
@@ -240,7 +237,7 @@ export const RoadmapDetailPage = ({ context }) => {
   const action = useApiAction(context.addToast);
   const [roadmap, setRoadmap] = useState(null);
   const [items, setItems] = useState([]);
-  const [form, setForm] = useState({ name: '', visibility: 'project', configText: '{}' });
+  const [form, setForm] = useState({ name: '', visibility: 'project', lanes: 'now, next, later' });
 
   const load = async () => {
     const result = await action.run(() => Promise.all([
@@ -254,7 +251,7 @@ export const RoadmapDetailPage = ({ context }) => {
       setForm({
         name: roadmapRow.name || '',
         visibility: roadmapRow.visibility || 'project',
-        configText: toJsonText(roadmapRow.config || {}),
+        lanes: Array.isArray(roadmapRow.config?.lanes) ? roadmapRow.config.lanes.join(', ') : 'now, next, later',
       });
     }
   };
@@ -269,7 +266,7 @@ export const RoadmapDetailPage = ({ context }) => {
       projectId: context.projectId || roadmap?.projectId,
       name: form.name,
       visibility: form.visibility,
-      config: parseJsonOrThrow(form.configText),
+      config: { lanes: csv(form.lanes) },
     }), 'Roadmap saved');
     if (saved) {
       await load();
@@ -287,9 +284,7 @@ export const RoadmapDetailPage = ({ context }) => {
         <form className="stack" onSubmit={save}>
           <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
           <SelectField label="Visibility" value={form.visibility} onChange={(visibility) => setForm({ ...form, visibility })} options={['private', 'project', 'workspace', 'public']} />
-          <Field label="Config JSON">
-            <textarea value={form.configText} onChange={(event) => setForm({ ...form, configText: event.target.value })} rows={8} spellCheck="false" />
-          </Field>
+          <TextField label="Roadmap lanes" value={form.lanes} onChange={(lanes) => setForm({ ...form, lanes })} />
           <div className="button-row wrap">
             <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
             <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive roadmap" type="button"><FiX /></button>

@@ -28,7 +28,7 @@ export const AgentsPage = ({ context }) => {
     hostedApiBaseUrl: '',
     cliWorkerCommandProfile: '',
   });
-  const [profileForm, setProfileForm] = useState({ providerId: '', displayName: 'Trasck Agent', username: 'trasck-agent', roleId: '', projectIds: '' });
+  const [profileForm, setProfileForm] = useState({ providerId: '', displayName: 'Trasck Agent', username: 'trasck-agent', projectScope: 'current_project' });
   const [repositoryForm, setRepositoryForm] = useState({ provider: 'generic_git', name: 'Local repo', repositoryUrl: '', defaultBranch: 'main' });
   const [taskForm, setTaskForm] = useState({ workItemId: '', agentProfileId: '', repositoryConnectionIds: '', instructions: 'Review this work item and prepare an implementation plan.', message: 'Adding context from the frontend console.' });
   const [attemptForm, setAttemptForm] = useState({ attemptType: 'all', status: 'all', retentionDays: '30' });
@@ -36,6 +36,14 @@ export const AgentsPage = ({ context }) => {
   const providerStatus = (provider) => provider.enabled === false ? 'deactivated' : 'active';
   const profileStatus = (profile) => profile.status || 'unknown';
   const statusClass = (status) => status === 'active' ? 'status-pill active' : 'status-pill';
+  const knownAgentTasks = [
+    ...(context.agentTaskId ? [{ id: context.agentTaskId, name: context.agentTaskId }] : []),
+    ...(task?.id ? [{ id: task.id, name: [task.status, task.workItemId].filter(Boolean).join(' - ') }] : []),
+    ...dispatchAttempts
+      .map((attempt) => attempt.agentTaskId)
+      .filter(Boolean)
+      .map((agentTaskId) => ({ id: agentTaskId, name: agentTaskId })),
+  ].filter((record, index, rows) => rows.findIndex((candidate) => candidate.id === record.id) === index);
 
   const providerRuntimeConfig = () => ({
     runtime: {
@@ -116,8 +124,7 @@ export const AgentsPage = ({ context }) => {
       providerId: profileForm.providerId,
       displayName: profileForm.displayName,
       username: profileForm.username,
-      roleId: profileForm.roleId || undefined,
-      projectIds: profileForm.projectIds.split(',').map((value) => value.trim()).filter(Boolean),
+      projectIds: profileForm.projectScope === 'current_project' && context.projectId ? [context.projectId] : [],
       status: 'active',
     }), 'Agent profile created');
     if (profile) {
@@ -244,8 +251,7 @@ export const AgentsPage = ({ context }) => {
           <RecordSelect label="Provider" records={providers} value={profileForm.providerId} onChange={(providerId) => setProfileForm({ ...profileForm, providerId })} />
           <TextField label="Display name" value={profileForm.displayName} onChange={(displayName) => setProfileForm({ ...profileForm, displayName })} />
           <TextField label="Username" value={profileForm.username} onChange={(username) => setProfileForm({ ...profileForm, username })} />
-          <TextField label="Role ID" value={profileForm.roleId} onChange={(roleId) => setProfileForm({ ...profileForm, roleId })} />
-          <TextField label="Project IDs" value={profileForm.projectIds} onChange={(projectIds) => setProfileForm({ ...profileForm, projectIds })} />
+          <SelectField label="Project access" value={profileForm.projectScope} onChange={(projectScope) => setProfileForm({ ...profileForm, projectScope })} options={['current_project', 'workspace']} />
           <button className="primary-button" disabled={action.pending || !profileForm.providerId} type="submit"><FiPlus />Create profile</button>
           <button className="secondary-button" disabled={action.pending || !profileForm.providerId} onClick={previewRuntime} type="button"><FiEye />Preview runtime</button>
           <button className="secondary-button danger" disabled={action.pending || !taskForm.agentProfileId} onClick={deactivateProfile} type="button"><FiX />Deactivate profile</button>
@@ -273,7 +279,7 @@ export const AgentsPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !taskForm.workItemId || !taskForm.agentProfileId} type="submit"><FiSend />Assign</button>
         </form>
         <div className="agent-command-strip">
-          <TextField label="Task ID" value={context.agentTaskId} onChange={context.setAgentTaskId} />
+          <RecordSelect label="Agent task" records={knownAgentTasks} value={context.agentTaskId} onChange={context.setAgentTaskId} includeBlank />
           <TextField label="Message" value={taskForm.message} onChange={(message) => setTaskForm({ ...taskForm, message })} />
           <button className="secondary-button" disabled={action.pending || !context.agentTaskId} onClick={loadTask} type="button"><FiRefreshCw />Load</button>
           <button className="secondary-button" disabled={action.pending || !context.agentTaskId} onClick={() => taskCommand(context.services.agents.retry, 'Retry requested')} type="button">Retry</button>
