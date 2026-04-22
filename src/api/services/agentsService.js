@@ -25,6 +25,37 @@ export const createAgentsService = (api) => ({
     });
   },
 
+  listCredentials(providerId) {
+    return api.request('get', '/api/v1/agent-providers/{providerId}/credentials', {
+      path: { providerId },
+    });
+  },
+
+  createCredential(providerId, request) {
+    return api.request('post', '/api/v1/agent-providers/{providerId}/credentials', {
+      path: { providerId },
+      body: request,
+    });
+  },
+
+  deactivateCredential(providerId, credentialId) {
+    return api.request('post', '/api/v1/agent-providers/{providerId}/credentials/{credentialId}/deactivate', {
+      path: { providerId, credentialId },
+    });
+  },
+
+  reencryptCredentials(providerId) {
+    return api.request('post', '/api/v1/agent-providers/{providerId}/credentials/reencrypt', {
+      path: { providerId },
+    });
+  },
+
+  rotateCallbackKey(providerId) {
+    return api.request('post', '/api/v1/agent-providers/{providerId}/callback-keys/rotate', {
+      path: { providerId },
+    });
+  },
+
   listDispatchAttempts(workspaceId, query = {}) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts', {
       path: { workspaceId },
