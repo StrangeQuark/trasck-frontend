@@ -4,6 +4,7 @@ import { ErrorLine } from '../components/ErrorLine';
 import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
 import { TextField } from '../components/TextField';
+import { defaultSetupForm } from '../constants/appConstants';
 import { useApiAction } from '../hooks/useApiAction';
 
 export const SetupPage = ({ context }) => {

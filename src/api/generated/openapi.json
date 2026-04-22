@@ -15469,6 +15469,10 @@
           "secret": {
             "type": "string"
           },
+          "previousSecretOverlapSeconds": {
+            "type": "integer",
+            "format": "int64"
+          },
           "eventTypes": {},
           "enabled": {
             "type": "boolean"
@@ -15508,6 +15512,10 @@
           "previousSecretExpiresAt": {
             "type": "string",
             "format": "date-time"
+          },
+          "previousSecretOverlapSeconds": {
+            "type": "integer",
+            "format": "int64"
           },
           "eventTypes": {},
           "enabled": {
