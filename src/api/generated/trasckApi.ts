@@ -1287,6 +1287,18 @@ export interface AgentDispatchAttemptExportRequest {
   limit?: number;
 }
 
+export interface AgentCliWorkerRunPruneRequest {
+  retentionDays?: number;
+}
+
+export interface AgentCliWorkerRunDeleteResponse {
+  workspaceId?: string;
+  cutoff?: string;
+  deletedRuns?: number;
+  deletedBytes?: number;
+  deletedAgentTaskIds?: string[];
+}
+
 export interface WorkLogRequest {
   userId?: string;
   minutesSpent?: number;
@@ -2416,6 +2428,23 @@ export interface CursorPageResponseAgentDispatchAttemptResponse {
   nextCursor?: string;
   hasMore?: boolean;
   limit?: number;
+}
+
+export interface AgentCliWorkerRunResponse {
+  agentTaskId?: string;
+  workspaceId?: string;
+  providerId?: string;
+  providerType?: string;
+  agentProfileId?: string;
+  workItemId?: string;
+  status?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  sizeBytes?: number;
+  fileCount?: number;
+  promptPresent?: boolean;
+  taskFilePresent?: boolean;
+  outputPresent?: boolean;
 }
 
 export interface CursorPageResponseWorkItemResponse {
@@ -3777,6 +3806,16 @@ export interface ApiPaths {
     };
       query: undefined;
       body: AgentDispatchAttemptExportRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/agent-cli-runs/prune": {
+    post: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: AgentCliWorkerRunPruneRequest;
       response: unknown;
     };
   };
@@ -6018,6 +6057,27 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/agent-cli-runs": {
+    get: {
+      path: {
+      workspaceId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
+  "/api/v1/workspaces/{workspaceId}/agent-cli-runs/{agentTaskId}/download": {
+    get: {
+      path: {
+      workspaceId: string;
+      agentTaskId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/workspaces/{workspaceId}/activity": {
     get: {
       path: {
@@ -6701,6 +6761,17 @@ export interface ApiPaths {
       response: void;
     };
   };
+  "/api/v1/workspaces/{workspaceId}/agent-cli-runs/{agentTaskId}": {
+    delete: {
+      path: {
+      workspaceId: string;
+      agentTaskId: string;
+    };
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/work-items/{workItemId}/watchers/{userId}": {
     delete: {
       path: {
@@ -6914,6 +6985,7 @@ export const apiOperations = {
   "createProvider": { method: "post", path: "/api/v1/workspaces/{workspaceId}/agent-providers" },
   "pruneDispatchAttempts": { method: "post", path: "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/prune" },
   "exportDispatchAttempts": { method: "post", path: "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts/export" },
+  "pruneRuns": { method: "post", path: "/api/v1/workspaces/{workspaceId}/agent-cli-runs/prune" },
   "listWorkLogs": { method: "get", path: "/api/v1/work-items/{workItemId}/work-logs" },
   "createWorkLog": { method: "post", path: "/api/v1/work-items/{workItemId}/work-logs" },
   "listWatchers": { method: "get", path: "/api/v1/work-items/{workItemId}/watchers" },
@@ -7146,6 +7218,8 @@ export const apiOperations = {
   "listWorkerHealth": { method: "get", path: "/api/v1/workspaces/{workspaceId}/automation-worker-health" },
   "listAuditLog": { method: "get", path: "/api/v1/workspaces/{workspaceId}/audit-log" },
   "listDispatchAttempts": { method: "get", path: "/api/v1/workspaces/{workspaceId}/agent-dispatch-attempts" },
+  "listRuns": { method: "get", path: "/api/v1/workspaces/{workspaceId}/agent-cli-runs" },
+  "downloadRun": { method: "get", path: "/api/v1/workspaces/{workspaceId}/agent-cli-runs/{agentTaskId}/download" },
   "workspaceActivity": { method: "get", path: "/api/v1/workspaces/{workspaceId}/activity" },
   "listValues": { method: "get", path: "/api/v1/work-items/{workItemId}/custom-fields" },
   "downloadAttachment": { method: "get", path: "/api/v1/work-items/{workItemId}/attachments/{attachmentId}/download" },
@@ -7209,6 +7283,7 @@ export const apiOperations = {
   "deactivateRepositoryConnection": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/repository-connections/{connectionId}" },
   "deleteWorkspaceLabel": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/labels/{labelId}" },
   "cancelInvitation": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/invitations/{invitationId}" },
+  "deleteRun": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/agent-cli-runs/{agentTaskId}" },
   "removeWatcher": { method: "delete", path: "/api/v1/work-items/{workItemId}/watchers/{userId}" },
   "deleteLink": { method: "delete", path: "/api/v1/work-items/{workItemId}/links/{linkId}" },
   "removeLabel": { method: "delete", path: "/api/v1/work-items/{workItemId}/labels/{labelId}" },

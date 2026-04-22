@@ -77,6 +77,32 @@ export const createAgentsService = (api) => ({
     });
   },
 
+  listCliRuns(workspaceId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/agent-cli-runs', {
+      path: { workspaceId },
+    });
+  },
+
+  downloadCliRun(workspaceId, agentTaskId) {
+    return api.request('get', '/api/v1/workspaces/{workspaceId}/agent-cli-runs/{agentTaskId}/download', {
+      path: { workspaceId, agentTaskId },
+      responseType: 'blob',
+    });
+  },
+
+  deleteCliRun(workspaceId, agentTaskId) {
+    return api.request('delete', '/api/v1/workspaces/{workspaceId}/agent-cli-runs/{agentTaskId}', {
+      path: { workspaceId, agentTaskId },
+    });
+  },
+
+  pruneCliRuns(workspaceId, request = {}) {
+    return api.request('post', '/api/v1/workspaces/{workspaceId}/agent-cli-runs/prune', {
+      path: { workspaceId },
+      body: request,
+    });
+  },
+
   listProfiles(workspaceId) {
     return api.request('get', '/api/v1/workspaces/{workspaceId}/agents', {
       path: { workspaceId },
