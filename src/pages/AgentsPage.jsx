@@ -21,7 +21,7 @@ export const AgentsPage = ({ context }) => {
     providerKey: 'simulated',
     providerType: 'simulated',
     displayName: 'Simulated Agent',
-    dispatchMode: 'simulated',
+    dispatchMode: 'managed',
     runtimeMode: 'stub',
     externalExecutionEnabled: 'false',
     hostedApiBaseUrl: '',
@@ -208,7 +208,7 @@ export const AgentsPage = ({ context }) => {
           <TextField label="Key" value={providerForm.providerKey} onChange={(providerKey) => setProviderForm({ ...providerForm, providerKey })} />
           <SelectField label="Type" value={providerForm.providerType} onChange={(providerType) => setProviderForm({ ...providerForm, providerType })} options={['simulated', 'codex', 'claude_code', 'generic_worker']} />
           <TextField label="Display name" value={providerForm.displayName} onChange={(displayName) => setProviderForm({ ...providerForm, displayName })} />
-          <SelectField label="Dispatch" value={providerForm.dispatchMode} onChange={(dispatchMode) => setProviderForm({ ...providerForm, dispatchMode })} options={['simulated', 'polling', 'webhook_push']} />
+          <SelectField label="Dispatch" value={providerForm.dispatchMode} onChange={(dispatchMode) => setProviderForm({ ...providerForm, dispatchMode })} options={['managed', 'manual', 'polling', 'webhook_push']} />
           <SelectField label="Runtime" value={providerForm.runtimeMode} onChange={(runtimeMode) => setProviderForm({ ...providerForm, runtimeMode })} options={['stub', 'hosted_api', 'cli_worker']} />
           <SelectField label="External execution" value={providerForm.externalExecutionEnabled} onChange={(externalExecutionEnabled) => setProviderForm({ ...providerForm, externalExecutionEnabled })} options={['false', 'true']} />
           <TextField label="Hosted API URL" value={providerForm.hostedApiBaseUrl} onChange={(hostedApiBaseUrl) => setProviderForm({ ...providerForm, hostedApiBaseUrl })} />
