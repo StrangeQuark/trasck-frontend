@@ -2,14 +2,13 @@ import { useState } from 'react';
 import { FiActivity, FiBarChart2, FiCheck, FiEye, FiLayers, FiList, FiPlus, FiRefreshCw, FiSliders, FiUsers } from 'react-icons/fi';
 import { DetailLinkGrid } from '../../components/DetailLinkGrid';
 import { ErrorLine } from '../../components/ErrorLine';
-import { Field } from '../../components/Field';
 import { JsonPreview } from '../../components/JsonPreview';
 import { Panel } from '../../components/Panel';
 import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
-import { firstId, numberOrUndefined, parseJsonOrThrow } from '../../utils/forms';
+import { csv, firstId, numberOrUndefined } from '../../utils/forms';
 
 export const PlanningPage = ({ context }) => {
   const [teams, setTeams] = useState([]);
@@ -31,8 +30,8 @@ export const PlanningPage = ({ context }) => {
   const [teamForm, setTeamForm] = useState({ name: 'Delivery Team', description: '', defaultCapacity: '100', status: 'active' });
   const [projectTeamForm, setProjectTeamForm] = useState({ teamId: '', role: 'delivery' });
   const [iterationForm, setIterationForm] = useState({ name: 'Sprint 1', teamId: '', startDate: '2026-04-20', endDate: '2026-05-01', status: 'planned' });
-  const [boardForm, setBoardForm] = useState({ name: 'Project Board', type: 'kanban', teamId: '', filterConfigText: JSON.stringify({ projectScoped: true }, null, 2) });
-  const [columnForm, setColumnForm] = useState({ name: 'Ready', statusIdsText: '[]', position: '1', wipLimit: '', doneColumn: 'false' });
+  const [boardForm, setBoardForm] = useState({ name: 'Project Board', type: 'kanban', teamId: '', projectScoped: 'true' });
+  const [columnForm, setColumnForm] = useState({ name: 'Ready', position: '1', wipLimit: '', doneColumn: 'false' });
   const [swimlaneForm, setSwimlaneForm] = useState({
     name: 'Assigned work',
     mode: 'simple',
@@ -41,14 +40,13 @@ export const PlanningPage = ({ context }) => {
     field: 'assigneeId',
     operator: 'is_not_null',
     value: '',
-    queryText: JSON.stringify({ where: { field: 'assigneeId', operator: 'is_not_null' } }, null, 2),
     position: '1',
     enabled: 'true',
   });
   const [releaseForm, setReleaseForm] = useState({ name: 'Release 1', version: '1.0.0', startDate: '2026-04-20', releaseDate: '2026-05-15', status: 'planned', description: '' });
   const [releaseItemForm, setReleaseItemForm] = useState({ workItemId: '' });
-  const [roadmapForm, setRoadmapForm] = useState({ name: 'Product Roadmap', visibility: 'project', configText: JSON.stringify({ lanes: ['now', 'next', 'later'] }, null, 2) });
-  const [roadmapItemForm, setRoadmapItemForm] = useState({ workItemId: '', startDate: '2026-04-20', endDate: '2026-05-15', position: '1', displayConfigText: JSON.stringify({ lane: 'now' }, null, 2) });
+  const [roadmapForm, setRoadmapForm] = useState({ name: 'Product Roadmap', visibility: 'project', lanes: 'now, next, later' });
+  const [roadmapItemForm, setRoadmapItemForm] = useState({ workItemId: '', startDate: '2026-04-20', endDate: '2026-05-15', position: '1', lane: 'now' });
   const action = useApiAction(context.addToast);
 
   const load = async () => {
@@ -165,7 +163,7 @@ export const PlanningPage = ({ context }) => {
       name: boardForm.name,
       type: boardForm.type,
       teamId: boardForm.teamId || undefined,
-      filterConfig: parseJsonOrThrow(boardForm.filterConfigText),
+      filterConfig: { projectScoped: boardForm.projectScoped === 'true' },
       active: true,
     }), 'Board created');
     if (board) {
@@ -178,7 +176,7 @@ export const PlanningPage = ({ context }) => {
     event.preventDefault();
     await action.run(() => context.services.planning.createBoardColumn(boardId, {
       name: columnForm.name,
-      statusIds: parseJsonOrThrow(columnForm.statusIdsText),
+      statusIds: [],
       position: Number(columnForm.position || 0),
       wipLimit: numberOrUndefined(columnForm.wipLimit),
       doneColumn: columnForm.doneColumn === 'true',
@@ -254,7 +252,7 @@ export const PlanningPage = ({ context }) => {
       projectId: context.projectId,
       name: roadmapForm.name,
       visibility: roadmapForm.visibility,
-      config: parseJsonOrThrow(roadmapForm.configText),
+      config: { lanes: csv(roadmapForm.lanes) },
     }), 'Roadmap created');
     if (roadmap) {
       setRoadmapId(roadmap.id || '');
@@ -269,7 +267,7 @@ export const PlanningPage = ({ context }) => {
       startDate: roadmapItemForm.startDate || undefined,
       endDate: roadmapItemForm.endDate || undefined,
       position: Number(roadmapItemForm.position || 0),
-      displayConfig: parseJsonOrThrow(roadmapItemForm.displayConfigText),
+      displayConfig: { lane: roadmapItemForm.lane || undefined },
     }), 'Roadmap item created');
     await loadRoadmapDetails();
   };
@@ -289,69 +287,60 @@ export const PlanningPage = ({ context }) => {
     <div className="content-grid">
       <Panel title="Teams" icon={<FiUsers />}>
         <form className="stack" onSubmit={createTeam}>
-          <TextField label="Name" value={teamForm.name} onChange={(name) => setTeamForm({ ...teamForm, name })} />
-          <TextField label="Description" value={teamForm.description} onChange={(description) => setTeamForm({ ...teamForm, description })} />
-          <TextField label="Capacity" type="number" value={teamForm.defaultCapacity} onChange={(defaultCapacity) => setTeamForm({ ...teamForm, defaultCapacity })} />
-          <SelectField label="Status" value={teamForm.status} onChange={(status) => setTeamForm({ ...teamForm, status })} options={['active', 'inactive']} />
+          <TextField label="Team name" value={teamForm.name} onChange={(name) => setTeamForm({ ...teamForm, name })} />
+          <TextField label="Team description" value={teamForm.description} onChange={(description) => setTeamForm({ ...teamForm, description })} />
+          <TextField label="Team capacity" type="number" value={teamForm.defaultCapacity} onChange={(defaultCapacity) => setTeamForm({ ...teamForm, defaultCapacity })} />
+          <SelectField label="Team status" value={teamForm.status} onChange={(status) => setTeamForm({ ...teamForm, status })} options={['active', 'inactive']} />
           <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create team</button>
         </form>
       </Panel>
       <Panel title="Project Team" icon={<FiLayers />}>
         <form className="stack" onSubmit={assignTeam}>
-          <RecordSelect label="Team" records={teams} value={projectTeamForm.teamId} onChange={(teamId) => setProjectTeamForm({ ...projectTeamForm, teamId })} />
-          <TextField label="Role" value={projectTeamForm.role} onChange={(role) => setProjectTeamForm({ ...projectTeamForm, role })} />
+          <RecordSelect label="Project team" records={teams} value={projectTeamForm.teamId} onChange={(teamId) => setProjectTeamForm({ ...projectTeamForm, teamId })} />
+          <TextField label="Project team role" value={projectTeamForm.role} onChange={(role) => setProjectTeamForm({ ...projectTeamForm, role })} />
           <button className="primary-button" disabled={action.pending || !context.projectId || !projectTeamForm.teamId} type="submit"><FiCheck />Assign</button>
         </form>
       </Panel>
       <Panel title="Iterations" icon={<FiActivity />}>
         <form className="stack create-strip" onSubmit={createIteration}>
-          <TextField label="Name" value={iterationForm.name} onChange={(name) => setIterationForm({ ...iterationForm, name })} />
-          <RecordSelect label="Team" records={teams} value={iterationForm.teamId} onChange={(teamId) => setIterationForm({ ...iterationForm, teamId })} includeBlank />
-          <TextField label="Start" value={iterationForm.startDate} onChange={(startDate) => setIterationForm({ ...iterationForm, startDate })} />
-          <TextField label="End" value={iterationForm.endDate} onChange={(endDate) => setIterationForm({ ...iterationForm, endDate })} />
+          <TextField label="Iteration name" value={iterationForm.name} onChange={(name) => setIterationForm({ ...iterationForm, name })} />
+          <RecordSelect label="Iteration team" records={teams} value={iterationForm.teamId} onChange={(teamId) => setIterationForm({ ...iterationForm, teamId })} includeBlank />
+          <TextField label="Iteration start" value={iterationForm.startDate} onChange={(startDate) => setIterationForm({ ...iterationForm, startDate })} />
+          <TextField label="Iteration end" value={iterationForm.endDate} onChange={(endDate) => setIterationForm({ ...iterationForm, endDate })} />
           <button className="secondary-button" disabled={action.pending || !context.projectId} type="submit"><FiPlus />Create</button>
         </form>
       </Panel>
       <Panel title="Board" icon={<FiList />}>
         <form className="stack" onSubmit={createBoard}>
-          <TextField label="Name" value={boardForm.name} onChange={(name) => setBoardForm({ ...boardForm, name })} />
-          <SelectField label="Type" value={boardForm.type} onChange={(type) => setBoardForm({ ...boardForm, type })} options={['kanban', 'scrum']} />
-          <RecordSelect label="Team" records={teams} value={boardForm.teamId} onChange={(teamId) => setBoardForm({ ...boardForm, teamId })} includeBlank />
-          <Field label="Filter JSON">
-            <textarea value={boardForm.filterConfigText} onChange={(event) => setBoardForm({ ...boardForm, filterConfigText: event.target.value })} rows={5} spellCheck="false" />
-          </Field>
+          <TextField label="Board name" value={boardForm.name} onChange={(name) => setBoardForm({ ...boardForm, name })} />
+          <SelectField label="Board type" value={boardForm.type} onChange={(type) => setBoardForm({ ...boardForm, type })} options={['kanban', 'scrum']} />
+          <RecordSelect label="Board team" records={teams} value={boardForm.teamId} onChange={(teamId) => setBoardForm({ ...boardForm, teamId })} includeBlank />
+          <SelectField label="Project scoped" value={boardForm.projectScoped} onChange={(projectScoped) => setBoardForm({ ...boardForm, projectScoped })} options={['true', 'false']} />
           <button className="primary-button" disabled={action.pending || !context.projectId} type="submit"><FiPlus />Create board</button>
         </form>
       </Panel>
       <Panel title="Board Layout" icon={<FiSliders />}>
         <form className="stack" onSubmit={createColumn}>
           <RecordSelect label="Board" records={boards} value={boardId} onChange={setBoardId} />
-          <TextField label="Column" value={columnForm.name} onChange={(name) => setColumnForm({ ...columnForm, name })} />
-          <Field label="Status IDs JSON">
-            <textarea value={columnForm.statusIdsText} onChange={(event) => setColumnForm({ ...columnForm, statusIdsText: event.target.value })} rows={3} spellCheck="false" />
-          </Field>
+          <TextField label="Column name" value={columnForm.name} onChange={(name) => setColumnForm({ ...columnForm, name })} />
           <div className="two-column compact">
-            <TextField label="Position" type="number" value={columnForm.position} onChange={(position) => setColumnForm({ ...columnForm, position })} />
-            <TextField label="WIP limit" type="number" value={columnForm.wipLimit} onChange={(wipLimit) => setColumnForm({ ...columnForm, wipLimit })} />
+            <TextField label="Column position" type="number" value={columnForm.position} onChange={(position) => setColumnForm({ ...columnForm, position })} />
+            <TextField label="Column WIP limit" type="number" value={columnForm.wipLimit} onChange={(wipLimit) => setColumnForm({ ...columnForm, wipLimit })} />
           </div>
-          <SelectField label="Done" value={columnForm.doneColumn} onChange={(doneColumn) => setColumnForm({ ...columnForm, doneColumn })} options={['false', 'true']} />
+          <SelectField label="Done column" value={columnForm.doneColumn} onChange={(doneColumn) => setColumnForm({ ...columnForm, doneColumn })} options={['false', 'true']} />
           <button className="primary-button" disabled={action.pending || !boardId} type="submit"><FiPlus />Add column</button>
         </form>
         <form className="stack nested-form" onSubmit={createSwimlane}>
-          <TextField label="Swimlane" value={swimlaneForm.name} onChange={(name) => setSwimlaneForm({ ...swimlaneForm, name })} />
-          <SelectField label="Mode" value={swimlaneForm.mode} onChange={(mode) => setSwimlaneForm({ ...swimlaneForm, mode })} options={['simple', 'saved_filter', 'advanced']} />
+          <TextField label="Swimlane name" value={swimlaneForm.name} onChange={(name) => setSwimlaneForm({ ...swimlaneForm, name })} />
+          <SelectField label="Swimlane mode" value={swimlaneForm.mode} onChange={(mode) => setSwimlaneForm({ ...swimlaneForm, mode })} options={['simple', 'saved_filter']} />
           {swimlaneForm.mode === 'saved_filter' ? (
             <RecordSelect label="Saved filter" records={savedFilters} value={swimlaneForm.savedFilterId} onChange={(savedFilterId) => setSwimlaneForm({ ...swimlaneForm, savedFilterId })} />
-          ) : swimlaneForm.mode === 'advanced' ? (
-            <Field label="Query JSON">
-              <textarea value={swimlaneForm.queryText} onChange={(event) => setSwimlaneForm({ ...swimlaneForm, queryText: event.target.value })} rows={3} spellCheck="false" />
-            </Field>
           ) : (
             <div className="two-column compact">
-              <SelectField label="Type" value={swimlaneForm.swimlaneType} onChange={(swimlaneType) => setSwimlaneForm({ ...swimlaneForm, swimlaneType })} options={['query', 'team', 'assignee', 'reporter', 'type', 'priority']} />
-              <TextField label="Field" value={swimlaneForm.field} onChange={(field) => setSwimlaneForm({ ...swimlaneForm, field })} />
-              <SelectField label="Operator" value={swimlaneForm.operator} onChange={(operator) => setSwimlaneForm({ ...swimlaneForm, operator })} options={['is_not_null', 'is_null', 'eq', 'ne', 'contains']} />
-              <TextField label="Value" value={swimlaneForm.value} onChange={(value) => setSwimlaneForm({ ...swimlaneForm, value })} />
+              <SelectField label="Swimlane type" value={swimlaneForm.swimlaneType} onChange={(swimlaneType) => setSwimlaneForm({ ...swimlaneForm, swimlaneType })} options={['query', 'team', 'assignee', 'reporter', 'type', 'priority']} />
+              <SelectField label="Swimlane field" value={swimlaneForm.field} onChange={(field) => setSwimlaneForm({ ...swimlaneForm, field })} options={['assigneeId', 'reporterId', 'teamId', 'typeKey', 'priorityKey', 'statusId']} />
+              <SelectField label="Swimlane operator" value={swimlaneForm.operator} onChange={(operator) => setSwimlaneForm({ ...swimlaneForm, operator })} options={['is_not_null', 'is_null', 'eq', 'ne', 'contains']} />
+              <TextField label="Swimlane value" value={swimlaneForm.value} onChange={(value) => setSwimlaneForm({ ...swimlaneForm, value })} />
             </div>
           )}
           <button className="secondary-button" disabled={action.pending || !boardId} type="submit"><FiPlus />Add swimlane</button>
@@ -359,13 +348,13 @@ export const PlanningPage = ({ context }) => {
       </Panel>
       <Panel title="Release" icon={<FiActivity />}>
         <form className="stack" onSubmit={createRelease}>
-          <TextField label="Name" value={releaseForm.name} onChange={(name) => setReleaseForm({ ...releaseForm, name })} />
-          <TextField label="Version" value={releaseForm.version} onChange={(version) => setReleaseForm({ ...releaseForm, version })} />
+          <TextField label="Release name" value={releaseForm.name} onChange={(name) => setReleaseForm({ ...releaseForm, name })} />
+          <TextField label="Release version" value={releaseForm.version} onChange={(version) => setReleaseForm({ ...releaseForm, version })} />
           <div className="two-column compact">
-            <TextField label="Start" value={releaseForm.startDate} onChange={(startDate) => setReleaseForm({ ...releaseForm, startDate })} />
-            <TextField label="Release" value={releaseForm.releaseDate} onChange={(releaseDate) => setReleaseForm({ ...releaseForm, releaseDate })} />
+            <TextField label="Release start" value={releaseForm.startDate} onChange={(startDate) => setReleaseForm({ ...releaseForm, startDate })} />
+            <TextField label="Release date" value={releaseForm.releaseDate} onChange={(releaseDate) => setReleaseForm({ ...releaseForm, releaseDate })} />
           </div>
-          <SelectField label="Status" value={releaseForm.status} onChange={(status) => setReleaseForm({ ...releaseForm, status })} options={['planned', 'active', 'released', 'archived']} />
+          <SelectField label="Release status" value={releaseForm.status} onChange={(status) => setReleaseForm({ ...releaseForm, status })} options={['planned', 'active', 'released', 'archived']} />
           <button className="primary-button" disabled={action.pending || !context.projectId} type="submit"><FiPlus />Create release</button>
         </form>
         <form className="stack nested-form" onSubmit={addReleaseWorkItem}>
@@ -376,20 +365,19 @@ export const PlanningPage = ({ context }) => {
       </Panel>
       <Panel title="Roadmap" icon={<FiBarChart2 />}>
         <form className="stack" onSubmit={createRoadmap}>
-          <TextField label="Name" value={roadmapForm.name} onChange={(name) => setRoadmapForm({ ...roadmapForm, name })} />
-          <SelectField label="Visibility" value={roadmapForm.visibility} onChange={(visibility) => setRoadmapForm({ ...roadmapForm, visibility })} options={['private', 'project', 'workspace', 'public']} />
-          <Field label="Config JSON">
-            <textarea value={roadmapForm.configText} onChange={(event) => setRoadmapForm({ ...roadmapForm, configText: event.target.value })} rows={5} spellCheck="false" />
-          </Field>
+          <TextField label="Roadmap name" value={roadmapForm.name} onChange={(name) => setRoadmapForm({ ...roadmapForm, name })} />
+          <SelectField label="Roadmap visibility" value={roadmapForm.visibility} onChange={(visibility) => setRoadmapForm({ ...roadmapForm, visibility })} options={['private', 'project', 'workspace', 'public']} />
+          <TextField label="Roadmap lanes" value={roadmapForm.lanes} onChange={(lanes) => setRoadmapForm({ ...roadmapForm, lanes })} />
           <button className="primary-button" disabled={action.pending || !context.workspaceId || !context.projectId} type="submit"><FiPlus />Create roadmap</button>
         </form>
         <form className="stack nested-form" onSubmit={createRoadmapItem}>
           <RecordSelect label="Roadmap" records={roadmaps} value={roadmapId} onChange={setRoadmapId} />
           <RecordSelect label="Work item" records={workItems} value={roadmapItemForm.workItemId} onChange={(workItemId) => setRoadmapItemForm({ ...roadmapItemForm, workItemId })} />
           <div className="two-column compact">
-            <TextField label="Start" value={roadmapItemForm.startDate} onChange={(startDate) => setRoadmapItemForm({ ...roadmapItemForm, startDate })} />
-            <TextField label="End" value={roadmapItemForm.endDate} onChange={(endDate) => setRoadmapItemForm({ ...roadmapItemForm, endDate })} />
+            <TextField label="Roadmap item start" value={roadmapItemForm.startDate} onChange={(startDate) => setRoadmapItemForm({ ...roadmapItemForm, startDate })} />
+            <TextField label="Roadmap item end" value={roadmapItemForm.endDate} onChange={(endDate) => setRoadmapItemForm({ ...roadmapItemForm, endDate })} />
           </div>
+          <TextField label="Roadmap item lane" value={roadmapItemForm.lane} onChange={(lane) => setRoadmapItemForm({ ...roadmapItemForm, lane })} />
           <button className="secondary-button" disabled={action.pending || !roadmapId || !roadmapItemForm.workItemId} type="submit"><FiPlus />Add item</button>
         </form>
       </Panel>
@@ -427,9 +415,6 @@ export const PlanningPage = ({ context }) => {
 };
 
 const swimlaneQuery = (form) => {
-  if (form.mode === 'advanced') {
-    return parseJsonOrThrow(form.queryText);
-  }
   if (form.mode === 'saved_filter') {
     return {};
   }

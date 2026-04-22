@@ -3,14 +3,13 @@ import { useNavigate, useParams } from 'react-router-dom';
 import { FiActivity, FiCheck, FiDatabase, FiEye, FiPlus, FiRefreshCw, FiSliders, FiUploadCloud, FiX } from 'react-icons/fi';
 import { DetailLayout } from '../../components/DetailLayout';
 import { ErrorLine } from '../../components/ErrorLine';
-import { Field } from '../../components/Field';
 import { JsonPreview } from '../../components/JsonPreview';
 import { Panel } from '../../components/Panel';
 import { RecordSelect } from '../../components/RecordSelect';
 import { SelectField } from '../../components/SelectField';
 import { TextField } from '../../components/TextField';
 import { useApiAction } from '../../hooks/useApiAction';
-import { firstId, numberOrUndefined, parseJsonOrThrow, toJsonText } from '../../utils/forms';
+import { csv, firstId, numberOrUndefined, parseJsonOrThrow, toJsonText } from '../../utils/forms';
 import { ImportConflictDetails } from './ImportConflictDetails';
 import { ImportRecordEditor } from './ImportRecordEditor';
 import {
@@ -20,8 +19,42 @@ import {
 } from './ImportReviewTables';
 import { TransformPipelineEditor } from './TransformPipelineEditor';
 import { importRecordFormToRequest, importRecordToForm } from './importRecordForms';
+import { importJobIsReviewable, selectedSourceType, sourceTypeOptionsForProvider } from './importJobState';
 
 const openConflictCompletionPhrase = 'COMPLETE WITH OPEN CONFLICTS';
+
+const mappingFieldsToText = (mapping, key) => {
+  const value = mapping?.[key];
+  return Array.isArray(value) ? value.join(', ') : '';
+};
+
+const mappingTemplateFieldMapping = (form) => Object.fromEntries(
+  Object.entries({
+    title: csv(form.titleFields),
+    descriptionMarkdown: csv(form.descriptionFields),
+    statusKey: csv(form.statusFields),
+    typeKey: csv(form.typeFields),
+  }).filter(([, values]) => values.length > 0),
+);
+
+const mappingTemplateDefaults = (form) => ({
+  ...(form.defaultDescription ? { descriptionMarkdown: form.defaultDescription } : {}),
+  ...(form.defaultVisibility ? { visibility: form.defaultVisibility } : {}),
+  ...(form.defaultTypeKey ? { typeKey: form.defaultTypeKey } : {}),
+});
+
+const lookupTargetValue = (form) => {
+  if (form.targetValueType === 'number') {
+    return Number(form.targetValue || 0);
+  }
+  if (form.targetValueType === 'boolean') {
+    return form.targetValue === 'true';
+  }
+  if (form.targetValueType === 'null') {
+    return null;
+  }
+  return form.targetValue;
+};
 
 export const ImportJobDetailPage = ({ context }) => {
   const { importJobId } = useParams();
@@ -66,15 +99,20 @@ export const ImportJobDetailPage = ({ context }) => {
   };
 
   const load = async () => {
-    const result = await action.run(() => Promise.all([
-      context.services.imports.getJob(importJobId),
-      context.services.imports.listRecords(importJobId),
-      context.services.imports.listConflicts(importJobId),
-      context.services.imports.listConflictResolutionJobs(importJobId),
-      context.services.imports.listJobVersionDiffs(importJobId),
-      context.services.imports.listMaterializationRuns(importJobId),
-      context.workspaceId ? context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }) : Promise.resolve({ items: [] }),
-    ]));
+    const result = await action.run(async () => {
+      const [jobRow, exportJobPage] = await Promise.all([
+        context.services.imports.getJob(importJobId),
+        context.workspaceId ? context.services.imports.listExportJobs(context.workspaceId, { exportType: 'import_job_version_diffs', limit: 20 }) : Promise.resolve({ items: [] }),
+      ]);
+      const [recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows] = importJobIsReviewable(jobRow) ? await Promise.all([
+        context.services.imports.listRecords(importJobId),
+        context.services.imports.listConflicts(importJobId),
+        context.services.imports.listConflictResolutionJobs(importJobId),
+        context.services.imports.listJobVersionDiffs(importJobId),
+        context.services.imports.listMaterializationRuns(importJobId),
+      ]) : [[], [], [], null, []];
+      return [jobRow, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, exportJobPage];
+    });
     if (result) {
       const [jobRow, recordRows, conflictRows, resolutionJobRows, jobDiffRows, runRows, exportJobPage] = result;
       setJob(jobRow);
@@ -377,8 +415,23 @@ export const ImportTemplateDetailPage = ({ context }) => {
   const [lookups, setLookups] = useState([]);
   const [typeTranslations, setTypeTranslations] = useState([]);
   const [statusTranslations, setStatusTranslations] = useState([]);
-  const [form, setForm] = useState({ name: '', provider: 'csv', sourceType: '', workItemTypeKey: '', statusKey: '', fieldMappingText: '{}', defaultsText: '{}', transformationConfigText: '{}', enabled: 'true' });
-  const [lookupForm, setLookupForm] = useState({ sourceField: '', sourceValue: '', targetField: '', targetValueText: 'null' });
+  const [form, setForm] = useState({
+    name: '',
+    provider: 'csv',
+    sourceType: 'row',
+    workItemTypeKey: '',
+    statusKey: '',
+    titleFields: '',
+    descriptionFields: '',
+    statusFields: '',
+    typeFields: '',
+    defaultDescription: '',
+    defaultVisibility: 'inherited',
+    defaultTypeKey: '',
+    transformationConfigText: '{}',
+    enabled: 'true',
+  });
+  const [lookupForm, setLookupForm] = useState({ sourceField: '', sourceValue: '', targetField: '', targetValueType: 'string', targetValue: '' });
   const [typeForm, setTypeForm] = useState({ sourceTypeKey: '', targetTypeKey: '' });
   const [statusForm, setStatusForm] = useState({ sourceStatusKey: '', targetStatusKey: '' });
 
@@ -400,11 +453,16 @@ export const ImportTemplateDetailPage = ({ context }) => {
         setForm({
           name: selected.name || '',
           provider: selected.provider || 'csv',
-          sourceType: selected.sourceType || '',
+          sourceType: selected.sourceType || selectedSourceType(selected.provider || 'csv', ''),
           workItemTypeKey: selected.workItemTypeKey || '',
           statusKey: selected.statusKey || '',
-          fieldMappingText: toJsonText(selected.fieldMapping || {}),
-          defaultsText: toJsonText(selected.defaults || {}),
+          titleFields: mappingFieldsToText(selected.fieldMapping, 'title'),
+          descriptionFields: mappingFieldsToText(selected.fieldMapping, 'descriptionMarkdown'),
+          statusFields: mappingFieldsToText(selected.fieldMapping, 'statusKey'),
+          typeFields: mappingFieldsToText(selected.fieldMapping, 'typeKey'),
+          defaultDescription: selected.defaults?.descriptionMarkdown || '',
+          defaultVisibility: selected.defaults?.visibility || 'inherited',
+          defaultTypeKey: selected.defaults?.typeKey || '',
           transformationConfigText: toJsonText(selected.transformationConfig || {}),
           enabled: String(selected.enabled ?? true),
         });
@@ -426,8 +484,8 @@ export const ImportTemplateDetailPage = ({ context }) => {
       projectId: context.projectId || template?.projectId,
       workItemTypeKey: form.workItemTypeKey || undefined,
       statusKey: form.statusKey || undefined,
-      fieldMapping: parseJsonOrThrow(form.fieldMappingText),
-      defaults: parseJsonOrThrow(form.defaultsText),
+      fieldMapping: mappingTemplateFieldMapping(form),
+      defaults: mappingTemplateDefaults(form),
       transformationConfig: parseJsonOrThrow(form.transformationConfigText),
       enabled: form.enabled === 'true',
     }), 'Mapping template saved');
@@ -447,7 +505,7 @@ export const ImportTemplateDetailPage = ({ context }) => {
       sourceField: lookupForm.sourceField,
       sourceValue: lookupForm.sourceValue,
       targetField: lookupForm.targetField,
-      targetValue: parseJsonOrThrow(lookupForm.targetValueText),
+      targetValue: lookupTargetValue(lookupForm),
       enabled: true,
     }), 'Lookup added');
     await load();
@@ -470,17 +528,20 @@ export const ImportTemplateDetailPage = ({ context }) => {
       <Panel title="Template" icon={<FiSliders />}>
         <form className="stack" onSubmit={save}>
           <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
-          <SelectField label="Provider" value={form.provider} onChange={(provider) => setForm({ ...form, provider })} options={['csv', 'jira', 'rally']} />
-          <TextField label="Source type" value={form.sourceType} onChange={(sourceType) => setForm({ ...form, sourceType })} />
+          <SelectField label="Provider" value={form.provider} onChange={(provider) => setForm({ ...form, provider, sourceType: selectedSourceType(provider, form.sourceType) })} options={['csv', 'jira', 'rally']} />
+          <SelectField label="Source type" value={selectedSourceType(form.provider, form.sourceType)} onChange={(sourceType) => setForm({ ...form, sourceType })} options={sourceTypeOptionsForProvider(form.provider)} />
           <TextField label="Type fallback" value={form.workItemTypeKey} onChange={(workItemTypeKey) => setForm({ ...form, workItemTypeKey })} />
           <TextField label="Status fallback" value={form.statusKey} onChange={(statusKey) => setForm({ ...form, statusKey })} />
           <SelectField label="Enabled" value={form.enabled} onChange={(enabled) => setForm({ ...form, enabled })} options={['true', 'false']} />
-          <Field label="Field mapping JSON">
-            <textarea value={form.fieldMappingText} onChange={(event) => setForm({ ...form, fieldMappingText: event.target.value })} rows={6} spellCheck="false" />
-          </Field>
-          <Field label="Defaults JSON">
-            <textarea value={form.defaultsText} onChange={(event) => setForm({ ...form, defaultsText: event.target.value })} rows={4} spellCheck="false" />
-          </Field>
+          <div className="two-column compact">
+            <TextField label="Title fields" value={form.titleFields} onChange={(titleFields) => setForm({ ...form, titleFields })} />
+            <TextField label="Description fields" value={form.descriptionFields} onChange={(descriptionFields) => setForm({ ...form, descriptionFields })} />
+            <TextField label="Status fields" value={form.statusFields} onChange={(statusFields) => setForm({ ...form, statusFields })} />
+            <TextField label="Type fields" value={form.typeFields} onChange={(typeFields) => setForm({ ...form, typeFields })} />
+            <TextField label="Default type" value={form.defaultTypeKey} onChange={(defaultTypeKey) => setForm({ ...form, defaultTypeKey })} />
+            <SelectField label="Default visibility" value={form.defaultVisibility} onChange={(defaultVisibility) => setForm({ ...form, defaultVisibility })} options={['inherited', 'private', 'workspace', 'public']} />
+          </div>
+          <TextField label="Default description" value={form.defaultDescription} onChange={(defaultDescription) => setForm({ ...form, defaultDescription })} />
           <TransformPipelineEditor label="Transformations" value={form.transformationConfigText} onChange={(transformationConfigText) => setForm({ ...form, transformationConfigText })} />
           <div className="button-row wrap">
             <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
@@ -496,7 +557,8 @@ export const ImportTemplateDetailPage = ({ context }) => {
             <TextField label="Source field" value={lookupForm.sourceField} onChange={(sourceField) => setLookupForm({ ...lookupForm, sourceField })} />
             <TextField label="Source value" value={lookupForm.sourceValue} onChange={(sourceValue) => setLookupForm({ ...lookupForm, sourceValue })} />
             <TextField label="Target field" value={lookupForm.targetField} onChange={(targetField) => setLookupForm({ ...lookupForm, targetField })} />
-            <TextField label="Target value JSON" value={lookupForm.targetValueText} onChange={(targetValueText) => setLookupForm({ ...lookupForm, targetValueText })} />
+            <SelectField label="Target value type" value={lookupForm.targetValueType} onChange={(targetValueType) => setLookupForm({ ...lookupForm, targetValueType })} options={['string', 'number', 'boolean', 'null']} />
+            <TextField label="Target value" value={lookupForm.targetValue} onChange={(targetValue) => setLookupForm({ ...lookupForm, targetValue })} />
             <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Add lookup</button>
           </form>
           <div className="stack">
