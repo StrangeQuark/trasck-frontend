@@ -1,19 +1,19 @@
 import { useState } from 'react';
 import { FiList, FiPlus, FiRefreshCw } from 'react-icons/fi';
 import { ErrorLine } from '../components/ErrorLine';
-import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
 import { ResultList } from '../components/ResultList';
 import { SelectField } from '../components/SelectField';
 import { TextField } from '../components/TextField';
 import { useApiAction } from '../hooks/useApiAction';
+import { WorkItemDetail } from './work/WorkItemDetail';
 
 export const WorkPage = ({ context }) => {
   const [workQuery, setWorkQuery] = useState({ customFieldKey: '', customFieldOperator: 'eq', customFieldValue: '', customFieldValueTo: '' });
   const [items, setItems] = useState([]);
   const [nextCursor, setNextCursor] = useState('');
   const [selected, setSelected] = useState(null);
-  const [newWorkItem, setNewWorkItem] = useState({ typeKey: 'story', title: 'New work item' });
+  const [newWorkItem, setNewWorkItem] = useState({ typeKey: 'story', title: 'New work item', visibility: 'inherited' });
   const action = useApiAction(context.addToast);
 
   const queryParams = (cursor) => {
@@ -40,7 +40,7 @@ export const WorkPage = ({ context }) => {
     const page = await action.run(() => context.services.workItems.listByProject(context.projectId, queryParams(cursor)));
     if (page) {
       const loaded = Array.isArray(page.items) ? page.items : [];
-      setItems(cursor ? [...items, ...loaded] : loaded);
+      setItems((currentItems) => (cursor ? [...currentItems, ...loaded] : loaded));
       setNextCursor(page.nextCursor || '');
     }
   };
@@ -84,12 +84,13 @@ export const WorkPage = ({ context }) => {
         <form className="stack create-strip" onSubmit={create}>
           <TextField label="Type key" value={newWorkItem.typeKey} onChange={(typeKey) => setNewWorkItem({ ...newWorkItem, typeKey })} />
           <TextField label="Title" value={newWorkItem.title} onChange={(title) => setNewWorkItem({ ...newWorkItem, title })} />
+          <SelectField label="Work item visibility" value={newWorkItem.visibility} onChange={(visibility) => setNewWorkItem({ ...newWorkItem, visibility })} options={['inherited', 'public', 'private']} />
           <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Create</button>
         </form>
         <ErrorLine message={action.error} />
         <div className="work-columns">
           <ResultList items={items} titleKey="title" eyebrowKey="key" onOpen={(item) => openItem(item.id)} />
-          <JsonPreview title="Detail" value={selected} />
+          <WorkItemDetail context={context} item={selected} projectItems={items} />
         </div>
       </div>
     </Panel>

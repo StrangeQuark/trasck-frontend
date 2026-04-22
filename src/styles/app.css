@@ -400,7 +400,7 @@ button:disabled {
 }
 
 .create-strip {
-  grid-template-columns: 130px minmax(0, 1fr) auto;
+  grid-template-columns: 130px minmax(0, 1fr) 160px auto;
   align-items: end;
 }
 
@@ -443,6 +443,161 @@ button:disabled {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.work-detail {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.detail-subtitle {
+  margin: 6px 0 0;
+  color: #56636c;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.collaboration-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 12px;
+  align-items: start;
+}
+
+.collaboration-section {
+  display: grid;
+  gap: 12px;
+  min-width: 0;
+  border: 1px solid #dfe4e8;
+  border-radius: 8px;
+  background: #fbfcfd;
+  padding: 12px;
+}
+
+.collaboration-section h3 {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: #215d78;
+  font-size: 0.94rem;
+  letter-spacing: 0;
+}
+
+.record-stack {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+}
+
+.record-card {
+  display: grid;
+  gap: 8px;
+  min-width: 0;
+  border: 1px solid #dfe4e8;
+  border-radius: 7px;
+  background: #ffffff;
+  padding: 10px;
+}
+
+.record-card.compact-record {
+  gap: 4px;
+}
+
+.record-body,
+.record-copy {
+  min-width: 0;
+  margin: 0;
+  color: #1d252c;
+  font-size: 0.88rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.record-body {
+  font-weight: 850;
+}
+
+.record-copy {
+  color: #4e5d66;
+}
+
+.record-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  color: #66727a;
+  font-size: 0.76rem;
+  font-weight: 850;
+}
+
+.record-meta span,
+.muted-text {
+  display: inline-flex;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.muted-text {
+  color: #66727a;
+  font-weight: 900;
+}
+
+.label-chip-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: center;
+}
+
+.label-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  min-width: 0;
+  max-width: 100%;
+  border-left: 5px solid var(--label-color);
+  border-radius: 7px;
+  background: #ffffff;
+  color: #1d252c;
+  font-size: 0.84rem;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+  padding: 5px 9px;
+}
+
+.workspace-labels {
+  min-width: 0;
+}
+
+.workspace-labels summary {
+  cursor: pointer;
+  color: #4e5d66;
+  font-size: 0.84rem;
+  font-weight: 900;
+}
+
+.attachment-drop-zone {
+  display: grid;
+  gap: 10px;
+  border: 1px dashed #bac8d3;
+  border-radius: 8px;
+  background: #f8fafb;
+  padding: 12px;
+}
+
+.attachment-drop-zone-active {
+  border-color: #2a7a8c;
+  background: #edf8fb;
+}
+
+.drop-zone-copy {
+  margin: 0;
+  color: #66727a;
+  font-size: 0.82rem;
+  font-weight: 850;
 }
 
 .json-preview {

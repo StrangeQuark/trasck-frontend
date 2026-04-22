@@ -3823,6 +3823,46 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/agent-cli-runs/prune": {
+      "post": {
+        "tags": [
+          "agent-cli-worker-run-controller"
+        ],
+        "operationId": "pruneRuns",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AgentCliWorkerRunPruneRequest"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentCliWorkerRunDeleteResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/work-items/{workItemId}/work-logs": {
       "get": {
         "tags": [
@@ -12440,6 +12480,81 @@
         }
       }
     },
+    "/api/v1/workspaces/{workspaceId}/agent-cli-runs": {
+      "get": {
+        "tags": [
+          "agent-cli-worker-run-controller"
+        ],
+        "operationId": "listRuns",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/AgentCliWorkerRunResponse"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/agent-cli-runs/{agentTaskId}/download": {
+      "get": {
+        "tags": [
+          "agent-cli-worker-run-controller"
+        ],
+        "operationId": "downloadRun",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "agentTaskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "type": "string",
+                  "format": "byte"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/workspaces/{workspaceId}/activity": {
       "get": {
         "tags": [
@@ -14793,6 +14908,46 @@
         "responses": {
           "200": {
             "description": "OK"
+          }
+        }
+      }
+    },
+    "/api/v1/workspaces/{workspaceId}/agent-cli-runs/{agentTaskId}": {
+      "delete": {
+        "tags": [
+          "agent-cli-worker-run-controller"
+        ],
+        "operationId": "deleteRun",
+        "parameters": [
+          {
+            "name": "workspaceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          },
+          {
+            "name": "agentTaskId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AgentCliWorkerRunDeleteResponse"
+                }
+              }
+            }
           }
         }
       }
@@ -18900,6 +19055,43 @@
           }
         }
       },
+      "AgentCliWorkerRunPruneRequest": {
+        "type": "object",
+        "properties": {
+          "retentionDays": {
+            "type": "integer",
+            "format": "int32"
+          }
+        }
+      },
+      "AgentCliWorkerRunDeleteResponse": {
+        "type": "object",
+        "properties": {
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "cutoff": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "deletedRuns": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "deletedBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "deletedAgentTaskIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "format": "uuid"
+            }
+          }
+        }
+      },
       "WorkLogRequest": {
         "type": "object",
         "properties": {
@@ -22179,6 +22371,62 @@
           "limit": {
             "type": "integer",
             "format": "int32"
+          }
+        }
+      },
+      "AgentCliWorkerRunResponse": {
+        "type": "object",
+        "properties": {
+          "agentTaskId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "providerType": {
+            "type": "string"
+          },
+          "agentProfileId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workItemId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "status": {
+            "type": "string"
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "updatedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "sizeBytes": {
+            "type": "integer",
+            "format": "int64"
+          },
+          "fileCount": {
+            "type": "integer",
+            "format": "int32"
+          },
+          "promptPresent": {
+            "type": "boolean"
+          },
+          "taskFilePresent": {
+            "type": "boolean"
+          },
+          "outputPresent": {
+            "type": "boolean"
           }
         }
       },
