@@ -22,9 +22,9 @@ export const ImportRecordEditor = ({
     <RecordSelect label="Record" records={records} value={form.recordId} onChange={onSelect} />
     <div className="two-column compact">
       <TextField label="Source type" value={form.sourceType} onChange={(sourceType) => onChange({ ...form, sourceType })} />
-      <TextField label="Source ID" value={form.sourceId} onChange={(sourceId) => onChange({ ...form, sourceId })} />
+      <TextField label="Source reference" value={form.sourceId} onChange={(sourceId) => onChange({ ...form, sourceId })} />
       <TextField label="Target type" value={form.targetType} onChange={(targetType) => onChange({ ...form, targetType })} />
-      <TextField label="Target ID" value={form.targetId} onChange={(targetId) => onChange({ ...form, targetId })} />
+      <TextField label="Target reference" value={form.targetId} onChange={(targetId) => onChange({ ...form, targetId })} />
       <SelectField label="Clear target" value={form.clearTarget} onChange={(clearTarget) => onChange({ ...form, clearTarget })} options={['false', 'true']} />
       <SelectField label="Status" value={form.status} onChange={(status) => onChange({ ...form, status })} options={['pending', 'imported', 'failed', 'skipped']} />
     </div>

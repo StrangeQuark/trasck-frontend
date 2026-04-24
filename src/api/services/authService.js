@@ -3,6 +3,10 @@ export const createAuthService = (api) => ({
     return api.request('post', '/api/v1/setup', { body: request });
   },
 
+  setupStatus() {
+    return api.request('get', '/api/v1/setup/status');
+  },
+
   login(request) {
     return api.request('post', '/api/v1/auth/login', { body: request });
   },
@@ -13,6 +17,10 @@ export const createAuthService = (api) => ({
 
   me() {
     return api.request('get', '/api/v1/auth/me');
+  },
+
+  context() {
+    return api.request('get', '/api/v1/auth/context');
   },
 
   logout() {

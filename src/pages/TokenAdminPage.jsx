@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { FiEye, FiKey, FiPlus, FiRefreshCw, FiSettings } from 'react-icons/fi';
 import { ErrorLine } from '../components/ErrorLine';
 import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
+import { RecordSelect } from '../components/RecordSelect';
 import { SecretReveal } from '../components/SecretReveal';
 import { TextField } from '../components/TextField';
 import { useApiAction } from '../hooks/useApiAction';
@@ -11,9 +12,10 @@ import { csv } from '../utils/forms';
 export const TokenAdminPage = ({ context }) => {
   const [personalTokens, setPersonalTokens] = useState([]);
   const [serviceTokens, setServiceTokens] = useState([]);
+  const [workspaceRoles, setWorkspaceRoles] = useState([]);
   const [createdToken, setCreatedToken] = useState(null);
-  const [personalForm, setPersonalForm] = useState({ name: 'Local API token', scopes: 'work_item.read,report.read', expiresAt: '' });
-  const [serviceForm, setServiceForm] = useState({ name: 'Worker token', username: 'service-worker', displayName: 'Service Worker', roleId: '', scopes: 'work_item.read,agent.manage', expiresAt: '' });
+  const [personalForm, setPersonalForm] = useState({ name: 'API token', scopes: 'work_item.read,report.read', expiresAt: '' });
+  const [serviceForm, setServiceForm] = useState({ name: 'Service token', username: 'service-user', displayName: 'Service User', roleId: '', scopes: 'work_item.read,agent.manage', expiresAt: '' });
   const action = useApiAction(context.addToast);
 
   const load = async () => {
@@ -22,12 +24,22 @@ export const TokenAdminPage = ({ context }) => {
       setPersonalTokens(personal || []);
     }
     if (context.workspaceId) {
-      const service = await action.run(() => context.services.auth.listServiceTokens(context.workspaceId));
-      if (service) {
+      const result = await action.run(() => Promise.all([
+        context.services.auth.listServiceTokens(context.workspaceId),
+        context.services.security.listWorkspaceRoles(context.workspaceId),
+      ]));
+      if (result) {
+        const [service, roles] = result;
         setServiceTokens(service || []);
+        setWorkspaceRoles(roles || []);
+        setServiceForm((current) => ({ ...current, roleId: current.roleId || roles?.[0]?.id || '' }));
       }
     }
   };
+
+  useEffect(() => {
+    load();
+  }, [context.workspaceId]);
 
   const createPersonal = async (event) => {
     event.preventDefault();
@@ -73,7 +85,7 @@ export const TokenAdminPage = ({ context }) => {
           <TextField label="Name" value={serviceForm.name} onChange={(name) => setServiceForm({ ...serviceForm, name })} />
           <TextField label="Username" value={serviceForm.username} onChange={(username) => setServiceForm({ ...serviceForm, username })} />
           <TextField label="Display name" value={serviceForm.displayName} onChange={(displayName) => setServiceForm({ ...serviceForm, displayName })} />
-          <TextField label="Role ID" value={serviceForm.roleId} onChange={(roleId) => setServiceForm({ ...serviceForm, roleId })} />
+          <RecordSelect label="Role" records={workspaceRoles} value={serviceForm.roleId} onChange={(roleId) => setServiceForm({ ...serviceForm, roleId })} />
           <TextField label="Scopes" value={serviceForm.scopes} onChange={(scopes) => setServiceForm({ ...serviceForm, scopes })} />
           <TextField label="Expires at" value={serviceForm.expiresAt} onChange={(expiresAt) => setServiceForm({ ...serviceForm, expiresAt })} />
           <button className="primary-button" disabled={action.pending || !context.workspaceId || !serviceForm.roleId} type="submit"><FiPlus />Create service token</button>
@@ -81,7 +93,7 @@ export const TokenAdminPage = ({ context }) => {
       </Panel>
       <Panel title="Tokens" icon={<FiEye />} wide>
         <div className="button-row">
-          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
+          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
         </div>
         <ErrorLine message={action.error} />
         <div className="data-columns">
@@ -91,7 +103,6 @@ export const TokenAdminPage = ({ context }) => {
             value={createdToken?.token}
             onClear={() => setCreatedToken(null)}
           />
-          <JsonPreview title="New Token" value={createdToken} />
           <JsonPreview title="Personal" value={personalTokens} />
           <JsonPreview title="Service" value={serviceTokens} />
         </div>

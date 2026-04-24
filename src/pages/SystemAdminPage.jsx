@@ -3,11 +3,12 @@ import { FiRefreshCw, FiShield, FiSlash, FiUserPlus } from 'react-icons/fi';
 import { ErrorLine } from '../components/ErrorLine';
 import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
-import { TextField } from '../components/TextField';
+import { RecordSelect } from '../components/RecordSelect';
 import { useApiAction } from '../hooks/useApiAction';
 
 export const SystemAdminPage = ({ context }) => {
   const [admins, setAdmins] = useState([]);
+  const [members, setMembers] = useState([]);
   const [grantUserId, setGrantUserId] = useState('');
   const action = useApiAction(context.addToast);
 
@@ -16,11 +17,21 @@ export const SystemAdminPage = ({ context }) => {
     if (loaded) {
       setAdmins(loaded || []);
     }
+    if (context.workspaceId) {
+      const loadedMembers = await action.run(() => context.services.security.listWorkspaceUsers(context.workspaceId, { status: 'active' }));
+      if (loadedMembers) {
+        setMembers(loadedMembers.map((member) => ({
+          id: member.userId,
+          name: member.displayName || member.username || member.email,
+          key: member.username,
+        })));
+      }
+    }
   };
 
   useEffect(() => {
     loadAdmins();
-  }, []);
+  }, [context.workspaceId]);
 
   const grantAdmin = async (event) => {
     event.preventDefault();
@@ -43,9 +54,9 @@ export const SystemAdminPage = ({ context }) => {
       <Panel title="System Admins" icon={<FiShield />}>
         <div className="stack">
           <form className="stack" onSubmit={grantAdmin}>
-            <TextField label="User ID" value={grantUserId} onChange={setGrantUserId} />
+            <RecordSelect includeBlank label="User" records={members} value={grantUserId} onChange={setGrantUserId} />
             <div className="button-row wrap">
-              <button className="secondary-button" disabled={action.pending} onClick={loadAdmins} type="button"><FiRefreshCw />Load</button>
+              <button className="secondary-button" disabled={action.pending} onClick={loadAdmins} type="button"><FiRefreshCw />Refresh</button>
               <button className="primary-button" disabled={action.pending || !grantUserId} type="submit"><FiUserPlus />Grant</button>
             </div>
           </form>

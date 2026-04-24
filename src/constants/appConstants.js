@@ -1,14 +1,14 @@
 export const defaultSetupForm = {
-  email: 'admin@trasck.local',
-  username: 'admin',
-  displayName: 'Trasck Admin',
-  password: 'correct-horse-battery-staple',
-  organizationName: 'Trasck Local',
-  organizationSlug: 'trasck-local',
-  workspaceName: 'Trasck Workspace',
-  workspaceKey: 'TRASCK',
-  projectName: 'Trasck Project',
-  projectKey: 'TRASCK',
+  email: '',
+  username: '',
+  displayName: '',
+  password: '',
+  organizationName: '',
+  organizationSlug: '',
+  workspaceName: '',
+  workspaceKey: '',
+  projectName: '',
+  projectKey: '',
 };
 
 export const defaultSavedFilterQuery = {

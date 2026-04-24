@@ -184,7 +184,7 @@ export const ImportsPage = ({ context }) => {
 
   const load = async (selection = {}) => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading imports');
       return;
     }
     const result = await action.run(async () => {
@@ -576,7 +576,7 @@ export const ImportsPage = ({ context }) => {
 
   const processConflictResolutionJobs = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before creating sample jobs');
       return;
     }
     const result = await action.run(() => context.services.imports.processConflictResolutionJobs(context.workspaceId, { limit: 10 }), 'Queued conflict jobs processed');
@@ -620,7 +620,7 @@ export const ImportsPage = ({ context }) => {
 
   const createImportReviewCsvExportJob = async (request) => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before updating import settings');
       return;
     }
     const exportJob = await action.run(() => context.services.imports.createReviewCsvExportJob(context.workspaceId, request), 'Import review export queued');
@@ -632,7 +632,7 @@ export const ImportsPage = ({ context }) => {
 
   const processReviewCsvExportJobs = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before running import workers');
       return;
     }
     const result = await action.run(() => context.services.imports.processReviewCsvExportJobs(context.workspaceId, { limit: 10 }), 'Import review exports processed');
@@ -681,7 +681,7 @@ export const ImportsPage = ({ context }) => {
 
   const loadImportOpsAudit = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading import audit data');
       return;
     }
     const result = await action.run(() => Promise.all([
@@ -904,7 +904,7 @@ export const ImportsPage = ({ context }) => {
         <form className="stack" onSubmit={createRecord}>
           <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={selectImportJob} />
           <SelectField label="Source type" value={selectedSourceType(selectedJob?.provider || jobForm.provider, recordForm.sourceType)} onChange={(sourceType) => setRecordForm({ ...recordForm, sourceType })} options={recordSourceTypeOptions} />
-          <TextField label="Source ID" value={recordForm.sourceId} onChange={(sourceId) => setRecordForm({ ...recordForm, sourceId })} />
+          <TextField label="Source reference" value={recordForm.sourceId} onChange={(sourceId) => setRecordForm({ ...recordForm, sourceId })} />
           <SelectField label="Target type" value={recordForm.targetType} onChange={(targetType) => setRecordForm({ ...recordForm, targetType })} options={['work_item']} />
           <RecordSelect label="Target work item" records={workItems} value={recordForm.targetWorkItemId} onChange={(targetWorkItemId) => setRecordForm({ ...recordForm, targetWorkItemId })} includeBlank />
           <TextField label="Payload title" value={recordForm.payloadTitle} onChange={(payloadTitle) => setRecordForm({ ...recordForm, payloadTitle })} />
@@ -919,7 +919,7 @@ export const ImportsPage = ({ context }) => {
       <Panel title="Lifecycle" icon={<FiActivity />}>
         <RecordSelect label="Import job" records={jobs} value={importJobId} onChange={selectImportJob} />
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
+          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={() => jobCommand(context.services.imports.start, 'Import started')} type="button">Start</button>
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={completeImportJob} type="button">Complete</button>
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={() => jobCommand(context.services.imports.fail, 'Import failed')} type="button">Fail</button>
@@ -929,7 +929,7 @@ export const ImportsPage = ({ context }) => {
       <Panel title="Import Ops Audit" icon={<FiActivity />}>
         <SelectField label="Conflict job status" value={conflictResolutionJobStatus} onChange={setConflictResolutionJobStatus} options={['', 'queued', 'running', 'completed', 'failed', 'cancelled']} />
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadImportOpsAudit} type="button"><FiRefreshCw />Load audit</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadImportOpsAudit} type="button"><FiRefreshCw />Refresh audit</button>
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processConflictResolutionJobs} type="button"><FiActivity />Process queued</button>
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={processReviewCsvExportJobs} type="button"><FiActivity />Process review exports</button>
         </div>
@@ -948,7 +948,7 @@ export const ImportsPage = ({ context }) => {
         </div>
         <div className="stack">
           <RecordSelect label="Version history preset" records={transformPresets} value={transformPresetId} onChange={(presetId) => loadPresetVersions(presetId)} includeBlank />
-          <button className="secondary-button" disabled={action.pending || !transformPresetId} onClick={() => loadPresetVersions()} type="button"><FiRefreshCw />Load versions</button>
+          <button className="secondary-button" disabled={action.pending || !transformPresetId} onClick={() => loadPresetVersions()} type="button"><FiRefreshCw />Refresh versions</button>
         </div>
         <form className="stack" onSubmit={(event) => { event.preventDefault(); loadRecords(); }}>
           <h3>Filter Records</h3>
@@ -1041,7 +1041,7 @@ export const ImportsPage = ({ context }) => {
           action={action}
         />
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending || !importJobId} onClick={loadJobVersionDiffExport} type="button"><FiEye />Load job diff export</button>
+          <button className="secondary-button" disabled={action.pending || !importJobId} onClick={loadJobVersionDiffExport} type="button"><FiEye />Refresh job diff export</button>
           <button className="secondary-button" disabled={action.pending || !importJobId} onClick={() => createJobVersionDiffExportJob()} type="button"><FiPlus />Create export artifact</button>
         </div>
         <ImportJobVersionDiffTable diffs={jobVersionDiffs} onCsvExport={createJobVersionDiffCsvExportJob} />

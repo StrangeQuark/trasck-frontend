@@ -18,6 +18,7 @@ export const DashboardsPage = ({ context }) => {
   const [workspaceSummary, setWorkspaceSummary] = useState(null);
   const [projectImportCompletions, setProjectImportCompletions] = useState(null);
   const [workspaceImportCompletions, setWorkspaceImportCompletions] = useState(null);
+  const [dashboardId, setDashboardId] = useState('');
   const [dashboardForm, setDashboardForm] = useState({ name: 'Project Health', visibility: 'project', layoutText: JSON.stringify({ columns: 12 }, null, 2) });
   const [widgetForm, setWidgetForm] = useState({
     widgetType: 'project_summary',
@@ -36,14 +37,14 @@ export const DashboardsPage = ({ context }) => {
 
   const load = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading dashboards');
       return;
     }
     const rows = await action.run(() => context.services.dashboards.list(context.workspaceId));
     if (rows) {
       setDashboards(rows || []);
-      if (!context.dashboardId && firstId(rows)) {
-        context.setDashboardId(firstId(rows));
+      if (!dashboardId && firstId(rows)) {
+        setDashboardId(firstId(rows));
       }
     }
   };
@@ -57,14 +58,14 @@ export const DashboardsPage = ({ context }) => {
       layout: parseJsonOrThrow(dashboardForm.layoutText),
     }), 'Dashboard created');
     if (dashboard) {
-      context.setDashboardId(dashboard.id || '');
+      setDashboardId(dashboard.id || '');
       await load();
     }
   };
 
   const createWidget = async (event) => {
     event.preventDefault();
-    await action.run(() => context.services.dashboards.createWidget(context.dashboardId, {
+    await action.run(() => context.services.dashboards.createWidget(dashboardId, {
       widgetType: widgetForm.widgetType,
       title: widgetForm.title,
       config: parseJsonOrThrow(widgetForm.configText),
@@ -77,11 +78,11 @@ export const DashboardsPage = ({ context }) => {
   };
 
   const renderDashboard = async () => {
-    if (!context.dashboardId) {
-      action.setError('Dashboard ID is required');
+    if (!dashboardId) {
+      action.setError('Select a dashboard first');
       return;
     }
-    const output = await action.run(() => context.services.dashboards.render(context.dashboardId));
+    const output = await action.run(() => context.services.dashboards.render(dashboardId));
     if (output) {
       setRendered(output);
     }
@@ -89,7 +90,7 @@ export const DashboardsPage = ({ context }) => {
 
   const loadImportReports = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading import reports');
       return;
     }
     const query = {
@@ -134,7 +135,7 @@ export const DashboardsPage = ({ context }) => {
       </Panel>
       <Panel title="Widget" icon={<FiActivity />}>
         <form className="stack" onSubmit={createWidget}>
-          <RecordSelect label="Dashboard" records={dashboards} value={context.dashboardId} onChange={context.setDashboardId} />
+          <RecordSelect label="Dashboard" records={dashboards} value={dashboardId} onChange={setDashboardId} />
           <div className="button-row wrap">
             <button className="secondary-button" onClick={() => useImportWidgetTemplate('import_completion_summary', 'Import Completion Summary', { reportType: 'project_dashboard_summary', query: { projectId: context.projectId || '' } })} type="button"><FiBarChart2 />Project import</button>
             <button className="secondary-button" onClick={() => useImportWidgetTemplate('portfolio_import_completion_summary', 'Portfolio Import Completion Summary', { reportType: 'workspace_dashboard_summary', query: {} })} type="button"><FiBarChart2 />Workspace import</button>
@@ -150,13 +151,13 @@ export const DashboardsPage = ({ context }) => {
             <TextField label="W" type="number" value={widgetForm.width} onChange={(width) => setWidgetForm({ ...widgetForm, width })} />
             <TextField label="H" type="number" value={widgetForm.height} onChange={(height) => setWidgetForm({ ...widgetForm, height })} />
           </div>
-          <button className="primary-button" disabled={action.pending || !context.dashboardId} type="submit"><FiPlus />Add widget</button>
+          <button className="primary-button" disabled={action.pending || !dashboardId} type="submit"><FiPlus />Add widget</button>
         </form>
       </Panel>
       <Panel title="Render" icon={<FiEye />} wide>
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
-          <button className="primary-button" disabled={action.pending || !context.dashboardId} onClick={renderDashboard} type="button"><FiRefreshCw />Render</button>
+          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
+          <button className="primary-button" disabled={action.pending || !dashboardId} onClick={renderDashboard} type="button"><FiRefreshCw />Render</button>
         </div>
         <ErrorLine message={action.error} />
         <div className="data-columns two">
@@ -170,7 +171,7 @@ export const DashboardsPage = ({ context }) => {
           <TextField label="To" value={reportForm.to} onChange={(to) => setReportForm({ ...reportForm, to })} />
         </div>
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadImportReports} type="button"><FiRefreshCw />Load import reports</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadImportReports} type="button"><FiRefreshCw />Refresh import reports</button>
         </div>
         <div className="data-columns two">
           <JsonPreview title="Project Summary" value={projectSummary} />

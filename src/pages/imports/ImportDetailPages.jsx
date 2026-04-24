@@ -212,7 +212,7 @@ export const ImportJobDetailPage = ({ context }) => {
 
   const processConflictResolutionJobs = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading import audit data');
       return;
     }
     const result = await action.run(() => context.services.imports.processConflictResolutionJobs(context.workspaceId, { limit: 10 }), 'Queued conflict jobs processed');
@@ -248,7 +248,7 @@ export const ImportJobDetailPage = ({ context }) => {
 
   const createImportReviewCsvExportJob = async (request) => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before running import workers');
       return;
     }
     const exportJob = await action.run(() => context.services.imports.createReviewCsvExportJob(context.workspaceId, request), 'Import review export queued');
@@ -260,7 +260,7 @@ export const ImportJobDetailPage = ({ context }) => {
 
   const processReviewCsvExportJobs = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before running import workers');
       return;
     }
     const result = await action.run(() => context.services.imports.processReviewCsvExportJobs(context.workspaceId, { limit: 10 }), 'Import review exports processed');
@@ -389,7 +389,7 @@ export const ImportJobDetailPage = ({ context }) => {
       </Panel>
       <Panel title="Records" icon={<FiEye />} wide>
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending} onClick={loadJobVersionDiffExport} type="button"><FiEye />Load job diff export</button>
+          <button className="secondary-button" disabled={action.pending} onClick={loadJobVersionDiffExport} type="button"><FiEye />Refresh job diff export</button>
           <button className="secondary-button" disabled={action.pending} onClick={() => createJobVersionDiffExportJob()} type="button"><FiPlus />Create export artifact</button>
         </div>
         <JsonPreview title="Job" value={job} />

@@ -38,7 +38,7 @@ export const AutomationPage = ({ context }) => {
   const [webhookForm, setWebhookForm] = useState({ name: 'Automation Webhook', url: 'https://example.com/hooks/trasck', secret: '', previousSecretOverlapSeconds: '', eventTypesText: JSON.stringify(['automation.rule_executed'], null, 2), enabled: 'true' });
   const [ruleForm, setRuleForm] = useState({ name: 'Notify on update', triggerType: 'manual', triggerConfigText: '{}' });
   const [conditionForm, setConditionForm] = useState({ conditionType: 'always', configText: '{}', position: '1' });
-  const [actionForm, setActionForm] = useState({ actionType: 'email', executionMode: 'async', configText: JSON.stringify({ toEmail: 'admin@trasck.local', subject: 'Automation ran', body: 'Trasck queued the email delivery action.' }, null, 2), position: '1' });
+  const [actionForm, setActionForm] = useState({ actionType: 'email', executionMode: 'async', configText: JSON.stringify({ toEmail: '', subject: 'Automation ran', body: 'Trasck queued the email delivery action.' }, null, 2), position: '1' });
   const [executeForm, setExecuteForm] = useState({ sourceEntityType: 'work_item', sourceEntityId: '', payloadText: '{}' });
   const [workerForm, setWorkerForm] = useState({ limit: '10', maxAttempts: '3', dryRun: 'true' });
   const [workerSettingsForm, setWorkerSettingsForm] = useState({
@@ -83,7 +83,7 @@ export const AutomationPage = ({ context }) => {
 
   const load = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading automation');
       return;
     }
     const result = await action.run(async () => {
@@ -506,7 +506,7 @@ export const AutomationPage = ({ context }) => {
           </div>
         </div>
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
+          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
           <button className="secondary-button" disabled={action.pending || !ruleId} onClick={loadRuleJobs} type="button">Rule jobs</button>
           <SelectField label="Worker type" value={workerTypeFilter} onChange={setWorkerTypeFilter} options={workerTypeOptions} />
           <RecordSelect label="Webhook" records={webhooks} value={webhookId} onChange={setWebhookId} />

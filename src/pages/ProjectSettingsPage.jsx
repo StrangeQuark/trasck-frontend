@@ -58,7 +58,7 @@ export const ProjectSettingsPage = ({ context }) => {
       <Panel title="Project Security Policy" icon={<FiShield />}>
         <form className="stack" onSubmit={savePolicy}>
           <SummaryRows rows={[
-            ['Project', context.projectId],
+            ['Project', projectName(context)],
             ['Visibility', policy?.visibility || 'Unknown'],
             ['Workspace anonymous read', policy?.workspaceAnonymousReadEnabled ? 'Enabled' : 'Disabled'],
             ['Effective anonymous read', policy?.publicReadEnabled ? 'Enabled' : 'Blocked'],
@@ -79,7 +79,7 @@ export const ProjectSettingsPage = ({ context }) => {
           <TextField label="Import max parse bytes" value={policyForm.importMaxParseBytes} onChange={(importMaxParseBytes) => setPolicyForm({ ...policyForm, importMaxParseBytes })} />
           <TextField label="Import content types" value={policyForm.importAllowedContentTypes} onChange={(importAllowedContentTypes) => setPolicyForm({ ...policyForm, importAllowedContentTypes })} />
           <div className="button-row wrap">
-            <button className="secondary-button" disabled={action.pending || !context.projectId} onClick={loadPolicy} type="button"><FiRefreshCw />Load</button>
+            <button className="secondary-button" disabled={action.pending || !context.projectId} onClick={loadPolicy} type="button"><FiRefreshCw />Refresh</button>
             {publicPreviewPath ? (
               <a className="secondary-button" href={publicPreviewPath} rel="noreferrer" target="_blank"><FiExternalLink />Public Preview</a>
             ) : null}
@@ -101,4 +101,9 @@ export const ProjectSettingsPage = ({ context }) => {
       </Panel>
     </div>
   );
+};
+
+const projectName = (context) => {
+  const project = context.projectOptions.find((candidate) => candidate.id === context.projectId);
+  return project ? `${project.key} - ${project.name}` : 'None selected';
 };

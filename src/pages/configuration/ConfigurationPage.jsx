@@ -28,7 +28,7 @@ export const ConfigurationPage = ({ context }) => {
 
   const load = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading configuration');
       return;
     }
     const result = await action.run(async () => {
@@ -219,7 +219,7 @@ export const ConfigurationPage = ({ context }) => {
           </form>
         </div>
         <div className="button-row">
-          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
+          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
           <button className="secondary-button" disabled={action.pending || !screenId} onClick={loadScreenDetails} type="button">Screen details</button>
         </div>
         <ErrorLine message={action.error} />

@@ -52,7 +52,7 @@ export const ProgramsPage = ({ context }) => {
 
   const loadPrograms = async (preferredProgramId = selectedProgramId) => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading programs');
       return;
     }
     const rows = await action.run(() => context.services.programs.list(context.workspaceId));
@@ -72,7 +72,7 @@ export const ProgramsPage = ({ context }) => {
 
   const loadProgram = async (programId = selectedProgramId) => {
     if (!programId) {
-      action.setError('Program ID is required');
+      action.setError('Select a program first');
       return;
     }
     const result = await action.run(() => Promise.all([
@@ -91,7 +91,7 @@ export const ProgramsPage = ({ context }) => {
   const createProgram = async (event) => {
     event.preventDefault();
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before creating programs');
       return;
     }
     const created = await action.run(
@@ -107,7 +107,7 @@ export const ProgramsPage = ({ context }) => {
   const updateProgram = async (event) => {
     event.preventDefault();
     if (!selectedProgramId) {
-      action.setError('Program ID is required');
+      action.setError('Select a program first');
       return;
     }
     const updated = await action.run(
@@ -123,7 +123,7 @@ export const ProgramsPage = ({ context }) => {
 
   const archiveProgram = async () => {
     if (!selectedProgramId) {
-      action.setError('Program ID is required');
+      action.setError('Select a program first');
       return;
     }
     if (!window.confirm('Archive this program?')) {
@@ -140,7 +140,7 @@ export const ProgramsPage = ({ context }) => {
   const assignProject = async (event) => {
     event.preventDefault();
     if (!selectedProgramId || !assignmentForm.projectId) {
-      action.setError('Program ID and Project ID are required');
+      action.setError('Select a program and project first');
       return;
     }
     await action.run(
@@ -165,7 +165,7 @@ export const ProgramsPage = ({ context }) => {
 
   const loadSummary = async () => {
     if (!selectedProgramId) {
-      action.setError('Program ID is required');
+      action.setError('Select a program first');
       return;
     }
     const loaded = await action.run(() => context.services.programs.dashboardSummary(selectedProgramId, {
@@ -189,7 +189,7 @@ export const ProgramsPage = ({ context }) => {
         <div className="stack">
           <RecordSelect label="Program" records={programs} value={selectedProgramId} onChange={(programId) => { setSelectedProgramId(programId); loadProgram(programId); }} />
           <div className="button-row wrap">
-            <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadPrograms} type="button"><FiRefreshCw />Load</button>
+            <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadPrograms} type="button"><FiRefreshCw />Refresh</button>
             <button className="secondary-button" disabled={action.pending || !selectedProgramId} onClick={() => loadProgram()} type="button"><FiRefreshCw />Refresh detail</button>
           </div>
           <ErrorLine message={action.error} />
@@ -199,7 +199,7 @@ export const ProgramsPage = ({ context }) => {
       <Panel title="Program Detail" icon={<FiSave />}>
         <form className="stack" onSubmit={updateProgram}>
           <SummaryRows rows={[
-            ['Selected', selectedProgramId],
+            ['Selected', selectedProgram?.name || 'None'],
             ['Created', selectedProgram?.createdAt],
             ['Updated', selectedProgram?.updatedAt],
           ]} />
@@ -222,7 +222,12 @@ export const ProgramsPage = ({ context }) => {
       <Panel title="Program Projects" icon={<FiBriefcase />} wide>
         <form className="stack compact" onSubmit={assignProject}>
           <div className="two-column compact">
-            <TextField label="Project ID" value={assignmentForm.projectId} onChange={(projectId) => setAssignmentForm({ ...assignmentForm, projectId })} />
+            <RecordSelect
+              label="Project"
+              records={context.projectOptions.filter((project) => project.workspaceId === context.workspaceId)}
+              value={assignmentForm.projectId}
+              onChange={(projectId) => setAssignmentForm({ ...assignmentForm, projectId })}
+            />
             <TextField label="Position" type="number" value={assignmentForm.position} onChange={(position) => setAssignmentForm({ ...assignmentForm, position })} />
           </div>
           <button className="secondary-button" disabled={action.pending || !selectedProgramId || !assignmentForm.projectId} type="submit"><FiPlus />Assign project</button>
@@ -240,7 +245,7 @@ export const ProgramsPage = ({ context }) => {
             <tbody>
               {programProjects.map((project) => (
                 <tr key={project.projectId}>
-                  <td>{project.projectId}</td>
+                  <td>{projectName(context.projectOptions, project.projectId)}</td>
                   <td>{project.position}</td>
                   <td>{project.createdAt || 'None'}</td>
                   <td>
@@ -264,12 +269,12 @@ export const ProgramsPage = ({ context }) => {
           <TextField label="To" value={reportForm.to} onChange={(to) => setReportForm({ ...reportForm, to })} />
         </div>
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending || !selectedProgramId} onClick={loadSummary} type="button"><FiRefreshCw />Load summary</button>
+          <button className="secondary-button" disabled={action.pending || !selectedProgramId} onClick={loadSummary} type="button"><FiRefreshCw />Refresh summary</button>
         </div>
         <div className="data-columns two">
           <SummaryRows rows={[
             ['Scope', summary?.scope?.scopeType],
-            ['Program', summary?.scope?.programId],
+            ['Program', selectedProgram?.name || summary?.scope?.programId],
             ['Projects', String(summary?.scope?.projectIds?.length ?? 0)],
             ['Total work items', String(summary?.totals?.workItems ?? summary?.totalWorkItems ?? 0)],
           ]} />
@@ -286,4 +291,9 @@ const parseJsonObject = (value, label) => {
     throw new Error(`${label} must be a JSON object`);
   }
   return parsed;
+};
+
+const projectName = (projects, projectId) => {
+  const project = projects.find((candidate) => candidate.id === projectId);
+  return project ? `${project.key} - ${project.name}` : 'Project';
 };
