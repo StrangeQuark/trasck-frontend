@@ -17,7 +17,7 @@ export const useLocalStorage = (key, initialValue) => {
         localStorage.setItem(key, value);
       }
     } catch {
-      // Local storage is optional for this development console.
+      // Local storage is optional; callers must not depend on it for canonical state.
     }
   }, [key, value]);
 

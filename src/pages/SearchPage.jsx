@@ -15,6 +15,7 @@ export const SearchPage = ({ context }) => {
   const [filters, setFilters] = useState([]);
   const [views, setViews] = useState([]);
   const [results, setResults] = useState(null);
+  const [savedFilterId, setSavedFilterId] = useState('');
   const [filterForm, setFilterForm] = useState({
     name: 'Open work search',
     visibility: 'project',
@@ -47,7 +48,7 @@ export const SearchPage = ({ context }) => {
 
   const load = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading filters');
       return;
     }
     const result = await action.run(() => Promise.all([
@@ -82,17 +83,17 @@ export const SearchPage = ({ context }) => {
       });
     }, 'Saved filter created');
     if (saved) {
-      context.setSavedFilterId(saved.id || '');
+      setSavedFilterId(saved.id || '');
       await load();
     }
   };
 
   const executeFilter = async (cursor = '') => {
-    if (!context.savedFilterId) {
-      action.setError('Saved filter ID is required');
+    if (!savedFilterId) {
+      action.setError('Select a saved filter first');
       return;
     }
-    const page = await action.run(() => context.services.search.executeSavedFilter(context.savedFilterId, {
+    const page = await action.run(() => context.services.search.executeSavedFilter(savedFilterId, {
       limit: 25,
       cursor: cursor || undefined,
     }));
@@ -122,25 +123,34 @@ export const SearchPage = ({ context }) => {
           <div className="two-column compact">
             <TextField label="Name" value={filterForm.name} onChange={(name) => setFilterForm({ ...filterForm, name })} />
             <SelectField label="Visibility" value={filterForm.visibility} onChange={(visibility) => setFilterForm({ ...filterForm, visibility })} options={['private', 'project', 'team', 'workspace', 'public']} />
-            <TextField label="Project ID" value={filterForm.projectId} onChange={(projectId) => setFilterForm({ ...filterForm, projectId })} />
-            <TextField label="Team ID" value={filterForm.teamId} onChange={(teamId) => setFilterForm({ ...filterForm, teamId })} />
+            <RecordSelect
+              includeBlank
+              label="Project"
+              records={context.projectOptions.filter((project) => project.workspaceId === context.workspaceId)}
+              value={filterForm.projectId}
+              onChange={(projectId) => setFilterForm({ ...filterForm, projectId })}
+            />
             <SelectField label="Sort" value={filterForm.sortField} onChange={(sortField) => setFilterForm({ ...filterForm, sortField })} options={['workspaceSequenceNumber', 'rank', 'createdAt', 'updatedAt', 'dueDate', 'priority']} />
             <SelectField label="Direction" value={filterForm.sortDirection} onChange={(sortDirection) => setFilterForm({ ...filterForm, sortDirection })} options={['asc', 'desc']} />
           </div>
+          <details className="advanced-field">
+            <summary>Team scope</summary>
+            <TextField label="Team" value={filterForm.teamId} onChange={(teamId) => setFilterForm({ ...filterForm, teamId })} />
+          </details>
           <button className="secondary-button" onClick={syncStructuredQuery} type="button"><FiSettings />Sync</button>
           <Field label="Expert JSON">
             <textarea value={filterForm.queryText} onChange={(event) => setFilterForm({ ...filterForm, queryText: event.target.value })} rows={14} spellCheck="false" />
           </Field>
           <div className="button-row wrap">
             <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create filter</button>
-            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
+            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
           </div>
         </form>
       </Panel>
       <Panel title="Execute" icon={<FiEye />}>
         <div className="stack">
-          <RecordSelect label="Saved filter" records={filters} value={context.savedFilterId} onChange={context.setSavedFilterId} />
-          <button className="primary-button" disabled={action.pending || !context.savedFilterId} onClick={() => executeFilter()} type="button"><FiRefreshCw />Run</button>
+          <RecordSelect label="Saved filter" records={filters} value={savedFilterId} onChange={setSavedFilterId} />
+          <button className="primary-button" disabled={action.pending || !savedFilterId} onClick={() => executeFilter()} type="button"><FiRefreshCw />Run</button>
           <button className="secondary-button" disabled={action.pending || !results?.nextCursor} onClick={() => executeFilter(results.nextCursor)} type="button">More</button>
           <ErrorLine message={action.error} />
         </div>

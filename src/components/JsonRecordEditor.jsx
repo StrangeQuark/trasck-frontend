@@ -43,14 +43,14 @@ export const JsonRecordEditor = ({ action, onDelete, onSave, onSuccess, records,
   };
 
   return (
-    <section className="json-record-editor">
-      <h3>{title}</h3>
+    <details className="advanced-record-editor">
+      <summary>{title} advanced editor</summary>
       <RecordSelect includeBlank label="Record" records={records} value={selected?.id || ''} onChange={setSelectedId} />
       <textarea value={draft} onChange={(event) => setDraft(event.target.value)} rows={10} spellCheck="false" />
       <div className="button-row wrap">
         <button className="secondary-button" disabled={action.pending || !selected} onClick={save} type="button"><FiCheck />Save</button>
         <button className="icon-button danger" disabled={action.pending || !selected} onClick={remove} title={'Delete ' + title} type="button"><FiX /></button>
       </div>
-    </section>
+    </details>
   );
 };

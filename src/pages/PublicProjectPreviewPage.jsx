@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { FiDownload, FiEye, FiMessageSquare, FiPaperclip, FiRefreshCw } from 'react-icons/fi';
+import { DEFAULT_API_BASE_URL } from '../api/client';
 import { EmptyState } from '../components/EmptyState';
 import { ErrorLine } from '../components/ErrorLine';
 import { JsonPreview } from '../components/JsonPreview';
@@ -73,7 +74,7 @@ export const PublicProjectPreviewPage = ({ context }) => {
 
   const absoluteDownloadUrl = (downloadUrl) => {
     try {
-      return new URL(downloadUrl, `${context.apiBaseUrl}/`).toString();
+      return new URL(downloadUrl, `${DEFAULT_API_BASE_URL}/`).toString();
     } catch {
       return downloadUrl;
     }
@@ -88,7 +89,7 @@ export const PublicProjectPreviewPage = ({ context }) => {
       <Panel title="Public Project Preview" icon={<FiEye />}>
         <div className="stack">
           <SummaryRows rows={[
-            ['Project', projectId],
+            ['Project', project?.key || project?.name || 'Not loaded'],
             ['Name', project?.name],
             ['Key', project?.key],
             ['Visibility', project?.visibility],
@@ -106,7 +107,7 @@ export const PublicProjectPreviewPage = ({ context }) => {
         <div className="work-columns">
           <ResultList items={workItems} titleKey="title" eyebrowKey="key" onOpen={(item) => openWorkItem(item.id)} />
           <div className="stack">
-            <JsonPreview title="Selected Work Item" value={selectedWorkItem || project} />
+            <JsonPreview title="Selection" value={selectedWorkItem || project} />
             {selectedWorkItem ? (
               <div className="two-column">
                 <section className="public-collab-list">

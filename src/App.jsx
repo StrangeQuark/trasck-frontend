@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
-import { DEFAULT_API_BASE_URL, createTrasckApiClient } from './api/client';
+import { createTrasckApiClient } from './api/client';
 import { createAgentsService } from './api/services/agentsService';
 import { createAuthService } from './api/services/authService';
 import { createAutomationService } from './api/services/automationService';
@@ -14,7 +14,6 @@ import { createSecurityService } from './api/services/securityService';
 import { createWorkItemsService } from './api/services/workItemsService';
 import { Shell } from './app/Shell';
 import { ToastStack } from './components/ToastStack';
-import { useLocalStorage } from './hooks/useLocalStorage';
 import { AgentsPage } from './pages/AgentsPage';
 import { AuthPage } from './pages/AuthPage';
 import { AutomationRuleDetailPage, WebhookDetailPage } from './pages/automation/AutomationDetailPages';
@@ -39,13 +38,13 @@ import { WorkspaceSettingsPage } from './pages/WorkspaceSettingsPage';
 import './styles/app.css';
 
 const App = () => {
-  const [apiBaseUrl, setApiBaseUrl] = useLocalStorage('trasck.apiBaseUrl', DEFAULT_API_BASE_URL);
-  const [workspaceId, setWorkspaceId] = useLocalStorage('trasck.workspaceId', '');
-  const [projectId, setProjectId] = useLocalStorage('trasck.projectId', '');
-  const [dashboardId, setDashboardId] = useLocalStorage('trasck.dashboardId', '');
-  const [savedFilterId, setSavedFilterId] = useLocalStorage('trasck.savedFilterId', '');
-  const [agentTaskId, setAgentTaskId] = useLocalStorage('trasck.agentTaskId', '');
+  const [workspaceId, setWorkspaceId] = useState('');
+  const [projectId, setProjectId] = useState('');
+  const [workspaceOptions, setWorkspaceOptions] = useState([]);
+  const [projectOptions, setProjectOptions] = useState([]);
+  const [sessionContext, setSessionContext] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [setupAvailable, setSetupAvailable] = useState(false);
   const [toasts, setToasts] = useState([]);
 
   const addToast = (message, tone = 'info') => {
@@ -54,7 +53,7 @@ const App = () => {
     window.setTimeout(() => setToasts((items) => items.filter((item) => item.id !== id)), 5200);
   };
 
-  const api = useMemo(() => createTrasckApiClient({ baseUrl: apiBaseUrl }), [apiBaseUrl]);
+  const api = useMemo(() => createTrasckApiClient(), []);
   const services = useMemo(() => ({
     agents: createAgentsService(api),
     auth: createAuthService(api),
@@ -69,29 +68,95 @@ const App = () => {
     workItems: createWorkItemsService(api),
   }), [api]);
 
+  const applySessionContext = (loadedContext) => {
+    const nextWorkspaces = loadedContext?.workspaces || [];
+    const nextProjects = loadedContext?.projects || [];
+    const defaultWorkspaceId = loadedContext?.defaultWorkspace?.id || nextWorkspaces[0]?.id || '';
+    const defaultProjectId = loadedContext?.defaultProject?.id || nextProjects.find((project) => project.workspaceId === defaultWorkspaceId)?.id || nextProjects[0]?.id || '';
+
+    setSessionContext(loadedContext || null);
+    setCurrentUser(loadedContext?.user || null);
+    setWorkspaceOptions(nextWorkspaces);
+    setProjectOptions(nextProjects);
+    setWorkspaceId((current) => nextWorkspaces.some((workspace) => workspace.id === current) ? current : defaultWorkspaceId);
+    setProjectId((current) => nextProjects.some((project) => project.id === current) ? current : defaultProjectId);
+  };
+
+  const clearSessionContext = () => {
+    setSessionContext(null);
+    setCurrentUser(null);
+    setWorkspaceOptions([]);
+    setProjectOptions([]);
+    setWorkspaceId('');
+    setProjectId('');
+  };
+
+  const refreshSession = async () => {
+    const loadedContext = await services.auth.context();
+    applySessionContext(loadedContext);
+    return loadedContext;
+  };
+
+  const refreshSetupStatus = async () => {
+    const status = await services.auth.setupStatus();
+    setSetupAvailable(Boolean(status?.available));
+    return status;
+  };
+
+  const selectWorkspace = (nextWorkspaceId) => {
+    setWorkspaceId(nextWorkspaceId);
+    const nextProject = projectOptions.find((project) => project.workspaceId === nextWorkspaceId);
+    setProjectId(nextProject?.id || '');
+  };
+
   useEffect(() => {
-    services.auth.me()
-      .then(setCurrentUser)
-      .catch(() => setCurrentUser(null));
+    let cancelled = false;
+    services.auth.context()
+      .then((loadedContext) => {
+        if (!cancelled) {
+          applySessionContext(loadedContext);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          clearSessionContext();
+        }
+      });
+    services.auth.setupStatus()
+      .then((status) => {
+        if (!cancelled) {
+          setSetupAvailable(Boolean(status?.available));
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setSetupAvailable(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
   }, [services]);
 
   const context = {
     addToast,
-    apiBaseUrl,
+    applySessionContext,
+    clearSessionContext,
     currentUser,
-    dashboardId,
     projectId,
-    savedFilterId,
+    projectOptions,
+    refreshSetupStatus,
+    refreshSession,
     services,
-    setApiBaseUrl,
     setCurrentUser,
-    setDashboardId,
     setProjectId,
-    setSavedFilterId,
+    setupAvailable,
+    setSetupAvailable,
+    selectWorkspace,
+    sessionContext,
     setWorkspaceId,
-    setAgentTaskId,
     workspaceId,
-    agentTaskId,
+    workspaceOptions,
   };
 
   return (

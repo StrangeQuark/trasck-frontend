@@ -4795,6 +4795,26 @@
         }
       }
     },
+    "/api/v1/setup/status": {
+      "get": {
+        "tags": [
+          "initial-setup-controller"
+        ],
+        "operationId": "setupStatus",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/InitialSetupStatusResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/screens/{screenId}/fields": {
       "get": {
         "tags": [
@@ -14696,6 +14716,26 @@
         }
       }
     },
+    "/api/v1/auth/context": {
+      "get": {
+        "tags": [
+          "auth-controller"
+        ],
+        "operationId": "context",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "*/*": {
+                "schema": {
+                  "$ref": "#/components/schemas/AuthContextResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/api/v1/agent-tasks/{taskId}": {
       "get": {
         "tags": [
@@ -19744,6 +19784,17 @@
           }
         }
       },
+      "InitialSetupStatusResponse": {
+        "type": "object",
+        "properties": {
+          "available": {
+            "type": "boolean"
+          },
+          "completed": {
+            "type": "boolean"
+          }
+        }
+      },
       "KeyedId": {
         "type": "object",
         "properties": {
@@ -23797,6 +23848,97 @@
             "type": "string"
           },
           "token": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthContextResponse": {
+        "type": "object",
+        "properties": {
+          "user": {
+            "$ref": "#/components/schemas/AuthUserResponse"
+          },
+          "workspaces": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthWorkspaceContextResponse"
+            }
+          },
+          "projects": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/AuthProjectContextResponse"
+            }
+          },
+          "defaultWorkspace": {
+            "$ref": "#/components/schemas/AuthWorkspaceContextResponse"
+          },
+          "defaultProject": {
+            "$ref": "#/components/schemas/AuthProjectContextResponse"
+          }
+        }
+      },
+      "AuthProjectContextResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "workspaceId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "visibility": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "membershipStatus": {
+            "type": "string"
+          }
+        }
+      },
+      "AuthWorkspaceContextResponse": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "key": {
+            "type": "string"
+          },
+          "status": {
+            "type": "string"
+          },
+          "membershipId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "roleId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "membershipStatus": {
             "type": "string"
           }
         }

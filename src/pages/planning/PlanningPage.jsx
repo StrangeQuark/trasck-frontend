@@ -51,7 +51,7 @@ export const PlanningPage = ({ context }) => {
 
   const load = async () => {
     if (!context.workspaceId || !context.projectId) {
-      action.setError('Workspace ID and Project ID are required');
+      action.setError('Select a workspace and project before loading planning records');
       return;
     }
     const result = await action.run(async () => {
@@ -383,7 +383,7 @@ export const PlanningPage = ({ context }) => {
       </Panel>
       <Panel title="Planning Records" icon={<FiEye />} wide>
         <div className="button-row">
-          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
+          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
           <button className="secondary-button" disabled={action.pending || !boardId} onClick={loadBoardDetails} type="button">Board cards</button>
           <button className="secondary-button" disabled={action.pending || !releaseId} onClick={loadReleaseDetails} type="button">Release scope</button>
           <button className="secondary-button" disabled={action.pending || !roadmapId} onClick={loadRoadmapDetails} type="button">Roadmap items</button>

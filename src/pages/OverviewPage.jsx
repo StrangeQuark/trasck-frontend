@@ -5,16 +5,18 @@ import { SummaryRows } from '../components/SummaryRows';
 
 export const OverviewPage = ({ context }) => (
   <div className="content-grid three">
-    <Panel title="Session" icon={<FiLogIn />}>
+    <Panel title="Workspace" icon={<FiLogIn />}>
       <SummaryRows rows={[
         ['User', context.currentUser?.displayName || context.currentUser?.username || 'None'],
-        ['Workspace', context.workspaceId],
-        ['Project', context.projectId],
+        ['Workspace', context.workspaceOptions.find((workspace) => workspace.id === context.workspaceId)?.name || 'None selected'],
+        ['Project', context.projectOptions.find((project) => project.id === context.projectId)?.name || 'None selected'],
       ]} />
-      <div className="button-row">
-        <NavLink className="secondary-button" to="/auth">Auth</NavLink>
-        <NavLink className="secondary-button" to="/setup">Setup</NavLink>
-      </div>
+      {!context.currentUser && (
+        <div className="button-row">
+          <NavLink className="secondary-button" to="/auth">Sign in</NavLink>
+          {context.setupAvailable && <NavLink className="secondary-button" to="/setup">First-run setup</NavLink>}
+        </div>
+      )}
     </Panel>
     <Panel title="Build" icon={<FiLayers />}>
       <div className="action-grid">

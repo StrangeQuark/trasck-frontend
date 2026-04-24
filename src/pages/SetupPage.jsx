@@ -1,7 +1,7 @@
 import { useState } from 'react';
-import { FiArrowRight, FiDatabase, FiEye } from 'react-icons/fi';
+import { useNavigate } from 'react-router-dom';
+import { FiArrowRight, FiCheckCircle, FiDatabase } from 'react-icons/fi';
 import { ErrorLine } from '../components/ErrorLine';
-import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
 import { TextField } from '../components/TextField';
 import { defaultSetupForm } from '../constants/appConstants';
@@ -10,6 +10,7 @@ import { useApiAction } from '../hooks/useApiAction';
 export const SetupPage = ({ context }) => {
   const [form, setForm] = useState(defaultSetupForm);
   const [setupResult, setSetupResult] = useState(null);
+  const navigate = useNavigate();
   const action = useApiAction(context.addToast);
 
   const submitSetup = async (event) => {
@@ -42,12 +43,15 @@ export const SetupPage = ({ context }) => {
         password: form.password,
       });
       context.setCurrentUser(session?.user || null);
+      await context.refreshSession?.();
       return created;
     }, 'Setup complete');
     if (setup) {
       setSetupResult(setup);
       context.setWorkspaceId(setup?.workspace?.id || '');
       context.setProjectId(setup?.project?.id || '');
+      context.setSetupAvailable?.(false);
+      navigate('/', { replace: true });
     }
   };
 
@@ -74,8 +78,28 @@ export const SetupPage = ({ context }) => {
           <ErrorLine message={action.error} />
         </form>
       </Panel>
-      <Panel title="Setup Result" icon={<FiEye />}>
-        <JsonPreview value={setupResult} />
+      <Panel title="Setup status" icon={<FiCheckCircle />}>
+        {setupResult ? (
+          <div className="stack">
+            <p className="success-text">Initial workspace and project are ready.</p>
+            <dl className="summary-rows">
+              <div>
+                <dt>Workspace</dt>
+                <dd>{setupResult.workspace?.name || 'Created'}</dd>
+              </div>
+              <div>
+                <dt>Project</dt>
+                <dd>{setupResult.project?.key ? `${setupResult.project.key} - ${setupResult.project.name}` : setupResult.project?.name || 'Created'}</dd>
+              </div>
+              <div>
+                <dt>Admin</dt>
+                <dd>{setupResult.adminUser?.displayName || setupResult.adminUser?.username || 'Created'}</dd>
+              </div>
+            </dl>
+          </div>
+        ) : (
+          <p className="muted">Create the first organization, workspace, project, and administrator account.</p>
+        )}
       </Panel>
     </div>
   );

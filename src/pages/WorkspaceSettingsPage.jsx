@@ -5,6 +5,7 @@ import { ErrorLine } from '../components/ErrorLine';
 import { Field } from '../components/Field';
 import { JsonPreview } from '../components/JsonPreview';
 import { Panel } from '../components/Panel';
+import { RecordSelect } from '../components/RecordSelect';
 import { RoleManagementPanel } from '../components/RoleManagementPanel';
 import { StatusPill } from '../components/StatusPill';
 import { SummaryRows } from '../components/SummaryRows';
@@ -160,7 +161,7 @@ export const WorkspaceSettingsPage = ({ context }) => {
       <Panel title="Workspace Security Policy" icon={<FiShield />}>
         <form className="stack" onSubmit={saveWorkspacePolicy}>
           <SummaryRows rows={[
-            ['Workspace', context.workspaceId],
+            ['Workspace', workspaceName(context)],
             ['Anonymous read', policy?.anonymousReadEnabled ? 'Enabled' : 'Disabled'],
             ['Custom policy', policy?.customPolicy ? 'Yes' : 'No'],
           ]} />
@@ -182,7 +183,7 @@ export const WorkspaceSettingsPage = ({ context }) => {
           <div className="button-row wrap">
             <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadWorkspaceSettings} type="button">
               <FiRefreshCw />
-              Load
+              Refresh
             </button>
             <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit">
               <FiSave />
@@ -195,7 +196,7 @@ export const WorkspaceSettingsPage = ({ context }) => {
       <Panel title="Workspace Members" icon={<FiUsers />} wide>
         <div className="stack">
           <SummaryRows rows={[
-            ['Workspace', context.workspaceId],
+            ['Workspace', workspaceName(context)],
             ['Loaded members', members.length],
             ['Workspace roles', workspaceRoles.length],
           ]} />
@@ -209,7 +210,7 @@ export const WorkspaceSettingsPage = ({ context }) => {
             </div>
             <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadWorkspaceSettings} type="button">
               <FiRefreshCw />
-              Load
+              Refresh
             </button>
           </div>
 
@@ -295,7 +296,7 @@ export const WorkspaceSettingsPage = ({ context }) => {
             </div>
             <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadWorkspaceSettings} type="button">
               <FiRefreshCw />
-              Load
+              Refresh
             </button>
           </div>
 
@@ -348,8 +349,10 @@ export const WorkspaceSettingsPage = ({ context }) => {
                 value={invitationForm.roleId}
                 onChange={(roleId) => setInvitationForm({ ...invitationForm, roleId })}
               />
-              <TextField
-                label="Project ID"
+              <RecordSelect
+                includeBlank
+                label="Project"
+                records={context.projectOptions.filter((project) => project.workspaceId === context.workspaceId)}
                 value={invitationForm.projectId}
                 onChange={(projectId) => setInvitationForm({
                   ...invitationForm,
@@ -371,7 +374,7 @@ export const WorkspaceSettingsPage = ({ context }) => {
                   projectRoleId,
                 })}
               />
-              <TextField label="Expires at ISO" value={invitationForm.expiresAt} onChange={(expiresAt) => setInvitationForm({ ...invitationForm, expiresAt })} />
+              <TextField label="Expires at" value={invitationForm.expiresAt} onChange={(expiresAt) => setInvitationForm({ ...invitationForm, expiresAt })} />
             </div>
             <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit">
               <FiMail />
@@ -410,6 +413,8 @@ const compactRequest = (value) => Object.fromEntries(
 );
 
 const roleLabel = (record) => record.roleName || record.roleKey || record.roleId || 'Default';
+
+const workspaceName = (context) => context.workspaceOptions.find((workspace) => workspace.id === context.workspaceId)?.name || 'None selected';
 
 const RoleSelect = ({ defaultLabel = 'Default workspace member role', disabled = false, label, onChange, roles, value }) => (
   <Field label={label}>

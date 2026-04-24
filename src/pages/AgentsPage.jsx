@@ -17,6 +17,7 @@ export const AgentsPage = ({ context }) => {
   const [credentials, setCredentials] = useState([]);
   const [workItems, setWorkItems] = useState([]);
   const [task, setTask] = useState(null);
+  const [agentTaskId, setAgentTaskId] = useState('');
   const [runtimePreview, setRuntimePreview] = useState(null);
   const [dispatchAttempts, setDispatchAttempts] = useState([]);
   const [cliRuns, setCliRuns] = useState([]);
@@ -39,8 +40,8 @@ export const AgentsPage = ({ context }) => {
     expiresAt: '',
   });
   const [profileForm, setProfileForm] = useState({ providerId: '', displayName: 'Trasck Agent', username: 'trasck-agent', projectScope: 'current_project' });
-  const [repositoryForm, setRepositoryForm] = useState({ provider: 'generic_git', name: 'Local repo', repositoryUrl: '', defaultBranch: 'main' });
-  const [taskForm, setTaskForm] = useState({ workItemId: '', agentProfileId: '', repositoryConnectionIds: '', instructions: 'Review this work item and prepare an implementation plan.', message: 'Adding context from the frontend console.' });
+  const [repositoryForm, setRepositoryForm] = useState({ provider: 'generic_git', name: 'Repository', repositoryUrl: '', defaultBranch: 'main' });
+  const [taskForm, setTaskForm] = useState({ workItemId: '', agentProfileId: '', repositoryConnectionIds: '', instructions: 'Review this work item and prepare an implementation plan.', message: 'Adding context for this assignment.' });
   const [attemptForm, setAttemptForm] = useState({ attemptType: 'all', status: 'all', retentionDays: '30' });
   const [cliRunForm, setCliRunForm] = useState({ retentionDays: '7' });
   const action = useApiAction(context.addToast);
@@ -71,7 +72,7 @@ export const AgentsPage = ({ context }) => {
     return ['codex_api_key', 'codex_cli_token', 'anthropic_api_key', 'claude_cli_token', 'worker_token'];
   };
   const knownAgentTasks = [
-    ...(context.agentTaskId ? [{ id: context.agentTaskId, name: context.agentTaskId }] : []),
+    ...(agentTaskId ? [{ id: agentTaskId, name: agentTaskId }] : []),
     ...(task?.id ? [{ id: task.id, name: [task.status, task.workItemId].filter(Boolean).join(' - ') }] : []),
     ...dispatchAttempts
       .map((attempt) => attempt.agentTaskId)
@@ -165,7 +166,7 @@ export const AgentsPage = ({ context }) => {
 
   const attemptQuery = () => ({
     ...(profileForm.providerId ? { providerId: profileForm.providerId } : {}),
-    ...(context.agentTaskId ? { agentTaskId: context.agentTaskId } : {}),
+    ...(agentTaskId ? { agentTaskId } : {}),
     ...(attemptForm.attemptType === 'all' ? {} : { attemptType: attemptForm.attemptType }),
     ...(attemptForm.status === 'all' ? {} : { status: attemptForm.status }),
     limit: 25,
@@ -173,7 +174,7 @@ export const AgentsPage = ({ context }) => {
 
   const load = async () => {
     if (!context.workspaceId) {
-      action.setError('Workspace ID is required');
+      action.setError('Select a workspace before loading agents');
       return;
     }
     const result = await action.run(() => Promise.all([
@@ -337,12 +338,12 @@ export const AgentsPage = ({ context }) => {
     }), 'Agent assigned');
     if (assigned) {
       setTask(assigned);
-      context.setAgentTaskId(assigned.id || '');
+      setAgentTaskId(assigned.id || '');
     }
   };
 
   const loadTask = async () => {
-    const loaded = await action.run(() => context.services.agents.getTask(context.agentTaskId));
+    const loaded = await action.run(() => context.services.agents.getTask(agentTaskId));
     if (loaded) {
       setTask(loaded);
       setDispatchAttempts(loaded.dispatchAttempts || []);
@@ -350,7 +351,7 @@ export const AgentsPage = ({ context }) => {
   };
 
   const taskCommand = async (command, success) => {
-    await action.run(() => command(context.agentTaskId), success);
+    await action.run(() => command(agentTaskId), success);
     await loadTask();
   };
 
@@ -379,7 +380,7 @@ export const AgentsPage = ({ context }) => {
   const exportDispatchAttempts = async () => {
     const exportJob = await action.run(() => context.services.agents.exportDispatchAttempts(context.workspaceId, {
       ...(profileForm.providerId ? { providerId: profileForm.providerId } : {}),
-      ...(context.agentTaskId ? { agentTaskId: context.agentTaskId } : {}),
+      ...(agentTaskId ? { agentTaskId } : {}),
       ...(attemptForm.attemptType === 'all' ? {} : { attemptType: attemptForm.attemptType }),
       ...(attemptForm.status === 'all' ? {} : { status: attemptForm.status }),
       limit: 1000,
@@ -474,7 +475,7 @@ export const AgentsPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !profileForm.providerId || !credentialForm.secret} type="submit"><FiPlus />Save credential</button>
         </form>
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending || !profileForm.providerId} onClick={loadCredentials} type="button"><FiRefreshCw />Load credentials</button>
+          <button className="secondary-button" disabled={action.pending || !profileForm.providerId} onClick={loadCredentials} type="button"><FiRefreshCw />Refresh credentials</button>
           <button className="secondary-button" disabled={action.pending || !profileForm.providerId} onClick={reencryptCredentials} type="button">Re-encrypt</button>
           <button className="secondary-button" disabled={action.pending || !profileForm.providerId} onClick={rotateCallbackKey} type="button">Rotate callback key</button>
         </div>
@@ -536,18 +537,18 @@ export const AgentsPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !taskForm.workItemId || !taskForm.agentProfileId} type="submit"><FiSend />Assign</button>
         </form>
         <div className="agent-command-strip">
-          <RecordSelect label="Agent task" records={knownAgentTasks} value={context.agentTaskId} onChange={context.setAgentTaskId} includeBlank />
+          <RecordSelect label="Agent task" records={knownAgentTasks} value={agentTaskId} onChange={setAgentTaskId} includeBlank />
           <TextField label="Message" value={taskForm.message} onChange={(message) => setTaskForm({ ...taskForm, message })} />
-          <button className="secondary-button" disabled={action.pending || !context.agentTaskId} onClick={loadTask} type="button"><FiRefreshCw />Load</button>
-          <button className="secondary-button" disabled={action.pending || !context.agentTaskId} onClick={() => taskCommand(context.services.agents.retry, 'Retry requested')} type="button">Retry</button>
-          <button className="secondary-button" disabled={action.pending || !context.agentTaskId} onClick={() => taskCommand(context.services.agents.acceptResult, 'Result accepted')} type="button">Accept</button>
-          <button className="icon-button danger" disabled={action.pending || !context.agentTaskId} onClick={() => taskCommand(context.services.agents.cancel, 'Task canceled')} title="Cancel" type="button"><FiX /></button>
+          <button className="secondary-button" disabled={action.pending || !agentTaskId} onClick={loadTask} type="button"><FiRefreshCw />Refresh</button>
+          <button className="secondary-button" disabled={action.pending || !agentTaskId} onClick={() => taskCommand(context.services.agents.retry, 'Retry requested')} type="button">Retry</button>
+          <button className="secondary-button" disabled={action.pending || !agentTaskId} onClick={() => taskCommand(context.services.agents.acceptResult, 'Result accepted')} type="button">Accept</button>
+          <button className="icon-button danger" disabled={action.pending || !agentTaskId} onClick={() => taskCommand(context.services.agents.cancel, 'Task canceled')} title="Cancel" type="button"><FiX /></button>
         </div>
         <ErrorLine message={action.error} />
       </Panel>
       <Panel title="Agent Records" icon={<FiEye />} wide>
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Load</button>
+          <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
           <SelectField label="Attempt" value={attemptForm.attemptType} onChange={(attemptType) => setAttemptForm({ ...attemptForm, attemptType })} options={['all', 'dispatch', 'retry', 'cancel']} />
           <SelectField label="Status" value={attemptForm.status} onChange={(status) => setAttemptForm({ ...attemptForm, status })} options={['all', 'succeeded', 'failed']} />
           <TextField label="Retention days" type="number" value={attemptForm.retentionDays} onChange={(retentionDays) => setAttemptForm({ ...attemptForm, retentionDays })} />
@@ -645,7 +646,7 @@ export const AgentsPage = ({ context }) => {
       </Panel>
       <Panel title="CLI Run Artifacts" icon={<FiArchive />} wide>
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadCliRuns} type="button"><FiRefreshCw />Load runs</button>
+          <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadCliRuns} type="button"><FiRefreshCw />Refresh runs</button>
           <TextField label="Retention days" type="number" value={cliRunForm.retentionDays} onChange={(retentionDays) => setCliRunForm({ ...cliRunForm, retentionDays })} />
           <button className="secondary-button danger" disabled={action.pending || !context.workspaceId} onClick={pruneCliRuns} type="button"><FiTrash2 />Prune runs</button>
         </div>

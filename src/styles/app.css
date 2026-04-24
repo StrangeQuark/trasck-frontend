@@ -9,7 +9,7 @@
 
 .topbar {
   display: grid;
-  grid-template-columns: minmax(220px, 1fr) minmax(280px, 520px) auto;
+  grid-template-columns: minmax(220px, 1fr) minmax(320px, 620px) auto;
   gap: 16px;
   align-items: center;
   max-width: 1480px;
@@ -52,15 +52,7 @@
   letter-spacing: 0;
 }
 
-.connection-form {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 38px;
-  gap: 8px;
-  align-items: center;
-}
-
 .route-tabs,
-.context-strip,
 .page-frame {
   max-width: 1480px;
   margin-right: auto;
@@ -72,6 +64,10 @@
   gap: 8px;
   overflow-x: auto;
   padding: 8px 0 14px;
+}
+
+.admin-tabs {
+  padding-top: 0;
 }
 
 .route-tab,
@@ -101,29 +97,27 @@
   color: #124e5d;
 }
 
-.context-strip {
+.context-selectors {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.inline-id {
-  display: grid;
-  grid-template-columns: 94px minmax(0, 1fr);
   gap: 8px;
-  align-items: center;
   min-width: 0;
-  border: 1px solid #d8dee4;
-  border-radius: 8px;
-  background: #ffffff;
-  padding: 8px 10px;
 }
 
-.inline-id span {
+.context-selectors label {
+  display: grid;
+  gap: 4px;
+}
+
+.context-selectors span {
   color: #63717b;
   font-size: 0.78rem;
   font-weight: 900;
+}
+
+.account-link {
+  color: inherit;
+  text-decoration: none;
 }
 
 .page-frame {
@@ -172,7 +166,7 @@
 }
 
 .panel h2,
-.json-preview h3 {
+.data-preview h3 {
   margin: 0;
   font-size: 1rem;
   line-height: 1.2;
@@ -600,13 +594,13 @@ button:disabled {
   font-weight: 850;
 }
 
-.json-preview {
+.data-preview {
   display: grid;
   gap: 10px;
   min-width: 0;
 }
 
-.json-preview pre {
+.diagnostic-json pre {
   max-height: 430px;
   min-height: 160px;
   overflow: auto;
@@ -618,6 +612,26 @@ button:disabled {
   font-size: 0.78rem;
   line-height: 1.5;
   padding: 12px;
+}
+
+.diagnostic-json summary,
+.advanced-field summary,
+.advanced-record-editor summary {
+  cursor: pointer;
+  color: #42515a;
+  font-size: 0.86rem;
+  font-weight: 900;
+}
+
+.advanced-field,
+.advanced-record-editor {
+  display: grid;
+  gap: 10px;
+  min-width: 0;
+  border: 1px solid #dfe4e8;
+  border-radius: 8px;
+  background: #fbfcfd;
+  padding: 10px;
 }
 
 .public-collab-list {
@@ -825,15 +839,13 @@ button:disabled {
   transform: rotate(180deg);
 }
 
-.detail-link-group,
-.json-record-editor {
+.detail-link-group {
   display: grid;
   gap: 10px;
   min-width: 0;
 }
 
 .detail-link-group h3,
-.json-record-editor h3,
 .board-card-column h3 {
   margin: 0;
   font-size: 0.9rem;
@@ -982,15 +994,11 @@ button:disabled {
     font-size: 1.65rem;
   }
 
-  .context-strip,
+  .context-selectors,
   .two-column,
   .data-columns.two,
   .four-column,
   .create-strip {
-    grid-template-columns: 1fr;
-  }
-
-  .inline-id {
     grid-template-columns: 1fr;
   }
 }

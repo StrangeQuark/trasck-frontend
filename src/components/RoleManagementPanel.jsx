@@ -227,7 +227,7 @@ export const RoleManagementPanel = ({ context, onRolesChanged, scope, scopeId })
           ['Selected role', selectedRole?.name || selectedRoleId],
         ]} />
         <div className="button-row wrap">
-          <button className="secondary-button" disabled={action.pending || !scopeId} onClick={() => loadRoles()} type="button"><FiRefreshCw />Load roles</button>
+          <button className="secondary-button" disabled={action.pending || !scopeId} onClick={() => loadRoles()} type="button"><FiRefreshCw />Refresh roles</button>
           <button className="secondary-button" disabled={action.pending || !selectedRoleId} onClick={() => loadRole()} type="button"><FiRefreshCw />Refresh role</button>
         </div>
         <ErrorLine message={action.error} />

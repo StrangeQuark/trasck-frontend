@@ -1529,6 +1529,11 @@ export interface InitialSetupResponse {
   seedData?: SeedDataSummary;
 }
 
+export interface InitialSetupStatusResponse {
+  available?: boolean;
+  completed?: boolean;
+}
+
 export interface KeyedId {
   id?: string;
   key?: string;
@@ -2889,6 +2894,36 @@ export interface CsrfTokenResponse {
   token?: string;
 }
 
+export interface AuthContextResponse {
+  user?: AuthUserResponse;
+  workspaces?: AuthWorkspaceContextResponse[];
+  projects?: AuthProjectContextResponse[];
+  defaultWorkspace?: AuthWorkspaceContextResponse;
+  defaultProject?: AuthProjectContextResponse;
+}
+
+export interface AuthProjectContextResponse {
+  id?: string;
+  workspaceId?: string;
+  name?: string;
+  key?: string;
+  visibility?: string;
+  status?: string;
+  membershipId?: string;
+  roleId?: string;
+  membershipStatus?: string;
+}
+
+export interface AuthWorkspaceContextResponse {
+  id?: string;
+  name?: string;
+  key?: string;
+  status?: string;
+  membershipId?: string;
+  roleId?: string;
+  membershipStatus?: string;
+}
+
 export type HttpMethod = 'get' | 'post' | 'put' | 'patch' | 'delete';
 
 export interface CursorPage<T> {
@@ -4048,6 +4083,14 @@ export interface ApiPaths {
       path: undefined;
       query: undefined;
       body: InitialSetupRequest;
+      response: unknown;
+    };
+  };
+  "/api/v1/setup/status": {
+    get: {
+      path: undefined;
+      query: undefined;
+      body: undefined;
       response: unknown;
     };
   };
@@ -6688,6 +6731,14 @@ export interface ApiPaths {
       response: unknown;
     };
   };
+  "/api/v1/auth/context": {
+    get: {
+      path: undefined;
+      query: undefined;
+      body: undefined;
+      response: unknown;
+    };
+  };
   "/api/v1/agent-tasks/{taskId}": {
     get: {
       path: {
@@ -7011,6 +7062,7 @@ export const apiOperations = {
   "listSystemAdmins": { method: "get", path: "/api/v1/system-admins" },
   "grantSystemAdmin": { method: "post", path: "/api/v1/system-admins" },
   "createInitialSetup": { method: "post", path: "/api/v1/setup" },
+  "setupStatus": { method: "get", path: "/api/v1/setup/status" },
   "listScreenFields": { method: "get", path: "/api/v1/screens/{screenId}/fields" },
   "addScreenField": { method: "post", path: "/api/v1/screens/{screenId}/fields" },
   "listScreenAssignments": { method: "get", path: "/api/v1/screens/{screenId}/assignments" },
@@ -7276,6 +7328,7 @@ export const apiOperations = {
   "getJob": { method: "get", path: "/api/v1/automation-jobs/{jobId}" },
   "me": { method: "get", path: "/api/v1/auth/me" },
   "csrf": { method: "get", path: "/api/v1/auth/csrf" },
+  "context": { method: "get", path: "/api/v1/auth/context" },
   "getTask": { method: "get", path: "/api/v1/agent-tasks/{taskId}" },
   "healthcheck": { method: "get", path: "/api/trasck/health" },
   "removeWorkspaceUser": { method: "delete", path: "/api/v1/workspaces/{workspaceId}/users/{userId}" },
