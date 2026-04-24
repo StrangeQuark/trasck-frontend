@@ -25,8 +25,14 @@ export const ConfigurationPage = ({ context }) => {
   const [screenFieldForm, setScreenFieldForm] = useState({ customFieldId: '', systemFieldKey: '', position: '1', required: 'false' });
   const [assignmentForm, setAssignmentForm] = useState({ operation: 'edit', priority: '100' });
   const action = useApiAction(context.addToast);
+  const canReadWorkspace = context.hasWorkspacePermission('workspace.read');
+  const canManageWorkspace = context.hasWorkspacePermission('workspace.admin');
 
   const load = async () => {
+    if (!canReadWorkspace) {
+      action.setError('Your current workspace role cannot read configuration');
+      return;
+    }
     if (!context.workspaceId) {
       action.setError('Select a workspace before loading configuration');
       return;
@@ -62,6 +68,10 @@ export const ConfigurationPage = ({ context }) => {
 
   const createCustomField = async (event) => {
     event.preventDefault();
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot manage custom fields');
+      return;
+    }
     const field = await action.run(() => context.services.configuration.createCustomField(context.workspaceId, {
       name: fieldForm.name,
       key: fieldForm.key,
@@ -80,6 +90,10 @@ export const ConfigurationPage = ({ context }) => {
 
   const createFieldContext = async (event) => {
     event.preventDefault();
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot manage field contexts');
+      return;
+    }
     await action.run(() => context.services.configuration.createCustomFieldContext(contextForm.customFieldId, {
       projectId: context.projectId || undefined,
       required: contextForm.required === 'true',
@@ -91,6 +105,10 @@ export const ConfigurationPage = ({ context }) => {
 
   const createFieldConfiguration = async (event) => {
     event.preventDefault();
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot manage field configurations');
+      return;
+    }
     await action.run(() => context.services.configuration.createFieldConfiguration(context.workspaceId, {
       customFieldId: configurationForm.customFieldId,
       projectId: context.projectId || undefined,
@@ -104,6 +122,10 @@ export const ConfigurationPage = ({ context }) => {
 
   const createScreen = async (event) => {
     event.preventDefault();
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot manage screens');
+      return;
+    }
     const screen = await action.run(() => context.services.configuration.createScreen(context.workspaceId, {
       name: screenForm.name,
       screenType: screenForm.screenType,
@@ -116,6 +138,10 @@ export const ConfigurationPage = ({ context }) => {
   };
 
   const loadScreenDetails = async () => {
+    if (!canReadWorkspace) {
+      action.setError('Your current workspace role cannot read screen details');
+      return;
+    }
     if (!screenId) {
       action.setError('Screen is required');
       return;
@@ -133,6 +159,10 @@ export const ConfigurationPage = ({ context }) => {
 
   const addScreenField = async (event) => {
     event.preventDefault();
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot manage screen layouts');
+      return;
+    }
     await action.run(() => context.services.configuration.addScreenField(screenId, {
       customFieldId: screenFieldForm.customFieldId || undefined,
       systemFieldKey: screenFieldForm.systemFieldKey || undefined,
@@ -144,6 +174,10 @@ export const ConfigurationPage = ({ context }) => {
 
   const addScreenAssignment = async (event) => {
     event.preventDefault();
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot manage screen assignments');
+      return;
+    }
     await action.run(() => context.services.configuration.addScreenAssignment(screenId, {
       projectId: context.projectId || undefined,
       operation: assignmentForm.operation,
@@ -154,70 +188,82 @@ export const ConfigurationPage = ({ context }) => {
 
   return (
     <div className="content-grid">
-      <Panel title="Custom Field" icon={<FiSliders />}>
-        <form className="stack" onSubmit={createCustomField}>
-          <TextField label="Name" value={fieldForm.name} onChange={(name) => setFieldForm({ ...fieldForm, name })} />
-          <TextField label="Key" value={fieldForm.key} onChange={(key) => setFieldForm({ ...fieldForm, key })} />
-          <SelectField label="Type" value={fieldForm.fieldType} onChange={(fieldType) => setFieldForm({ ...fieldForm, fieldType })} options={['text', 'number', 'date', 'datetime', 'boolean', 'single_select', 'multi_select', 'json']} />
-          <SelectField label="Searchable" value={fieldForm.searchable} onChange={(searchable) => setFieldForm({ ...fieldForm, searchable })} options={['true', 'false']} />
-          <Field label="Options JSON">
-            <textarea value={fieldForm.optionsText} onChange={(event) => setFieldForm({ ...fieldForm, optionsText: event.target.value })} rows={5} spellCheck="false" />
-          </Field>
-          <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create field</button>
-        </form>
-      </Panel>
-      <Panel title="Context" icon={<FiLayers />}>
-        <form className="stack" onSubmit={createFieldContext}>
-          <RecordSelect label="Custom field" records={customFields} value={contextForm.customFieldId} onChange={(customFieldId) => setContextForm({ ...contextForm, customFieldId })} />
-          <SelectField label="Required" value={contextForm.required} onChange={(required) => setContextForm({ ...contextForm, required })} options={['false', 'true']} />
-          <Field label="Default JSON">
-            <textarea value={contextForm.defaultValueText} onChange={(event) => setContextForm({ ...contextForm, defaultValueText: event.target.value })} rows={3} spellCheck="false" />
-          </Field>
-          <button className="primary-button" disabled={action.pending || !contextForm.customFieldId} type="submit"><FiPlus />Add context</button>
-        </form>
-      </Panel>
-      <Panel title="Field Configuration" icon={<FiSettings />}>
-        <form className="stack" onSubmit={createFieldConfiguration}>
-          <RecordSelect label="Custom field" records={customFields} value={configurationForm.customFieldId} onChange={(customFieldId) => setConfigurationForm({ ...configurationForm, customFieldId })} />
-          <div className="two-column compact">
-            <SelectField label="Required" value={configurationForm.required} onChange={(required) => setConfigurationForm({ ...configurationForm, required })} options={['false', 'true']} />
-            <SelectField label="Hidden" value={configurationForm.hidden} onChange={(hidden) => setConfigurationForm({ ...configurationForm, hidden })} options={['false', 'true']} />
-          </div>
-          <Field label="Validation JSON">
-            <textarea value={configurationForm.validationConfigText} onChange={(event) => setConfigurationForm({ ...configurationForm, validationConfigText: event.target.value })} rows={4} spellCheck="false" />
-          </Field>
-          <button className="primary-button" disabled={action.pending || !configurationForm.customFieldId} type="submit"><FiPlus />Create config</button>
-        </form>
-      </Panel>
-      <Panel title="Screen" icon={<FiEye />}>
-        <form className="stack" onSubmit={createScreen}>
-          <TextField label="Name" value={screenForm.name} onChange={(name) => setScreenForm({ ...screenForm, name })} />
-          <SelectField label="Type" value={screenForm.screenType} onChange={(screenType) => setScreenForm({ ...screenForm, screenType })} options={['create', 'edit', 'view']} />
-          <Field label="Config JSON">
-            <textarea value={screenForm.configText} onChange={(event) => setScreenForm({ ...screenForm, configText: event.target.value })} rows={4} spellCheck="false" />
-          </Field>
-          <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create screen</button>
-        </form>
-      </Panel>
-      <Panel title="Screen Layout" icon={<FiList />} wide>
-        <div className="data-columns two no-margin">
-          <form className="stack" onSubmit={addScreenField}>
-            <RecordSelect label="Screen" records={screens} value={screenId} onChange={setScreenId} />
-            <RecordSelect label="Custom field" records={customFields} value={screenFieldForm.customFieldId} onChange={(customFieldId) => setScreenFieldForm({ ...screenFieldForm, customFieldId, systemFieldKey: '' })} includeBlank />
-            <TextField label="System field" value={screenFieldForm.systemFieldKey} onChange={(systemFieldKey) => setScreenFieldForm({ ...screenFieldForm, systemFieldKey, customFieldId: '' })} />
+      {canManageWorkspace && (
+        <Panel title="Custom Field" icon={<FiSliders />}>
+          <form className="stack" onSubmit={createCustomField}>
+            <TextField label="Name" value={fieldForm.name} onChange={(name) => setFieldForm({ ...fieldForm, name })} />
+            <TextField label="Key" value={fieldForm.key} onChange={(key) => setFieldForm({ ...fieldForm, key })} />
+            <SelectField label="Type" value={fieldForm.fieldType} onChange={(fieldType) => setFieldForm({ ...fieldForm, fieldType })} options={['text', 'number', 'date', 'datetime', 'boolean', 'single_select', 'multi_select', 'json']} />
+            <SelectField label="Searchable" value={fieldForm.searchable} onChange={(searchable) => setFieldForm({ ...fieldForm, searchable })} options={['true', 'false']} />
+            <Field label="Options JSON">
+              <textarea value={fieldForm.optionsText} onChange={(event) => setFieldForm({ ...fieldForm, optionsText: event.target.value })} rows={5} spellCheck="false" />
+            </Field>
+            <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create field</button>
+          </form>
+        </Panel>
+      )}
+      {canManageWorkspace && (
+        <Panel title="Context" icon={<FiLayers />}>
+          <form className="stack" onSubmit={createFieldContext}>
+            <RecordSelect label="Custom field" records={customFields} value={contextForm.customFieldId} onChange={(customFieldId) => setContextForm({ ...contextForm, customFieldId })} />
+            <SelectField label="Required" value={contextForm.required} onChange={(required) => setContextForm({ ...contextForm, required })} options={['false', 'true']} />
+            <Field label="Default JSON">
+              <textarea value={contextForm.defaultValueText} onChange={(event) => setContextForm({ ...contextForm, defaultValueText: event.target.value })} rows={3} spellCheck="false" />
+            </Field>
+            <button className="primary-button" disabled={action.pending || !contextForm.customFieldId} type="submit"><FiPlus />Add context</button>
+          </form>
+        </Panel>
+      )}
+      {canManageWorkspace && (
+        <Panel title="Field Configuration" icon={<FiSettings />}>
+          <form className="stack" onSubmit={createFieldConfiguration}>
+            <RecordSelect label="Custom field" records={customFields} value={configurationForm.customFieldId} onChange={(customFieldId) => setConfigurationForm({ ...configurationForm, customFieldId })} />
             <div className="two-column compact">
-              <TextField label="Position" type="number" value={screenFieldForm.position} onChange={(position) => setScreenFieldForm({ ...screenFieldForm, position })} />
-              <SelectField label="Required" value={screenFieldForm.required} onChange={(required) => setScreenFieldForm({ ...screenFieldForm, required })} options={['false', 'true']} />
+              <SelectField label="Required" value={configurationForm.required} onChange={(required) => setConfigurationForm({ ...configurationForm, required })} options={['false', 'true']} />
+              <SelectField label="Hidden" value={configurationForm.hidden} onChange={(hidden) => setConfigurationForm({ ...configurationForm, hidden })} options={['false', 'true']} />
             </div>
-            <button className="primary-button" disabled={action.pending || !screenId || (!screenFieldForm.customFieldId && !screenFieldForm.systemFieldKey)} type="submit"><FiPlus />Add field</button>
+            <Field label="Validation JSON">
+              <textarea value={configurationForm.validationConfigText} onChange={(event) => setConfigurationForm({ ...configurationForm, validationConfigText: event.target.value })} rows={4} spellCheck="false" />
+            </Field>
+            <button className="primary-button" disabled={action.pending || !configurationForm.customFieldId} type="submit"><FiPlus />Create config</button>
           </form>
-          <form className="stack" onSubmit={addScreenAssignment}>
-            <RecordSelect label="Screen" records={screens} value={screenId} onChange={setScreenId} />
-            <SelectField label="Operation" value={assignmentForm.operation} onChange={(operation) => setAssignmentForm({ ...assignmentForm, operation })} options={['create', 'edit', 'view']} />
-            <TextField label="Priority" type="number" value={assignmentForm.priority} onChange={(priority) => setAssignmentForm({ ...assignmentForm, priority })} />
-            <button className="primary-button" disabled={action.pending || !screenId || !context.projectId} type="submit"><FiCheck />Assign screen</button>
+        </Panel>
+      )}
+      {canManageWorkspace && (
+        <Panel title="Screen" icon={<FiEye />}>
+          <form className="stack" onSubmit={createScreen}>
+            <TextField label="Name" value={screenForm.name} onChange={(name) => setScreenForm({ ...screenForm, name })} />
+            <SelectField label="Type" value={screenForm.screenType} onChange={(screenType) => setScreenForm({ ...screenForm, screenType })} options={['create', 'edit', 'view']} />
+            <Field label="Config JSON">
+              <textarea value={screenForm.configText} onChange={(event) => setScreenForm({ ...screenForm, configText: event.target.value })} rows={4} spellCheck="false" />
+            </Field>
+            <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create screen</button>
           </form>
-        </div>
+        </Panel>
+      )}
+      <Panel title="Screen Layout" icon={<FiList />} wide>
+        {canManageWorkspace ? (
+          <div className="data-columns two no-margin">
+            <form className="stack" onSubmit={addScreenField}>
+              <RecordSelect label="Screen" records={screens} value={screenId} onChange={setScreenId} />
+              <RecordSelect label="Custom field" records={customFields} value={screenFieldForm.customFieldId} onChange={(customFieldId) => setScreenFieldForm({ ...screenFieldForm, customFieldId, systemFieldKey: '' })} includeBlank />
+              <TextField label="System field" value={screenFieldForm.systemFieldKey} onChange={(systemFieldKey) => setScreenFieldForm({ ...screenFieldForm, systemFieldKey, customFieldId: '' })} />
+              <div className="two-column compact">
+                <TextField label="Position" type="number" value={screenFieldForm.position} onChange={(position) => setScreenFieldForm({ ...screenFieldForm, position })} />
+                <SelectField label="Required" value={screenFieldForm.required} onChange={(required) => setScreenFieldForm({ ...screenFieldForm, required })} options={['false', 'true']} />
+              </div>
+              <button className="primary-button" disabled={action.pending || !screenId || (!screenFieldForm.customFieldId && !screenFieldForm.systemFieldKey)} type="submit"><FiPlus />Add field</button>
+            </form>
+            <form className="stack" onSubmit={addScreenAssignment}>
+              <RecordSelect label="Screen" records={screens} value={screenId} onChange={setScreenId} />
+              <SelectField label="Operation" value={assignmentForm.operation} onChange={(operation) => setAssignmentForm({ ...assignmentForm, operation })} options={['create', 'edit', 'view']} />
+              <TextField label="Priority" type="number" value={assignmentForm.priority} onChange={(priority) => setAssignmentForm({ ...assignmentForm, priority })} />
+              <button className="primary-button" disabled={action.pending || !screenId || !context.projectId} type="submit"><FiCheck />Assign screen</button>
+            </form>
+          </div>
+        ) : (
+          <p className="muted">Configuration records are read-only for your current workspace membership.</p>
+        )}
         <div className="button-row">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
           <button className="secondary-button" disabled={action.pending || !screenId} onClick={loadScreenDetails} type="button">Screen details</button>

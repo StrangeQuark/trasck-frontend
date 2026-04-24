@@ -45,6 +45,16 @@ export const AgentsPage = ({ context }) => {
   const [attemptForm, setAttemptForm] = useState({ attemptType: 'all', status: 'all', retentionDays: '30' });
   const [cliRunForm, setCliRunForm] = useState({ retentionDays: '7' });
   const action = useApiAction(context.addToast);
+  const canManageProviders = context.hasWorkspacePermission('agent.provider.manage');
+  const canManageCredentials = context.hasWorkspacePermission('agent.provider.credential.manage');
+  const canManageProfiles = context.hasWorkspacePermission('agent.profile.manage');
+  const canManageRepositories = context.hasWorkspacePermission('repository_connection.manage');
+  const canReadWorkItems = context.hasProjectPermission('work_item.read');
+  const canAssignAgents = context.hasProjectPermission('agent.assign') && context.hasProjectPermission('work_item.update');
+  const canViewAgentTasks = context.hasWorkspacePermission('agent.task.view');
+  const canRetryAgentTasks = context.hasWorkspacePermission('agent.task.retry');
+  const canAcceptAgentTasks = context.hasWorkspacePermission('agent.task.accept_result');
+  const canCancelAgentTasks = context.hasWorkspacePermission('agent.task.cancel');
   const selectedProvider = providers.find((provider) => provider.id === profileForm.providerId);
   const providerStatus = (provider) => provider.enabled === false ? 'deactivated' : 'active';
   const profileStatus = (profile) => profile.status || 'unknown';
@@ -178,12 +188,12 @@ export const AgentsPage = ({ context }) => {
       return;
     }
     const result = await action.run(() => Promise.all([
-      context.services.agents.listProviders(context.workspaceId),
-      context.services.agents.listProfiles(context.workspaceId),
-      context.services.agents.listRepositoryConnections(context.workspaceId),
-      context.projectId ? context.services.workItems.listByProject(context.projectId, { limit: 50 }) : Promise.resolve({ items: [] }),
-      context.services.agents.listDispatchAttempts(context.workspaceId, attemptQuery()),
-      context.services.agents.listCliRuns(context.workspaceId),
+      canManageProviders ? context.services.agents.listProviders(context.workspaceId) : Promise.resolve([]),
+      canManageProfiles ? context.services.agents.listProfiles(context.workspaceId) : Promise.resolve([]),
+      canManageRepositories ? context.services.agents.listRepositoryConnections(context.workspaceId) : Promise.resolve([]),
+      context.projectId && canReadWorkItems ? context.services.workItems.listByProject(context.projectId, { limit: 50 }) : Promise.resolve({ items: [] }),
+      canManageProviders ? context.services.agents.listDispatchAttempts(context.workspaceId, attemptQuery()) : Promise.resolve({ items: [] }),
+      canManageProviders ? context.services.agents.listCliRuns(context.workspaceId) : Promise.resolve([]),
     ]));
     if (result) {
       const [providerRows, profileRows, repoRows, workItemPage, attemptPage, cliRunRows] = result;
@@ -209,6 +219,10 @@ export const AgentsPage = ({ context }) => {
 
   const createProvider = async (event) => {
     event.preventDefault();
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot manage agent providers');
+      return;
+    }
     const provider = await action.run(() => context.services.agents.createProvider(context.workspaceId, {
       providerKey: providerForm.providerKey,
       providerType: providerForm.providerType,
@@ -224,6 +238,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const deactivateProvider = async () => {
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot manage agent providers');
+      return;
+    }
     if (!profileForm.providerId) {
       action.setError('Provider is required');
       return;
@@ -233,6 +251,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const loadCredentials = async () => {
+    if (!canManageCredentials) {
+      action.setError('Your current workspace role cannot manage provider credentials');
+      return;
+    }
     if (!profileForm.providerId) {
       action.setError('Provider is required');
       return;
@@ -245,6 +267,10 @@ export const AgentsPage = ({ context }) => {
 
   const createCredential = async (event) => {
     event.preventDefault();
+    if (!canManageCredentials) {
+      action.setError('Your current workspace role cannot manage provider credentials');
+      return;
+    }
     if (!profileForm.providerId) {
       action.setError('Provider is required');
       return;
@@ -262,6 +288,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const deactivateCredential = async (credentialId) => {
+    if (!canManageCredentials) {
+      action.setError('Your current workspace role cannot manage provider credentials');
+      return;
+    }
     if (!profileForm.providerId) {
       action.setError('Provider is required');
       return;
@@ -271,6 +301,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const reencryptCredentials = async () => {
+    if (!canManageCredentials) {
+      action.setError('Your current workspace role cannot manage provider credentials');
+      return;
+    }
     if (!profileForm.providerId) {
       action.setError('Provider is required');
       return;
@@ -282,6 +316,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const rotateCallbackKey = async () => {
+    if (!canManageCredentials) {
+      action.setError('Your current workspace role cannot manage provider credentials');
+      return;
+    }
     if (!profileForm.providerId) {
       action.setError('Provider is required');
       return;
@@ -294,6 +332,10 @@ export const AgentsPage = ({ context }) => {
 
   const createProfile = async (event) => {
     event.preventDefault();
+    if (!canManageProfiles) {
+      action.setError('Your current workspace role cannot manage agent profiles');
+      return;
+    }
     const profile = await action.run(() => context.services.agents.createProfile(context.workspaceId, {
       providerId: profileForm.providerId,
       displayName: profileForm.displayName,
@@ -308,6 +350,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const deactivateProfile = async () => {
+    if (!canManageProfiles) {
+      action.setError('Your current workspace role cannot manage agent profiles');
+      return;
+    }
     if (!taskForm.agentProfileId) {
       action.setError('Agent profile is required');
       return;
@@ -318,6 +364,10 @@ export const AgentsPage = ({ context }) => {
 
   const createRepository = async (event) => {
     event.preventDefault();
+    if (!canManageRepositories) {
+      action.setError('Your current workspace role cannot manage repository connections');
+      return;
+    }
     const repository = await action.run(() => context.services.agents.createRepositoryConnection(context.workspaceId, {
       ...repositoryForm,
       projectId: context.projectId || undefined,
@@ -331,6 +381,10 @@ export const AgentsPage = ({ context }) => {
 
   const assign = async (event) => {
     event.preventDefault();
+    if (!canAssignAgents) {
+      action.setError('Your current project role cannot assign agent work');
+      return;
+    }
     const assigned = await action.run(() => context.services.agents.assign(taskForm.workItemId, {
       agentProfileId: taskForm.agentProfileId,
       repositoryConnectionIds: taskForm.repositoryConnectionIds.split(',').map((value) => value.trim()).filter(Boolean),
@@ -343,6 +397,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const loadTask = async () => {
+    if (!canViewAgentTasks) {
+      action.setError('Your current workspace role cannot view agent tasks');
+      return;
+    }
     const loaded = await action.run(() => context.services.agents.getTask(agentTaskId));
     if (loaded) {
       setTask(loaded);
@@ -350,12 +408,20 @@ export const AgentsPage = ({ context }) => {
     }
   };
 
-  const taskCommand = async (command, success) => {
+  const taskCommand = async (command, success, allowed, deniedMessage) => {
+    if (!allowed) {
+      action.setError(deniedMessage);
+      return;
+    }
     await action.run(() => command(agentTaskId), success);
     await loadTask();
   };
 
   const previewRuntime = async () => {
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot preview provider runtime');
+      return;
+    }
     if (!profileForm.providerId) {
       action.setError('Provider is required');
       return;
@@ -371,6 +437,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const loadDispatchAttempts = async () => {
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot read agent dispatch attempts');
+      return;
+    }
     const page = await action.run(() => context.services.agents.listDispatchAttempts(context.workspaceId, attemptQuery()));
     if (page) {
       setDispatchAttempts(page.items || []);
@@ -378,6 +448,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const exportDispatchAttempts = async () => {
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot export agent dispatch attempts');
+      return;
+    }
     const exportJob = await action.run(() => context.services.agents.exportDispatchAttempts(context.workspaceId, {
       ...(profileForm.providerId ? { providerId: profileForm.providerId } : {}),
       ...(agentTaskId ? { agentTaskId } : {}),
@@ -391,6 +465,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const pruneDispatchAttempts = async () => {
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot prune agent dispatch attempts');
+      return;
+    }
     const result = await action.run(() => context.services.agents.pruneDispatchAttempts(context.workspaceId, {
       ...(profileForm.providerId ? { providerId: profileForm.providerId } : {}),
       ...(attemptForm.attemptType === 'all' ? {} : { attemptType: attemptForm.attemptType }),
@@ -405,6 +483,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const loadCliRuns = async () => {
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot read CLI run artifacts');
+      return;
+    }
     const rows = await action.run(() => context.services.agents.listCliRuns(context.workspaceId));
     if (rows) {
       setCliRuns(rows || []);
@@ -412,6 +494,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const downloadCliRun = async (run) => {
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot download CLI run artifacts');
+      return;
+    }
     const blob = await action.run(() => context.services.agents.downloadCliRun(context.workspaceId, run.agentTaskId), 'CLI run archive downloaded');
     if (blob) {
       const url = URL.createObjectURL(blob);
@@ -426,6 +512,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const deleteCliRun = async (run) => {
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot delete CLI run artifacts');
+      return;
+    }
     const result = await action.run(() => context.services.agents.deleteCliRun(context.workspaceId, run.agentTaskId), 'CLI run deleted');
     if (result) {
       setRuntimePreview(result);
@@ -434,6 +524,10 @@ export const AgentsPage = ({ context }) => {
   };
 
   const pruneCliRuns = async () => {
+    if (!canManageProviders) {
+      action.setError('Your current workspace role cannot prune CLI run artifacts');
+      return;
+    }
     const result = await action.run(() => context.services.agents.pruneCliRuns(context.workspaceId, {
       retentionDays: Number(cliRunForm.retentionDays || 7),
     }), 'CLI runs pruned');
@@ -445,6 +539,7 @@ export const AgentsPage = ({ context }) => {
 
   return (
     <div className="content-grid">
+      {canManageProviders && (
       <Panel title="Provider" icon={<FiCpu />}>
         <form className="stack" onSubmit={createProvider}>
           <div className="button-row wrap">
@@ -463,6 +558,8 @@ export const AgentsPage = ({ context }) => {
           <button className="secondary-button danger" disabled={action.pending || !profileForm.providerId} onClick={deactivateProvider} type="button"><FiX />Deactivate provider</button>
         </form>
       </Panel>
+      )}
+      {canManageCredentials && (
       <Panel title="Credentials" icon={<FiKey />}>
         <form className="stack" onSubmit={createCredential}>
           <RecordSelect label="Provider" records={providers} value={profileForm.providerId} onChange={selectProvider} />
@@ -504,6 +601,8 @@ export const AgentsPage = ({ context }) => {
           </table>
         </div>
       </Panel>
+      )}
+      {canManageProfiles && (
       <Panel title="Profile" icon={<FiUsers />}>
         <form className="stack" onSubmit={createProfile}>
           <RecordSelect label="Provider" records={providers} value={profileForm.providerId} onChange={selectProvider} />
@@ -515,6 +614,8 @@ export const AgentsPage = ({ context }) => {
           <button className="secondary-button danger" disabled={action.pending || !taskForm.agentProfileId} onClick={deactivateProfile} type="button"><FiX />Deactivate profile</button>
         </form>
       </Panel>
+      )}
+      {canManageRepositories && (
       <Panel title="Repository" icon={<FiDatabase />}>
         <form className="stack" onSubmit={createRepository}>
           <SelectField label="Provider" value={repositoryForm.provider} onChange={(provider) => setRepositoryForm({ ...repositoryForm, provider })} options={['generic_git', 'github', 'gitlab']} />
@@ -524,28 +625,34 @@ export const AgentsPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Connect</button>
         </form>
       </Panel>
+      )}
+      {(canAssignAgents || canViewAgentTasks) && (
       <Panel title="Agent Task" icon={<FiSend />} wide>
-        <form className="stack" onSubmit={assign}>
-          <div className="two-column compact">
-            <RecordSelect label="Work item" records={workItems} value={taskForm.workItemId} onChange={(workItemId) => setTaskForm({ ...taskForm, workItemId })} />
-            <RecordSelect label="Agent profile" records={profiles} value={taskForm.agentProfileId} onChange={(agentProfileId) => setTaskForm({ ...taskForm, agentProfileId })} />
-          </div>
-          <RecordSelect label="Repository" records={repositories} value={taskForm.repositoryConnectionIds} onChange={(repositoryConnectionIds) => setTaskForm({ ...taskForm, repositoryConnectionIds })} includeBlank />
-          <Field label="Instructions">
-            <textarea value={taskForm.instructions} onChange={(event) => setTaskForm({ ...taskForm, instructions: event.target.value })} rows={4} />
-          </Field>
-          <button className="primary-button" disabled={action.pending || !taskForm.workItemId || !taskForm.agentProfileId} type="submit"><FiSend />Assign</button>
-        </form>
+        {canAssignAgents && (
+          <form className="stack" onSubmit={assign}>
+            <div className="two-column compact">
+              <RecordSelect label="Work item" records={workItems} value={taskForm.workItemId} onChange={(workItemId) => setTaskForm({ ...taskForm, workItemId })} />
+              <RecordSelect label="Agent profile" records={profiles} value={taskForm.agentProfileId} onChange={(agentProfileId) => setTaskForm({ ...taskForm, agentProfileId })} />
+            </div>
+            <RecordSelect label="Repository" records={repositories} value={taskForm.repositoryConnectionIds} onChange={(repositoryConnectionIds) => setTaskForm({ ...taskForm, repositoryConnectionIds })} includeBlank />
+            <Field label="Instructions">
+              <textarea value={taskForm.instructions} onChange={(event) => setTaskForm({ ...taskForm, instructions: event.target.value })} rows={4} />
+            </Field>
+            <button className="primary-button" disabled={action.pending || !taskForm.workItemId || !taskForm.agentProfileId} type="submit"><FiSend />Assign</button>
+          </form>
+        )}
         <div className="agent-command-strip">
           <RecordSelect label="Agent task" records={knownAgentTasks} value={agentTaskId} onChange={setAgentTaskId} includeBlank />
           <TextField label="Message" value={taskForm.message} onChange={(message) => setTaskForm({ ...taskForm, message })} />
-          <button className="secondary-button" disabled={action.pending || !agentTaskId} onClick={loadTask} type="button"><FiRefreshCw />Refresh</button>
-          <button className="secondary-button" disabled={action.pending || !agentTaskId} onClick={() => taskCommand(context.services.agents.retry, 'Retry requested')} type="button">Retry</button>
-          <button className="secondary-button" disabled={action.pending || !agentTaskId} onClick={() => taskCommand(context.services.agents.acceptResult, 'Result accepted')} type="button">Accept</button>
-          <button className="icon-button danger" disabled={action.pending || !agentTaskId} onClick={() => taskCommand(context.services.agents.cancel, 'Task canceled')} title="Cancel" type="button"><FiX /></button>
+          <button className="secondary-button" disabled={action.pending || !agentTaskId || !canViewAgentTasks} onClick={loadTask} type="button"><FiRefreshCw />Refresh</button>
+          <button className="secondary-button" disabled={action.pending || !agentTaskId || !canRetryAgentTasks} onClick={() => taskCommand(context.services.agents.retry, 'Retry requested', canRetryAgentTasks, 'Your current workspace role cannot retry agent tasks')} type="button">Retry</button>
+          <button className="secondary-button" disabled={action.pending || !agentTaskId || !canAcceptAgentTasks} onClick={() => taskCommand(context.services.agents.acceptResult, 'Result accepted', canAcceptAgentTasks, 'Your current workspace role cannot accept agent task results')} type="button">Accept</button>
+          <button className="icon-button danger" disabled={action.pending || !agentTaskId || !canCancelAgentTasks} onClick={() => taskCommand(context.services.agents.cancel, 'Task canceled', canCancelAgentTasks, 'Your current workspace role cannot cancel agent tasks')} title="Cancel" type="button"><FiX /></button>
         </div>
         <ErrorLine message={action.error} />
       </Panel>
+      )}
+      {canManageProviders && (
       <Panel title="Agent Records" icon={<FiEye />} wide>
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
@@ -644,6 +751,8 @@ export const AgentsPage = ({ context }) => {
           <JsonPreview title="Dispatch Attempts" value={dispatchAttempts} />
         </div>
       </Panel>
+      )}
+      {canManageProviders && (
       <Panel title="CLI Run Artifacts" icon={<FiArchive />} wide>
         <div className="button-row wrap">
           <button className="secondary-button" disabled={action.pending || !context.workspaceId} onClick={loadCliRuns} type="button"><FiRefreshCw />Refresh runs</button>
@@ -691,6 +800,7 @@ export const AgentsPage = ({ context }) => {
         </div>
         <JsonPreview title="CLI Runs" value={cliRuns} />
       </Panel>
+      )}
     </div>
   );
 };
