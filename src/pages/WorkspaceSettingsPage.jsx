@@ -46,6 +46,9 @@ export const WorkspaceSettingsPage = ({ context }) => {
   const [workspaceRoles, setWorkspaceRoles] = useState([]);
   const [lastResult, setLastResult] = useState(null);
   const action = useApiAction(context.addToast);
+  const canManageWorkspace = context.hasWorkspacePermission('workspace.admin');
+  const canManageUsers = context.hasWorkspacePermission('user.manage');
+  const canManageProjectRoles = context.hasProjectPermission('project.admin');
 
   const loadWorkspaceSettings = async () => {
     if (!context.workspaceId) {
@@ -56,10 +59,10 @@ export const WorkspaceSettingsPage = ({ context }) => {
       return;
     }
     const loaded = await action.run(() => Promise.all([
-      context.services.security.listWorkspaceInvitations(context.workspaceId, { status: invitationStatus }),
-      context.services.security.listWorkspaceUsers(context.workspaceId, { status: memberStatus }),
-      context.services.security.listWorkspaceRoles(context.workspaceId),
-      context.services.security.getWorkspaceSecurityPolicy(context.workspaceId),
+      canManageUsers ? context.services.security.listWorkspaceInvitations(context.workspaceId, { status: invitationStatus }) : Promise.resolve([]),
+      canManageUsers ? context.services.security.listWorkspaceUsers(context.workspaceId, { status: memberStatus }) : Promise.resolve([]),
+      canManageUsers ? context.services.security.listWorkspaceRoles(context.workspaceId) : Promise.resolve([]),
+      canManageWorkspace ? context.services.security.getWorkspaceSecurityPolicy(context.workspaceId) : Promise.resolve(null),
     ]));
     if (loaded) {
       setInvitations(loaded[0] || []);
@@ -85,12 +88,20 @@ export const WorkspaceSettingsPage = ({ context }) => {
       }
       return;
     }
+    if (!canManageUsers || !canManageProjectRoles) {
+      setProjectRoles([]);
+      return;
+    }
     action.run(() => context.services.security.listProjectRoles(projectId))
       .then((loaded) => setProjectRoles(loaded || []));
-  }, [context.projectId, invitationForm.projectId]);
+  }, [canManageProjectRoles, canManageUsers, context.projectId, invitationForm.projectId]);
 
   const saveWorkspacePolicy = async (event) => {
     event.preventDefault();
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot manage workspace policy');
+      return;
+    }
     if (!policy?.anonymousReadEnabled && policyForm.anonymousReadEnabled) {
       const confirmed = window.confirm('Enable anonymous reads for public projects in this workspace?');
       if (!confirmed) {
@@ -109,6 +120,10 @@ export const WorkspaceSettingsPage = ({ context }) => {
 
   const inviteUser = async (event) => {
     event.preventDefault();
+    if (!canManageUsers) {
+      action.setError('Your current workspace role cannot invite users');
+      return;
+    }
     const invitation = await action.run(
       () => context.services.security.inviteWorkspaceUser(context.workspaceId, compactRequest(invitationForm)),
       'Invitation created',
@@ -121,6 +136,10 @@ export const WorkspaceSettingsPage = ({ context }) => {
   };
 
   const revokeInvitation = async (invitation) => {
+    if (!canManageUsers) {
+      action.setError('Your current workspace role cannot revoke invitations');
+      return;
+    }
     if (!window.confirm(`Revoke invitation for ${invitation.email || invitation.id}?`)) {
       return;
     }
@@ -133,6 +152,10 @@ export const WorkspaceSettingsPage = ({ context }) => {
 
   const createUser = async (event) => {
     event.preventDefault();
+    if (!canManageUsers) {
+      action.setError('Your current workspace role cannot create users');
+      return;
+    }
     const user = await action.run(
       () => context.services.security.createWorkspaceUser(context.workspaceId, compactRequest(userForm)),
       'Workspace user created',
@@ -145,6 +168,10 @@ export const WorkspaceSettingsPage = ({ context }) => {
   };
 
   const removeUser = async (member) => {
+    if (!canManageUsers) {
+      action.setError('Your current workspace role cannot remove users');
+      return;
+    }
     const label = member.displayName || member.username || member.email || member.userId;
     if (!window.confirm(`Remove ${label} from this workspace?`)) {
       return;
@@ -158,6 +185,7 @@ export const WorkspaceSettingsPage = ({ context }) => {
 
   return (
     <div className="content-grid">
+      {canManageWorkspace && (
       <Panel title="Workspace Security Policy" icon={<FiShield />}>
         <form className="stack" onSubmit={saveWorkspacePolicy}>
           <SummaryRows rows={[
@@ -192,7 +220,9 @@ export const WorkspaceSettingsPage = ({ context }) => {
           </div>
         </form>
       </Panel>
+      )}
 
+      {canManageUsers && (
       <Panel title="Workspace Members" icon={<FiUsers />} wide>
         <div className="stack">
           <SummaryRows rows={[
@@ -284,7 +314,9 @@ export const WorkspaceSettingsPage = ({ context }) => {
           </form>
         </div>
       </Panel>
+      )}
 
+      {canManageUsers && (
       <Panel title="Workspace Invitations" icon={<FiMail />} wide>
         <div className="stack">
           <div className="table-actions">
@@ -383,13 +415,16 @@ export const WorkspaceSettingsPage = ({ context }) => {
           </form>
         </div>
       </Panel>
+      )}
 
+      {canManageUsers && (
       <RoleManagementPanel
         context={context}
         onRolesChanged={loadWorkspaceSettings}
         scope="workspace"
         scopeId={context.workspaceId}
       />
+      )}
 
       <Panel title="Workspace Management State" icon={<FiUsers />} wide>
         <ErrorLine message={action.error} />

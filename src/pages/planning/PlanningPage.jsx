@@ -48,6 +48,13 @@ export const PlanningPage = ({ context }) => {
   const [roadmapForm, setRoadmapForm] = useState({ name: 'Product Roadmap', visibility: 'project', lanes: 'now, next, later' });
   const [roadmapItemForm, setRoadmapItemForm] = useState({ workItemId: '', startDate: '2026-04-20', endDate: '2026-05-15', position: '1', lane: 'now' });
   const action = useApiAction(context.addToast);
+  const canReadWorkspace = context.hasWorkspacePermission('workspace.read');
+  const canReadProject = context.hasProjectPermission('project.read');
+  const canReadWorkItems = context.hasProjectPermission('work_item.read');
+  const canReadReports = context.hasProjectPermission('report.read');
+  const canManageTeams = context.hasWorkspacePermission('workspace.admin');
+  const canManageProjectTeams = context.hasProjectPermission('project.admin');
+  const canManagePlanning = context.hasProjectPermission('board.admin');
 
   const load = async () => {
     if (!context.workspaceId || !context.projectId) {
@@ -65,24 +72,24 @@ export const PlanningPage = ({ context }) => {
         workItemPage,
         savedFilterRows,
       ] = await Promise.all([
-        context.services.planning.listTeams(context.workspaceId),
-        context.services.planning.listProjectTeams(context.projectId),
-        context.services.planning.listIterations(context.projectId),
-        context.services.planning.listBoards(context.projectId),
-        context.services.planning.listReleases(context.projectId),
-        context.services.planning.listProjectRoadmaps(context.projectId),
-        context.services.workItems.listByProject(context.projectId, { limit: 50 }),
-        context.services.search.listProjectSavedFilters(context.projectId),
+        canReadWorkspace ? context.services.planning.listTeams(context.workspaceId) : Promise.resolve([]),
+        canReadProject ? context.services.planning.listProjectTeams(context.projectId) : Promise.resolve([]),
+        canReadProject ? context.services.planning.listIterations(context.projectId) : Promise.resolve([]),
+        canReadProject ? context.services.planning.listBoards(context.projectId) : Promise.resolve([]),
+        canReadProject ? context.services.planning.listReleases(context.projectId) : Promise.resolve([]),
+        canReadProject ? context.services.planning.listProjectRoadmaps(context.projectId) : Promise.resolve([]),
+        canReadWorkItems ? context.services.workItems.listByProject(context.projectId, { limit: 50 }) : Promise.resolve({ items: [] }),
+        canReadReports ? context.services.search.listProjectSavedFilters(context.projectId) : Promise.resolve([]),
       ]);
       const nextBoardId = boardId || firstId(boardRows);
       const nextReleaseId = releaseId || firstId(releaseRows);
       const nextRoadmapId = roadmapId || firstId(roadmapRows);
       const [columnRows, swimlaneRows, boardCards, releaseItems, roadmapRowsForSelected] = await Promise.all([
-        nextBoardId ? context.services.planning.listBoardColumns(nextBoardId) : Promise.resolve([]),
-        nextBoardId ? context.services.planning.listBoardSwimlanes(nextBoardId) : Promise.resolve([]),
-        nextBoardId ? context.services.planning.listBoardWorkItems(nextBoardId, { limitPerColumn: 50 }) : Promise.resolve(null),
-        nextReleaseId ? context.services.planning.listReleaseWorkItems(nextReleaseId) : Promise.resolve([]),
-        nextRoadmapId ? context.services.planning.listRoadmapItems(nextRoadmapId) : Promise.resolve([]),
+        canReadProject && nextBoardId ? context.services.planning.listBoardColumns(nextBoardId) : Promise.resolve([]),
+        canReadProject && nextBoardId ? context.services.planning.listBoardSwimlanes(nextBoardId) : Promise.resolve([]),
+        canReadWorkItems && nextBoardId ? context.services.planning.listBoardWorkItems(nextBoardId, { limitPerColumn: 50 }) : Promise.resolve(null),
+        canReadProject && nextReleaseId ? context.services.planning.listReleaseWorkItems(nextReleaseId) : Promise.resolve([]),
+        canReadProject && nextRoadmapId ? context.services.planning.listRoadmapItems(nextRoadmapId) : Promise.resolve([]),
       ]);
       return {
         teamRows,
@@ -125,6 +132,10 @@ export const PlanningPage = ({ context }) => {
 
   const createTeam = async (event) => {
     event.preventDefault();
+    if (!canManageTeams) {
+      action.setError('Your current workspace role cannot create teams');
+      return;
+    }
     const team = await action.run(() => context.services.planning.createTeam(context.workspaceId, {
       ...teamForm,
       defaultCapacity: Number(teamForm.defaultCapacity || 100),
@@ -140,6 +151,10 @@ export const PlanningPage = ({ context }) => {
 
   const assignTeam = async (event) => {
     event.preventDefault();
+    if (!canManageProjectTeams) {
+      action.setError('Your current project role cannot assign teams');
+      return;
+    }
     await action.run(() => context.services.planning.assignProjectTeam(context.projectId, projectTeamForm.teamId, {
       role: projectTeamForm.role,
     }), 'Team assigned');
@@ -148,6 +163,10 @@ export const PlanningPage = ({ context }) => {
 
   const createIteration = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot create iterations');
+      return;
+    }
     const iteration = await action.run(() => context.services.planning.createIteration(context.projectId, {
       ...iterationForm,
       teamId: iterationForm.teamId || undefined,
@@ -159,6 +178,10 @@ export const PlanningPage = ({ context }) => {
 
   const createBoard = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot create boards');
+      return;
+    }
     const board = await action.run(() => context.services.planning.createBoard(context.projectId, {
       name: boardForm.name,
       type: boardForm.type,
@@ -174,6 +197,10 @@ export const PlanningPage = ({ context }) => {
 
   const createColumn = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot manage board columns');
+      return;
+    }
     await action.run(() => context.services.planning.createBoardColumn(boardId, {
       name: columnForm.name,
       statusIds: [],
@@ -186,6 +213,10 @@ export const PlanningPage = ({ context }) => {
 
   const createSwimlane = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot manage board swimlanes');
+      return;
+    }
     await action.run(() => context.services.planning.createBoardSwimlane(boardId, {
       name: swimlaneForm.name,
       swimlaneType: swimlaneForm.mode === 'saved_filter' ? 'query' : swimlaneForm.swimlaneType,
@@ -202,10 +233,14 @@ export const PlanningPage = ({ context }) => {
       action.setError('Board is required');
       return;
     }
+    if (!canReadProject) {
+      action.setError('Your current project role cannot load board details');
+      return;
+    }
     const result = await action.run(() => Promise.all([
       context.services.planning.listBoardColumns(boardId),
       context.services.planning.listBoardSwimlanes(boardId),
-      context.services.planning.listBoardWorkItems(boardId, { limitPerColumn: 50 }),
+      canReadWorkItems ? context.services.planning.listBoardWorkItems(boardId, { limitPerColumn: 50 }) : Promise.resolve(null),
     ]));
     if (result) {
       const [columnRows, swimlaneRows, cardRows] = result;
@@ -217,6 +252,10 @@ export const PlanningPage = ({ context }) => {
 
   const createRelease = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot create releases');
+      return;
+    }
     const release = await action.run(() => context.services.planning.createRelease(context.projectId, {
       ...releaseForm,
       description: releaseForm.description || undefined,
@@ -229,6 +268,10 @@ export const PlanningPage = ({ context }) => {
 
   const addReleaseWorkItem = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot manage release scope');
+      return;
+    }
     await action.run(() => context.services.planning.addReleaseWorkItem(releaseId, {
       workItemId: releaseItemForm.workItemId,
     }), 'Work item added');
@@ -240,6 +283,10 @@ export const PlanningPage = ({ context }) => {
       action.setError('Release is required');
       return;
     }
+    if (!canReadProject) {
+      action.setError('Your current project role cannot load release scope');
+      return;
+    }
     const rows = await action.run(() => context.services.planning.listReleaseWorkItems(releaseId));
     if (rows) {
       setReleaseWorkItems(rows || []);
@@ -248,6 +295,10 @@ export const PlanningPage = ({ context }) => {
 
   const createRoadmap = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot create roadmaps');
+      return;
+    }
     const roadmap = await action.run(() => context.services.planning.createRoadmap(context.workspaceId, {
       projectId: context.projectId,
       name: roadmapForm.name,
@@ -262,6 +313,10 @@ export const PlanningPage = ({ context }) => {
 
   const createRoadmapItem = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot manage roadmap items');
+      return;
+    }
     await action.run(() => context.services.planning.createRoadmapItem(roadmapId, {
       workItemId: roadmapItemForm.workItemId,
       startDate: roadmapItemForm.startDate || undefined,
@@ -277,6 +332,10 @@ export const PlanningPage = ({ context }) => {
       action.setError('Roadmap is required');
       return;
     }
+    if (!canReadProject) {
+      action.setError('Your current project role cannot load roadmap items');
+      return;
+    }
     const rows = await action.run(() => context.services.planning.listRoadmapItems(roadmapId));
     if (rows) {
       setRoadmapItems(rows || []);
@@ -285,6 +344,7 @@ export const PlanningPage = ({ context }) => {
 
   return (
     <div className="content-grid">
+      {canManageTeams && (
       <Panel title="Teams" icon={<FiUsers />}>
         <form className="stack" onSubmit={createTeam}>
           <TextField label="Team name" value={teamForm.name} onChange={(name) => setTeamForm({ ...teamForm, name })} />
@@ -294,6 +354,8 @@ export const PlanningPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create team</button>
         </form>
       </Panel>
+      )}
+      {canManageProjectTeams && (
       <Panel title="Project Team" icon={<FiLayers />}>
         <form className="stack" onSubmit={assignTeam}>
           <RecordSelect label="Project team" records={teams} value={projectTeamForm.teamId} onChange={(teamId) => setProjectTeamForm({ ...projectTeamForm, teamId })} />
@@ -301,6 +363,8 @@ export const PlanningPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !context.projectId || !projectTeamForm.teamId} type="submit"><FiCheck />Assign</button>
         </form>
       </Panel>
+      )}
+      {canManagePlanning && (
       <Panel title="Iterations" icon={<FiActivity />}>
         <form className="stack create-strip" onSubmit={createIteration}>
           <TextField label="Iteration name" value={iterationForm.name} onChange={(name) => setIterationForm({ ...iterationForm, name })} />
@@ -310,6 +374,8 @@ export const PlanningPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !context.projectId} type="submit"><FiPlus />Create</button>
         </form>
       </Panel>
+      )}
+      {canManagePlanning && (
       <Panel title="Board" icon={<FiList />}>
         <form className="stack" onSubmit={createBoard}>
           <TextField label="Board name" value={boardForm.name} onChange={(name) => setBoardForm({ ...boardForm, name })} />
@@ -319,6 +385,8 @@ export const PlanningPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !context.projectId} type="submit"><FiPlus />Create board</button>
         </form>
       </Panel>
+      )}
+      {canManagePlanning && (
       <Panel title="Board Layout" icon={<FiSliders />}>
         <form className="stack" onSubmit={createColumn}>
           <RecordSelect label="Board" records={boards} value={boardId} onChange={setBoardId} />
@@ -346,6 +414,8 @@ export const PlanningPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !boardId} type="submit"><FiPlus />Add swimlane</button>
         </form>
       </Panel>
+      )}
+      {canManagePlanning && (
       <Panel title="Release" icon={<FiActivity />}>
         <form className="stack" onSubmit={createRelease}>
           <TextField label="Release name" value={releaseForm.name} onChange={(name) => setReleaseForm({ ...releaseForm, name })} />
@@ -363,6 +433,8 @@ export const PlanningPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !releaseId || !releaseItemForm.workItemId} type="submit"><FiPlus />Add work</button>
         </form>
       </Panel>
+      )}
+      {canManagePlanning && (
       <Panel title="Roadmap" icon={<FiBarChart2 />}>
         <form className="stack" onSubmit={createRoadmap}>
           <TextField label="Roadmap name" value={roadmapForm.name} onChange={(name) => setRoadmapForm({ ...roadmapForm, name })} />
@@ -381,10 +453,11 @@ export const PlanningPage = ({ context }) => {
           <button className="secondary-button" disabled={action.pending || !roadmapId || !roadmapItemForm.workItemId} type="submit"><FiPlus />Add item</button>
         </form>
       </Panel>
+      )}
       <Panel title="Planning Records" icon={<FiEye />} wide>
         <div className="button-row">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
-          <button className="secondary-button" disabled={action.pending || !boardId} onClick={loadBoardDetails} type="button">Board cards</button>
+          <button className="secondary-button" disabled={action.pending || !boardId || !canReadProject} onClick={loadBoardDetails} type="button">Board cards</button>
           <button className="secondary-button" disabled={action.pending || !releaseId} onClick={loadReleaseDetails} type="button">Release scope</button>
           <button className="secondary-button" disabled={action.pending || !roadmapId} onClick={loadRoadmapDetails} type="button">Roadmap items</button>
         </div>

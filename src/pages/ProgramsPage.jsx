@@ -37,6 +37,8 @@ export const ProgramsPage = ({ context }) => {
   const [assignmentForm, setAssignmentForm] = useState({ projectId: context.projectId || '', position: '1' });
   const [reportForm, setReportForm] = useState({ from: '2020-01-01T00:00:00Z', to: '2030-01-01T00:00:00Z' });
   const action = useApiAction(context.addToast);
+  const canReadPrograms = context.hasWorkspacePermission('workspace.read');
+  const canManagePrograms = context.hasWorkspacePermission('workspace.admin');
 
   useEffect(() => {
     setAssignmentForm((current) => ({ ...current, projectId: current.projectId || context.projectId || '' }));
@@ -51,6 +53,10 @@ export const ProgramsPage = ({ context }) => {
   });
 
   const loadPrograms = async (preferredProgramId = selectedProgramId) => {
+    if (!canReadPrograms) {
+      action.setError('Your current workspace role cannot read programs');
+      return;
+    }
     if (!context.workspaceId) {
       action.setError('Select a workspace before loading programs');
       return;
@@ -71,6 +77,10 @@ export const ProgramsPage = ({ context }) => {
   };
 
   const loadProgram = async (programId = selectedProgramId) => {
+    if (!canReadPrograms) {
+      action.setError('Your current workspace role cannot read program details');
+      return;
+    }
     if (!programId) {
       action.setError('Select a program first');
       return;
@@ -90,6 +100,10 @@ export const ProgramsPage = ({ context }) => {
 
   const createProgram = async (event) => {
     event.preventDefault();
+    if (!canManagePrograms) {
+      action.setError('Your current workspace role cannot create programs');
+      return;
+    }
     if (!context.workspaceId) {
       action.setError('Select a workspace before creating programs');
       return;
@@ -106,6 +120,10 @@ export const ProgramsPage = ({ context }) => {
 
   const updateProgram = async (event) => {
     event.preventDefault();
+    if (!canManagePrograms) {
+      action.setError('Your current workspace role cannot update programs');
+      return;
+    }
     if (!selectedProgramId) {
       action.setError('Select a program first');
       return;
@@ -122,6 +140,10 @@ export const ProgramsPage = ({ context }) => {
   };
 
   const archiveProgram = async () => {
+    if (!canManagePrograms) {
+      action.setError('Your current workspace role cannot archive programs');
+      return;
+    }
     if (!selectedProgramId) {
       action.setError('Select a program first');
       return;
@@ -139,6 +161,10 @@ export const ProgramsPage = ({ context }) => {
 
   const assignProject = async (event) => {
     event.preventDefault();
+    if (!canManagePrograms) {
+      action.setError('Your current workspace role cannot manage program projects');
+      return;
+    }
     if (!selectedProgramId || !assignmentForm.projectId) {
       action.setError('Select a program and project first');
       return;
@@ -153,6 +179,10 @@ export const ProgramsPage = ({ context }) => {
   };
 
   const removeProject = async (projectId) => {
+    if (!canManagePrograms) {
+      action.setError('Your current workspace role cannot manage program projects');
+      return;
+    }
     if (!selectedProgramId || !projectId) {
       return;
     }
@@ -164,6 +194,10 @@ export const ProgramsPage = ({ context }) => {
   };
 
   const loadSummary = async () => {
+    if (!canReadPrograms) {
+      action.setError('Your current workspace role cannot read program summaries');
+      return;
+    }
     if (!selectedProgramId) {
       action.setError('Select a program first');
       return;
@@ -180,12 +214,14 @@ export const ProgramsPage = ({ context }) => {
   return (
     <div className="content-grid">
       <Panel title="Program Portfolio" icon={<FiBriefcase />}>
-        <form className="stack" onSubmit={createProgram}>
-          <TextField label="Name" value={programForm.name} onChange={(name) => setProgramForm({ ...programForm, name })} />
-          <TextField label="Description" value={programForm.description} onChange={(description) => setProgramForm({ ...programForm, description })} />
-          <SelectField label="Status" value={programForm.status} onChange={(status) => setProgramForm({ ...programForm, status })} options={['active', 'archived']} />
-          <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create program</button>
-        </form>
+        {canManagePrograms && (
+          <form className="stack" onSubmit={createProgram}>
+            <TextField label="Name" value={programForm.name} onChange={(name) => setProgramForm({ ...programForm, name })} />
+            <TextField label="Description" value={programForm.description} onChange={(description) => setProgramForm({ ...programForm, description })} />
+            <SelectField label="Status" value={programForm.status} onChange={(status) => setProgramForm({ ...programForm, status })} options={['active', 'archived']} />
+            <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create program</button>
+          </form>
+        )}
         <div className="stack">
           <RecordSelect label="Program" records={programs} value={selectedProgramId} onChange={(programId) => { setSelectedProgramId(programId); loadProgram(programId); }} />
           <div className="button-row wrap">
@@ -197,41 +233,47 @@ export const ProgramsPage = ({ context }) => {
       </Panel>
 
       <Panel title="Program Detail" icon={<FiSave />}>
-        <form className="stack" onSubmit={updateProgram}>
-          <SummaryRows rows={[
-            ['Selected', selectedProgram?.name || 'None'],
-            ['Created', selectedProgram?.createdAt],
-            ['Updated', selectedProgram?.updatedAt],
-          ]} />
-          <TextField label="Name" value={programForm.name} onChange={(name) => setProgramForm({ ...programForm, name })} />
-          <TextField label="Description" value={programForm.description} onChange={(description) => setProgramForm({ ...programForm, description })} />
-          <SelectField label="Status" value={programForm.status} onChange={(status) => setProgramForm({ ...programForm, status })} options={['active', 'archived']} />
-          <Field label="Roadmap config JSON">
-            <textarea value={programForm.roadmapConfigText} onChange={(event) => setProgramForm({ ...programForm, roadmapConfigText: event.target.value })} rows={6} spellCheck="false" />
-          </Field>
-          <Field label="Report config JSON">
-            <textarea value={programForm.reportConfigText} onChange={(event) => setProgramForm({ ...programForm, reportConfigText: event.target.value })} rows={6} spellCheck="false" />
-          </Field>
-          <div className="button-row wrap">
-            <button className="primary-button" disabled={action.pending || !selectedProgramId} type="submit"><FiSave />Save</button>
-            <button className="secondary-button danger" disabled={action.pending || !selectedProgramId} onClick={archiveProgram} type="button"><FiArchive />Archive</button>
-          </div>
-        </form>
+        <SummaryRows rows={[
+          ['Selected', selectedProgram?.name || 'None'],
+          ['Created', selectedProgram?.createdAt],
+          ['Updated', selectedProgram?.updatedAt],
+        ]} />
+        {canManagePrograms ? (
+          <form className="stack" onSubmit={updateProgram}>
+            <TextField label="Name" value={programForm.name} onChange={(name) => setProgramForm({ ...programForm, name })} />
+            <TextField label="Description" value={programForm.description} onChange={(description) => setProgramForm({ ...programForm, description })} />
+            <SelectField label="Status" value={programForm.status} onChange={(status) => setProgramForm({ ...programForm, status })} options={['active', 'archived']} />
+            <Field label="Roadmap config JSON">
+              <textarea value={programForm.roadmapConfigText} onChange={(event) => setProgramForm({ ...programForm, roadmapConfigText: event.target.value })} rows={6} spellCheck="false" />
+            </Field>
+            <Field label="Report config JSON">
+              <textarea value={programForm.reportConfigText} onChange={(event) => setProgramForm({ ...programForm, reportConfigText: event.target.value })} rows={6} spellCheck="false" />
+            </Field>
+            <div className="button-row wrap">
+              <button className="primary-button" disabled={action.pending || !selectedProgramId} type="submit"><FiSave />Save</button>
+              <button className="secondary-button danger" disabled={action.pending || !selectedProgramId} onClick={archiveProgram} type="button"><FiArchive />Archive</button>
+            </div>
+          </form>
+        ) : (
+          <JsonPreview title="Program" value={selectedProgram} />
+        )}
       </Panel>
 
       <Panel title="Program Projects" icon={<FiBriefcase />} wide>
-        <form className="stack compact" onSubmit={assignProject}>
-          <div className="two-column compact">
-            <RecordSelect
-              label="Project"
-              records={context.projectOptions.filter((project) => project.workspaceId === context.workspaceId)}
-              value={assignmentForm.projectId}
-              onChange={(projectId) => setAssignmentForm({ ...assignmentForm, projectId })}
-            />
-            <TextField label="Position" type="number" value={assignmentForm.position} onChange={(position) => setAssignmentForm({ ...assignmentForm, position })} />
-          </div>
-          <button className="secondary-button" disabled={action.pending || !selectedProgramId || !assignmentForm.projectId} type="submit"><FiPlus />Assign project</button>
-        </form>
+        {canManagePrograms && (
+          <form className="stack compact" onSubmit={assignProject}>
+            <div className="two-column compact">
+              <RecordSelect
+                label="Project"
+                records={context.projectOptions.filter((project) => project.workspaceId === context.workspaceId)}
+                value={assignmentForm.projectId}
+                onChange={(projectId) => setAssignmentForm({ ...assignmentForm, projectId })}
+              />
+              <TextField label="Position" type="number" value={assignmentForm.position} onChange={(position) => setAssignmentForm({ ...assignmentForm, position })} />
+            </div>
+            <button className="secondary-button" disabled={action.pending || !selectedProgramId || !assignmentForm.projectId} type="submit"><FiPlus />Assign project</button>
+          </form>
+        )}
         <div className="table-wrap">
           <table className="data-table">
             <thead>
@@ -249,7 +291,11 @@ export const ProgramsPage = ({ context }) => {
                   <td>{project.position}</td>
                   <td>{project.createdAt || 'None'}</td>
                   <td>
-                    <button className="secondary-button" disabled={action.pending} onClick={() => removeProject(project.projectId)} type="button"><FiTrash2 />Remove</button>
+                    {canManagePrograms ? (
+                      <button className="secondary-button" disabled={action.pending} onClick={() => removeProject(project.projectId)} type="button"><FiTrash2 />Remove</button>
+                    ) : (
+                      'Read only'
+                    )}
                   </td>
                 </tr>
               ))}

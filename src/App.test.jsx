@@ -6,13 +6,8 @@ describe('App', () => {
   beforeEach(() => {
     window.history.pushState({}, '', '/');
     window.localStorage.clear();
-    vi.stubGlobal('fetch', vi.fn(async () => new Response(
-      JSON.stringify({ message: 'Unauthorized' }),
-      {
-        status: 401,
-        headers: { 'Content-Type': 'application/json' },
-      },
-    )));
+    vi.stubGlobal('fetch', vi.fn());
+    mockAuthenticatedContext();
   });
 
   afterEach(() => {
@@ -31,7 +26,7 @@ describe('App', () => {
     expect(within(primaryNavigation).getByRole('link', { name: /^Planning$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Programs$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Agents$/i })).toBeInTheDocument();
-    expect(screen.queryByRole('navigation', { name: 'Administration' })).not.toBeInTheDocument();
+    expect(screen.getByRole('navigation', { name: 'Administration' })).toBeInTheDocument();
   });
 
   it('shows first-run setup links only while initial setup is available', async () => {
@@ -354,6 +349,17 @@ const authenticatedContext = () => ({
     name: 'Demo Workspace',
     key: 'DEMO',
     status: 'active',
+    permissionKeys: [
+      'workspace.read',
+      'workspace.admin',
+      'report.read',
+      'report.manage',
+      'automation.admin',
+      'user.manage',
+      'agent.provider.manage',
+      'agent.profile.manage',
+      'repository_connection.manage',
+    ],
   }],
   projects: [{
     id: '00000000-0000-0000-0000-000000000099',
@@ -361,12 +367,35 @@ const authenticatedContext = () => ({
     name: 'Demo Project',
     key: 'DEMO',
     status: 'active',
+    permissionKeys: [
+      'project.read',
+      'project.admin',
+      'board.admin',
+      'work_item.read',
+      'work_item.create',
+      'work_item.update',
+      'work_item.comment',
+      'work_item.link',
+      'report.read',
+      'report.manage',
+    ],
   }],
   defaultWorkspace: {
     id: '00000000-0000-0000-0000-000000000101',
     name: 'Demo Workspace',
     key: 'DEMO',
     status: 'active',
+    permissionKeys: [
+      'workspace.read',
+      'workspace.admin',
+      'report.read',
+      'report.manage',
+      'automation.admin',
+      'user.manage',
+      'agent.provider.manage',
+      'agent.profile.manage',
+      'repository_connection.manage',
+    ],
   },
   defaultProject: {
     id: '00000000-0000-0000-0000-000000000099',
@@ -374,7 +403,20 @@ const authenticatedContext = () => ({
     name: 'Demo Project',
     key: 'DEMO',
     status: 'active',
+    permissionKeys: [
+      'project.read',
+      'project.admin',
+      'board.admin',
+      'work_item.read',
+      'work_item.create',
+      'work_item.update',
+      'work_item.comment',
+      'work_item.link',
+      'report.read',
+      'report.manage',
+    ],
   },
+  systemAdmin: true,
 });
 
 const firstSetupResponse = () => ({

@@ -32,6 +32,12 @@ export const SearchPage = ({ context }) => {
     configText: JSON.stringify({ columns: ['key', 'title', 'statusKey', 'assigneeId'] }, null, 2),
   });
   const action = useApiAction(context.addToast);
+  const canReadReports = context.hasWorkspacePermission('report.read');
+  const canReadWorkspace = context.hasWorkspacePermission('workspace.read');
+  const canManageWorkspaceReports = context.hasWorkspacePermission('report.manage');
+  const canManageProjectReports = context.hasProjectPermission('report.manage');
+  const canCreateFilter = sharedVisibilityAllowed(filterForm.visibility, context, canReadReports, canManageWorkspaceReports, canManageProjectReports);
+  const canCreateView = sharedVisibilityAllowed(viewForm.visibility, context, canReadWorkspace, canManageWorkspaceReports, canManageProjectReports);
 
   useEffect(() => {
     setFilterForm((current) => {
@@ -47,13 +53,17 @@ export const SearchPage = ({ context }) => {
   }, [context.projectId]);
 
   const load = async () => {
+    if (!canReadReports && !canReadWorkspace) {
+      action.setError('Your current membership cannot read saved filters or saved views');
+      return;
+    }
     if (!context.workspaceId) {
       action.setError('Select a workspace before loading filters');
       return;
     }
     const result = await action.run(() => Promise.all([
-      context.services.search.listSavedFilters(context.workspaceId),
-      context.services.search.listSavedViews(context.workspaceId),
+      canReadReports ? context.services.search.listSavedFilters(context.workspaceId) : Promise.resolve([]),
+      canReadWorkspace ? context.services.search.listSavedViews(context.workspaceId) : Promise.resolve([]),
     ]));
     if (result) {
       const [filterRows, viewRows] = result;
@@ -72,6 +82,10 @@ export const SearchPage = ({ context }) => {
 
   const createFilter = async (event) => {
     event.preventDefault();
+    if (!canCreateFilter) {
+      action.setError('Your current membership cannot create a saved filter with this visibility');
+      return;
+    }
     const saved = await action.run(() => {
       const query = parseJsonOrThrow(filterForm.queryText);
       return context.services.search.createSavedFilter(context.workspaceId, {
@@ -89,6 +103,10 @@ export const SearchPage = ({ context }) => {
   };
 
   const executeFilter = async (cursor = '') => {
+    if (!canReadReports) {
+      action.setError('Your current membership cannot execute saved filters');
+      return;
+    }
     if (!savedFilterId) {
       action.setError('Select a saved filter first');
       return;
@@ -104,6 +122,10 @@ export const SearchPage = ({ context }) => {
 
   const createView = async (event) => {
     event.preventDefault();
+    if (!canCreateView) {
+      action.setError('Your current membership cannot create a saved view with this visibility');
+      return;
+    }
     const saved = await action.run(() => context.services.search.createSavedView(context.workspaceId, {
       name: viewForm.name,
       viewType: viewForm.viewType,
@@ -142,15 +164,15 @@ export const SearchPage = ({ context }) => {
             <textarea value={filterForm.queryText} onChange={(event) => setFilterForm({ ...filterForm, queryText: event.target.value })} rows={14} spellCheck="false" />
           </Field>
           <div className="button-row wrap">
-            <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create filter</button>
-            <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>
+            <button className="primary-button" disabled={action.pending || !context.workspaceId || !canCreateFilter} type="submit"><FiPlus />Create filter</button>
+            <button className="secondary-button" disabled={action.pending || (!canReadReports && !canReadWorkspace)} onClick={load} type="button"><FiRefreshCw />Refresh</button>
           </div>
         </form>
       </Panel>
       <Panel title="Execute" icon={<FiEye />}>
         <div className="stack">
           <RecordSelect label="Saved filter" records={filters} value={savedFilterId} onChange={setSavedFilterId} />
-          <button className="primary-button" disabled={action.pending || !savedFilterId} onClick={() => executeFilter()} type="button"><FiRefreshCw />Run</button>
+          <button className="primary-button" disabled={action.pending || !savedFilterId || !canReadReports} onClick={() => executeFilter()} type="button"><FiRefreshCw />Run</button>
           <button className="secondary-button" disabled={action.pending || !results?.nextCursor} onClick={() => executeFilter(results.nextCursor)} type="button">More</button>
           <ErrorLine message={action.error} />
         </div>
@@ -163,7 +185,7 @@ export const SearchPage = ({ context }) => {
           <Field label="Config JSON">
             <textarea value={viewForm.configText} onChange={(event) => setViewForm({ ...viewForm, configText: event.target.value })} rows={8} spellCheck="false" />
           </Field>
-          <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create view</button>
+          <button className="primary-button" disabled={action.pending || !context.workspaceId || !canCreateView} type="submit"><FiPlus />Create view</button>
         </form>
       </Panel>
       <Panel title="Catalog" icon={<FiDatabase />} wide>
@@ -174,4 +196,14 @@ export const SearchPage = ({ context }) => {
       </Panel>
     </div>
   );
+};
+
+const sharedVisibilityAllowed = (visibility, context, canReadPrivate, canManageWorkspaceReports, canManageProjectReports) => {
+  if (visibility === 'private') {
+    return canReadPrivate;
+  }
+  if (visibility === 'project') {
+    return canManageProjectReports && Boolean(context.projectId);
+  }
+  return canManageWorkspaceReports;
 };

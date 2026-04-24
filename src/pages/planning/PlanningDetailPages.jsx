@@ -23,13 +23,20 @@ export const BoardDetailPage = ({ context }) => {
   const [cards, setCards] = useState(null);
   const [moveForm, setMoveForm] = useState({ workItemId: '', targetColumnId: '', previousWorkItemId: '', nextWorkItemId: '', transitionKey: '' });
   const [form, setForm] = useState({ name: '', type: 'kanban', projectScoped: 'true', active: 'true' });
+  const canReadProject = context.hasProjectPermission('project.read');
+  const canReadWorkItems = context.hasProjectPermission('work_item.read');
+  const canManagePlanning = context.hasProjectPermission('board.admin');
 
   const load = async () => {
+    if (!canReadProject) {
+      action.setError('Your current project role cannot access this board');
+      return;
+    }
     const result = await action.run(() => Promise.all([
       context.services.planning.getBoard(boardId),
       context.services.planning.listBoardColumns(boardId),
       context.services.planning.listBoardSwimlanes(boardId),
-      context.services.planning.listBoardWorkItems(boardId, { limitPerColumn: 50 }),
+      canReadWorkItems ? context.services.planning.listBoardWorkItems(boardId, { limitPerColumn: 50 }) : Promise.resolve(null),
     ]));
     if (result) {
       const [boardRow, columnRows, swimlaneRows, cardRows] = result;
@@ -59,6 +66,10 @@ export const BoardDetailPage = ({ context }) => {
 
   const save = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot update this board');
+      return;
+    }
     const saved = await action.run(() => context.services.planning.updateBoard(boardId, {
       name: form.name,
       type: form.type,
@@ -71,11 +82,19 @@ export const BoardDetailPage = ({ context }) => {
   };
 
   const archive = async () => {
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot archive this board');
+      return;
+    }
     await action.run(() => context.services.planning.archiveBoard(boardId), 'Board archived');
     navigate('/planning');
   };
 
   const moveWorkItem = async (request) => {
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot move board cards');
+      return;
+    }
     const workItemId = request.workItemId || moveForm.workItemId;
     if (!workItemId) {
       action.setError('Work item is required');
@@ -106,13 +125,14 @@ export const BoardDetailPage = ({ context }) => {
           <SelectField label="Active" value={form.active} onChange={(active) => setForm({ ...form, active })} options={['true', 'false']} />
           <SelectField label="Project scoped" value={form.projectScoped} onChange={(projectScoped) => setForm({ ...form, projectScoped })} options={['true', 'false']} />
           <div className="button-row wrap">
-            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
-            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive board" type="button"><FiX /></button>
+            <button className="primary-button" disabled={action.pending || !canManagePlanning} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending || !canManagePlanning} onClick={archive} title="Archive board" type="button"><FiX /></button>
             <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
           </div>
         </form>
         <ErrorLine message={action.error} />
       </Panel>
+      {canManagePlanning && (
       <Panel title="Move Card" icon={<FiActivity />}>
         <form className="stack" onSubmit={submitMove}>
           <RecordSelect label="Work item" records={boardWorkItemsList(cards)} value={moveForm.workItemId} onChange={(workItemId) => setMoveForm({ ...moveForm, workItemId })} />
@@ -123,6 +143,8 @@ export const BoardDetailPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !moveForm.workItemId} type="submit"><FiCheck />Move</button>
         </form>
       </Panel>
+      )}
+      {canManagePlanning && (
       <Panel title="Columns And Swimlanes" icon={<FiSliders />} wide>
         <div className="data-columns two no-margin">
           <JsonRecordEditor
@@ -143,8 +165,9 @@ export const BoardDetailPage = ({ context }) => {
           />
         </div>
       </Panel>
+      )}
       <Panel title="Board Cards" icon={<FiEye />} wide>
-        <BoardCardColumns boardWorkItems={cards} onMove={(workItemId, request) => moveWorkItem({ ...request, workItemId })} />
+        <BoardCardColumns boardWorkItems={cards} onMove={canManagePlanning ? (workItemId, request) => moveWorkItem({ ...request, workItemId }) : undefined} />
         <JsonPreview title="Board" value={board} />
       </Panel>
     </DetailLayout>
@@ -164,8 +187,14 @@ export const ReleaseDetailPage = ({ context }) => {
   const [release, setRelease] = useState(null);
   const [scope, setScope] = useState([]);
   const [form, setForm] = useState({ name: '', version: '', startDate: '', releaseDate: '', status: 'planned', description: '' });
+  const canReadProject = context.hasProjectPermission('project.read');
+  const canManagePlanning = context.hasProjectPermission('board.admin');
 
   const load = async () => {
+    if (!canReadProject) {
+      action.setError('Your current project role cannot access this release');
+      return;
+    }
     const result = await action.run(() => Promise.all([
       context.services.planning.getRelease(releaseId),
       context.services.planning.listReleaseWorkItems(releaseId),
@@ -191,6 +220,10 @@ export const ReleaseDetailPage = ({ context }) => {
 
   const save = async (event) => {
     event.preventDefault();
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot update this release');
+      return;
+    }
     const saved = await action.run(() => context.services.planning.updateRelease(releaseId, {
       ...form,
       description: form.description || undefined,
@@ -201,6 +234,10 @@ export const ReleaseDetailPage = ({ context }) => {
   };
 
   const archive = async () => {
+    if (!canManagePlanning) {
+      action.setError('Your current project role cannot archive this release');
+      return;
+    }
     await action.run(() => context.services.planning.deleteRelease(releaseId), 'Release archived');
     navigate('/planning');
   };
@@ -216,8 +253,8 @@ export const ReleaseDetailPage = ({ context }) => {
           <SelectField label="Status" value={form.status} onChange={(status) => setForm({ ...form, status })} options={['planned', 'active', 'released', 'archived']} />
           <TextField label="Description" value={form.description} onChange={(description) => setForm({ ...form, description })} />
           <div className="button-row wrap">
-            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
-            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive release" type="button"><FiX /></button>
+            <button className="primary-button" disabled={action.pending || !canManagePlanning} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending || !canManagePlanning} onClick={archive} title="Archive release" type="button"><FiX /></button>
             <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
           </div>
         </form>
@@ -238,8 +275,14 @@ export const RoadmapDetailPage = ({ context }) => {
   const [roadmap, setRoadmap] = useState(null);
   const [items, setItems] = useState([]);
   const [form, setForm] = useState({ name: '', visibility: 'project', lanes: 'now, next, later' });
+  const canReadRoadmap = context.hasWorkspacePermission('workspace.read') || context.hasProjectPermission('project.read');
+  const canManageRoadmap = context.hasWorkspacePermission('workspace.admin') || context.hasProjectPermission('board.admin');
 
   const load = async () => {
+    if (!canReadRoadmap) {
+      action.setError('Your current membership cannot access this roadmap');
+      return;
+    }
     const result = await action.run(() => Promise.all([
       context.services.planning.getRoadmap(roadmapId),
       context.services.planning.listRoadmapItems(roadmapId),
@@ -262,6 +305,10 @@ export const RoadmapDetailPage = ({ context }) => {
 
   const save = async (event) => {
     event.preventDefault();
+    if (!canManageRoadmap) {
+      action.setError('Your current membership cannot update this roadmap');
+      return;
+    }
     const saved = await action.run(() => context.services.planning.updateRoadmap(roadmapId, {
       projectId: context.projectId || roadmap?.projectId,
       name: form.name,
@@ -274,6 +321,10 @@ export const RoadmapDetailPage = ({ context }) => {
   };
 
   const archive = async () => {
+    if (!canManageRoadmap) {
+      action.setError('Your current membership cannot archive this roadmap');
+      return;
+    }
     await action.run(() => context.services.planning.deleteRoadmap(roadmapId), 'Roadmap archived');
     navigate('/planning');
   };
@@ -286,14 +337,15 @@ export const RoadmapDetailPage = ({ context }) => {
           <SelectField label="Visibility" value={form.visibility} onChange={(visibility) => setForm({ ...form, visibility })} options={['private', 'project', 'workspace', 'public']} />
           <TextField label="Roadmap lanes" value={form.lanes} onChange={(lanes) => setForm({ ...form, lanes })} />
           <div className="button-row wrap">
-            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
-            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive roadmap" type="button"><FiX /></button>
+            <button className="primary-button" disabled={action.pending || !canManageRoadmap} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending || !canManageRoadmap} onClick={archive} title="Archive roadmap" type="button"><FiX /></button>
             <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
           </div>
         </form>
         <ErrorLine message={action.error} />
       </Panel>
       <Panel title="Items" icon={<FiList />} wide>
+        {canManageRoadmap ? (
         <JsonRecordEditor
           records={items}
           title="Roadmap Items"
@@ -302,6 +354,9 @@ export const RoadmapDetailPage = ({ context }) => {
           onSuccess={load}
           action={action}
         />
+        ) : (
+          <p className="muted">Roadmap items are read-only for your current membership.</p>
+        )}
         <JsonPreview title="Roadmap" value={roadmap} />
       </Panel>
     </DetailLayout>

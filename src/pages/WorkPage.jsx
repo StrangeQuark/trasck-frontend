@@ -15,6 +15,8 @@ export const WorkPage = ({ context }) => {
   const [selected, setSelected] = useState(null);
   const [newWorkItem, setNewWorkItem] = useState({ typeKey: 'story', title: 'New work item', visibility: 'inherited' });
   const action = useApiAction(context.addToast);
+  const canReadWorkItems = context.hasProjectPermission('work_item.read');
+  const canCreateWorkItems = context.hasProjectPermission('work_item.create');
 
   const queryParams = (cursor) => {
     const query = { limit: 25 };
@@ -33,6 +35,10 @@ export const WorkPage = ({ context }) => {
   };
 
   const loadItems = async (cursor = '') => {
+    if (!canReadWorkItems) {
+      action.setError('Your current project role cannot read work items');
+      return;
+    }
     if (!context.projectId) {
       action.setError('Select a project before loading work items');
       return;
@@ -47,6 +53,10 @@ export const WorkPage = ({ context }) => {
 
   const create = async (event) => {
     event.preventDefault();
+    if (!canCreateWorkItems) {
+      action.setError('Your current project role cannot create work items');
+      return;
+    }
     if (!context.projectId) {
       action.setError('Select a project before creating work items');
       return;
@@ -59,12 +69,16 @@ export const WorkPage = ({ context }) => {
   };
 
   useEffect(() => {
-    if (context.projectId) {
+    if (context.projectId && canReadWorkItems) {
       loadItems();
     }
-  }, [context.projectId]);
+  }, [context.projectId, canReadWorkItems]);
 
   const openItem = async (workItemId) => {
+    if (!canReadWorkItems) {
+      action.setError('Your current project role cannot open work items');
+      return;
+    }
     const item = await action.run(() => context.services.workItems.get(workItemId));
     if (item) {
       setSelected(item);
@@ -89,12 +103,14 @@ export const WorkPage = ({ context }) => {
             <button className="secondary-button" disabled={!nextCursor || action.pending} onClick={() => loadItems(nextCursor)} type="button">More</button>
           </div>
         </form>
-        <form className="stack create-strip" onSubmit={create}>
-          <SelectField label="Type" value={newWorkItem.typeKey} onChange={(typeKey) => setNewWorkItem({ ...newWorkItem, typeKey })} options={['story', 'epic', 'task', 'bug']} />
-          <TextField label="Title" value={newWorkItem.title} onChange={(title) => setNewWorkItem({ ...newWorkItem, title })} />
-          <SelectField label="Work item visibility" value={newWorkItem.visibility} onChange={(visibility) => setNewWorkItem({ ...newWorkItem, visibility })} options={['inherited', 'public', 'private']} />
-          <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Create</button>
-        </form>
+        {canCreateWorkItems && (
+          <form className="stack create-strip" onSubmit={create}>
+            <SelectField label="Type" value={newWorkItem.typeKey} onChange={(typeKey) => setNewWorkItem({ ...newWorkItem, typeKey })} options={['story', 'epic', 'task', 'bug']} />
+            <TextField label="Title" value={newWorkItem.title} onChange={(title) => setNewWorkItem({ ...newWorkItem, title })} />
+            <SelectField label="Work item visibility" value={newWorkItem.visibility} onChange={(visibility) => setNewWorkItem({ ...newWorkItem, visibility })} options={['inherited', 'public', 'private']} />
+            <button className="secondary-button" disabled={action.pending} type="submit"><FiPlus />Create</button>
+          </form>
+        )}
         <ErrorLine message={action.error} />
         <div className="work-columns">
           <ResultList items={items} titleKey="title" eyebrowKey="key" onOpen={(item) => openItem(item.id)} />

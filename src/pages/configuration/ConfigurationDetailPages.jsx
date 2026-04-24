@@ -20,6 +20,7 @@ export const CustomFieldDetailPage = ({ context }) => {
   const [contexts, setContexts] = useState([]);
   const [configs, setConfigs] = useState([]);
   const [form, setForm] = useState({ name: '', key: '', fieldType: 'text', optionsText: '{}', searchable: 'false', archived: 'false' });
+  const canManageWorkspace = context.hasWorkspacePermission('workspace.admin');
 
   const load = async () => {
     const result = await action.run(() => Promise.all([
@@ -49,6 +50,10 @@ export const CustomFieldDetailPage = ({ context }) => {
 
   const save = async (event) => {
     event.preventDefault();
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot update custom fields');
+      return;
+    }
     const saved = await action.run(() => context.services.configuration.updateCustomField(customFieldId, {
       name: form.name,
       key: form.key,
@@ -63,6 +68,10 @@ export const CustomFieldDetailPage = ({ context }) => {
   };
 
   const archive = async () => {
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot archive custom fields');
+      return;
+    }
     await action.run(() => context.services.configuration.archiveCustomField(customFieldId), 'Custom field archived');
     navigate('/configuration');
   };
@@ -80,32 +89,36 @@ export const CustomFieldDetailPage = ({ context }) => {
             <textarea value={form.optionsText} onChange={(event) => setForm({ ...form, optionsText: event.target.value })} rows={6} spellCheck="false" />
           </Field>
           <div className="button-row wrap">
-            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
-            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Archive custom field" type="button"><FiX /></button>
+            <button className="primary-button" disabled={action.pending || !canManageWorkspace} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending || !canManageWorkspace} onClick={archive} title="Archive custom field" type="button"><FiX /></button>
             <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
           </div>
         </form>
         <ErrorLine message={action.error} />
       </Panel>
       <Panel title="Contexts And Configs" icon={<FiLayers />} wide>
-        <div className="data-columns two no-margin">
-          <JsonRecordEditor
-            records={contexts}
-            title="Contexts"
-            onDelete={(record) => context.services.configuration.deleteCustomFieldContext(customFieldId, record.id)}
-            onSave={(record, draft) => context.services.configuration.updateCustomFieldContext(customFieldId, record.id, pick(draft, ['projectId', 'workItemTypeId', 'required', 'defaultValue', 'validationConfig']))}
-            onSuccess={load}
-            action={action}
-          />
-          <JsonRecordEditor
-            records={configs}
-            title="Field Configurations"
-            onDelete={(record) => context.services.configuration.deleteFieldConfiguration(record.id)}
-            onSave={(record, draft) => context.services.configuration.updateFieldConfiguration(record.id, pick(draft, ['projectId', 'workItemTypeId', 'required', 'hidden', 'defaultValue', 'validationConfig']))}
-            onSuccess={load}
-            action={action}
-          />
-        </div>
+        {canManageWorkspace ? (
+          <div className="data-columns two no-margin">
+            <JsonRecordEditor
+              records={contexts}
+              title="Contexts"
+              onDelete={(record) => context.services.configuration.deleteCustomFieldContext(customFieldId, record.id)}
+              onSave={(record, draft) => context.services.configuration.updateCustomFieldContext(customFieldId, record.id, pick(draft, ['projectId', 'workItemTypeId', 'required', 'defaultValue', 'validationConfig']))}
+              onSuccess={load}
+              action={action}
+            />
+            <JsonRecordEditor
+              records={configs}
+              title="Field Configurations"
+              onDelete={(record) => context.services.configuration.deleteFieldConfiguration(record.id)}
+              onSave={(record, draft) => context.services.configuration.updateFieldConfiguration(record.id, pick(draft, ['projectId', 'workItemTypeId', 'required', 'hidden', 'defaultValue', 'validationConfig']))}
+              onSuccess={load}
+              action={action}
+            />
+          </div>
+        ) : (
+          <p className="muted">Context and field configuration records are read-only for your current workspace membership.</p>
+        )}
         <JsonPreview title="Field" value={field} />
       </Panel>
     </DetailLayout>
@@ -120,6 +133,7 @@ export const ScreenDetailPage = ({ context }) => {
   const [fields, setFields] = useState([]);
   const [assignments, setAssignments] = useState([]);
   const [form, setForm] = useState({ name: '', screenType: 'edit', configText: '{}' });
+  const canManageWorkspace = context.hasWorkspacePermission('workspace.admin');
 
   const load = async () => {
     const result = await action.run(() => Promise.all([
@@ -146,6 +160,10 @@ export const ScreenDetailPage = ({ context }) => {
 
   const save = async (event) => {
     event.preventDefault();
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot update screens');
+      return;
+    }
     const saved = await action.run(() => context.services.configuration.updateScreen(screenId, {
       name: form.name,
       screenType: form.screenType,
@@ -157,6 +175,10 @@ export const ScreenDetailPage = ({ context }) => {
   };
 
   const archive = async () => {
+    if (!canManageWorkspace) {
+      action.setError('Your current workspace role cannot delete screens');
+      return;
+    }
     await action.run(() => context.services.configuration.deleteScreen(screenId), 'Screen deleted');
     navigate('/configuration');
   };
@@ -171,32 +193,36 @@ export const ScreenDetailPage = ({ context }) => {
             <textarea value={form.configText} onChange={(event) => setForm({ ...form, configText: event.target.value })} rows={7} spellCheck="false" />
           </Field>
           <div className="button-row wrap">
-            <button className="primary-button" disabled={action.pending} type="submit"><FiCheck />Save</button>
-            <button className="icon-button danger" disabled={action.pending} onClick={archive} title="Delete screen" type="button"><FiX /></button>
+            <button className="primary-button" disabled={action.pending || !canManageWorkspace} type="submit"><FiCheck />Save</button>
+            <button className="icon-button danger" disabled={action.pending || !canManageWorkspace} onClick={archive} title="Delete screen" type="button"><FiX /></button>
             <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Reload</button>
           </div>
         </form>
         <ErrorLine message={action.error} />
       </Panel>
       <Panel title="Layout Records" icon={<FiList />} wide>
-        <div className="data-columns two no-margin">
-          <JsonRecordEditor
-            records={fields}
-            title="Fields"
-            onDelete={(record) => context.services.configuration.deleteScreenField(screenId, record.id)}
-            onSave={(record, draft) => context.services.configuration.updateScreenField(screenId, record.id, pick(draft, ['customFieldId', 'systemFieldKey', 'position', 'required']))}
-            onSuccess={load}
-            action={action}
-          />
-          <JsonRecordEditor
-            records={assignments}
-            title="Assignments"
-            onDelete={(record) => context.services.configuration.deleteScreenAssignment(screenId, record.id)}
-            onSave={(record, draft) => context.services.configuration.updateScreenAssignment(screenId, record.id, pick(draft, ['projectId', 'workItemTypeId', 'operation', 'priority']))}
-            onSuccess={load}
-            action={action}
-          />
-        </div>
+        {canManageWorkspace ? (
+          <div className="data-columns two no-margin">
+            <JsonRecordEditor
+              records={fields}
+              title="Fields"
+              onDelete={(record) => context.services.configuration.deleteScreenField(screenId, record.id)}
+              onSave={(record, draft) => context.services.configuration.updateScreenField(screenId, record.id, pick(draft, ['customFieldId', 'systemFieldKey', 'position', 'required']))}
+              onSuccess={load}
+              action={action}
+            />
+            <JsonRecordEditor
+              records={assignments}
+              title="Assignments"
+              onDelete={(record) => context.services.configuration.deleteScreenAssignment(screenId, record.id)}
+              onSave={(record, draft) => context.services.configuration.updateScreenAssignment(screenId, record.id, pick(draft, ['projectId', 'workItemTypeId', 'operation', 'priority']))}
+              onSuccess={load}
+              action={action}
+            />
+          </div>
+        ) : (
+          <p className="muted">Screen fields and assignments are read-only for your current workspace membership.</p>
+        )}
         <JsonPreview title="Screen" value={screen} />
       </Panel>
     </DetailLayout>

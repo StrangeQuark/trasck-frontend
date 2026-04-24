@@ -54,6 +54,13 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
   const workspaceId = item?.workspaceId || context.workspaceId;
   const currentUserId = context.currentUser?.id;
   const currentUserName = context.currentUser?.displayName || context.currentUser?.username || context.currentUser?.email || 'You';
+  const canReadWorkItems = context.hasProjectPermission('work_item.read');
+  const canComment = context.hasProjectPermission('work_item.comment');
+  const canLink = context.hasProjectPermission('work_item.link');
+  const canUpdateWorkItems = context.hasProjectPermission('work_item.update');
+  const canCreateOwnWorkLogs = context.hasProjectPermission('work_log.create_own') || canUpdateWorkItems;
+  const canUpdateOwnWorkLogs = context.hasProjectPermission('work_log.update_own') || canUpdateWorkItems;
+  const canDeleteOwnWorkLogs = context.hasProjectPermission('work_log.delete_own') || canUpdateWorkItems;
 
   const workItemOptions = useMemo(
     () => projectItems.filter((candidate) => candidate.id !== item?.id),
@@ -80,6 +87,10 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
   const loadCollaboration = async (workItemId = item?.id) => {
     if (!workItemId) {
       setCollaboration(emptyCollaboration());
+      return;
+    }
+    if (!canReadWorkItems) {
+      action.setError('Your current project role cannot read work item collaboration');
       return;
     }
     const loaded = await action.run(() => Promise.all([
@@ -130,6 +141,10 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
 
   const createComment = async (event) => {
     event.preventDefault();
+    if (!canComment) {
+      action.setError('Your current project role cannot add comments');
+      return;
+    }
     const created = await action.run(
       () => context.services.workItems.createComment(item.id, commentForm),
       'Comment added',
@@ -142,6 +157,13 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
 
   const updateComment = async (event) => {
     event.preventDefault();
+    if (!commentEdit) {
+      return;
+    }
+    if (!(canUpdateWorkItems || commentEdit.authorId === currentUserId)) {
+      action.setError('Your current project role cannot update this comment');
+      return;
+    }
     const updated = await action.run(
       () => context.services.workItems.updateComment(item.id, commentEdit.id, {
         bodyMarkdown: commentEdit.bodyMarkdown,
@@ -156,12 +178,21 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
   };
 
   const deleteComment = async (commentId) => {
+    const comment = collaboration.comments.find((entry) => entry.id === commentId);
+    if (!(canUpdateWorkItems || comment?.authorId === currentUserId)) {
+      action.setError('Your current project role cannot delete this comment');
+      return;
+    }
     await action.run(() => context.services.workItems.deleteComment(item.id, commentId), 'Comment deleted');
     await refresh();
   };
 
   const createLink = async (event) => {
     event.preventDefault();
+    if (!canLink) {
+      action.setError('Your current project role cannot create links');
+      return;
+    }
     const linkType = linkForm.linkType === 'custom' ? linkForm.customLinkType : linkForm.linkType;
     const created = await action.run(
       () => context.services.workItems.createLink(item.id, {
@@ -177,11 +208,19 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
   };
 
   const deleteLink = async (linkId) => {
+    if (!canLink) {
+      action.setError('Your current project role cannot delete links');
+      return;
+    }
     await action.run(() => context.services.workItems.deleteLink(item.id, linkId), 'Link removed');
     await refresh();
   };
 
   const addWatcher = async () => {
+    if (!canReadWorkItems || !currentUserId) {
+      action.setError('Your current project role cannot add watchers');
+      return;
+    }
     const watcher = await action.run(
       () => context.services.workItems.addWatcher(item.id, currentUserId ? { userId: currentUserId } : {}),
       'Watcher added',
@@ -192,12 +231,20 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
   };
 
   const removeSelfWatcher = async () => {
+    if (!canReadWorkItems || !currentUserId) {
+      action.setError('Your current project role cannot remove watchers');
+      return;
+    }
     await action.run(() => context.services.workItems.removeWatcher(item.id, currentUserId), 'Watcher removed');
     await refresh();
   };
 
   const createWorkLog = async (event) => {
     event.preventDefault();
+    if (!canCreateOwnWorkLogs) {
+      action.setError('Your current project role cannot create work logs');
+      return;
+    }
     const created = await action.run(
       () => context.services.workItems.createWorkLog(item.id, workLogRequest(workLogForm, currentUserId)),
       'Work logged',
@@ -210,6 +257,13 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
 
   const updateWorkLog = async (event) => {
     event.preventDefault();
+    if (!workLogEdit) {
+      return;
+    }
+    if (!(canUpdateWorkItems || (canUpdateOwnWorkLogs && workLogEdit.userId === currentUserId))) {
+      action.setError('Your current project role cannot update this work log');
+      return;
+    }
     const updated = await action.run(
       () => context.services.workItems.updateWorkLog(item.id, workLogEdit.id, workLogRequest(workLogEdit, currentUserId)),
       'Work log updated',
@@ -221,12 +275,21 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
   };
 
   const deleteWorkLog = async (workLogId) => {
+    const workLog = collaboration.workLogs.find((entry) => entry.id === workLogId);
+    if (!(canUpdateWorkItems || (canDeleteOwnWorkLogs && workLog?.userId === currentUserId))) {
+      action.setError('Your current project role cannot delete this work log');
+      return;
+    }
     await action.run(() => context.services.workItems.deleteWorkLog(item.id, workLogId), 'Work log deleted');
     await refresh();
   };
 
   const createWorkspaceLabel = async (event) => {
     event.preventDefault();
+    if (!canUpdateWorkItems) {
+      action.setError('Your current project role cannot manage labels');
+      return;
+    }
     const created = await action.run(
       () => context.services.workItems.createWorkspaceLabel(workspaceId, labelForm),
       'Label created',
@@ -240,6 +303,10 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
 
   const addLabel = async (event) => {
     event.preventDefault();
+    if (!canUpdateWorkItems) {
+      action.setError('Your current project role cannot manage labels');
+      return;
+    }
     const created = await action.run(
       () => context.services.workItems.addLabel(item.id, { labelId }),
       'Label added',
@@ -251,16 +318,28 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
   };
 
   const removeLabel = async (removeLabelId) => {
+    if (!canUpdateWorkItems) {
+      action.setError('Your current project role cannot manage labels');
+      return;
+    }
     await action.run(() => context.services.workItems.removeLabel(item.id, removeLabelId), 'Label removed');
     await refresh();
   };
 
   const deleteWorkspaceLabel = async (deleteLabelId) => {
+    if (!canUpdateWorkItems) {
+      action.setError('Your current project role cannot manage labels');
+      return;
+    }
     await action.run(() => context.services.workItems.deleteWorkspaceLabel(workspaceId, deleteLabelId), 'Workspace label deleted');
     await refresh();
   };
 
   const uploadFiles = async (fileList) => {
+    if (!canUpdateWorkItems) {
+      action.setError('Your current project role cannot upload attachments');
+      return;
+    }
     const [file] = Array.from(fileList || []);
     if (!file) {
       return;
@@ -299,6 +378,10 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
   };
 
   const deleteAttachment = async (attachmentId) => {
+    if (!canUpdateWorkItems) {
+      action.setError('Your current project role cannot delete attachments');
+      return;
+    }
     await action.run(() => context.services.workItems.deleteAttachment(item.id, attachmentId), 'Attachment deleted');
     await refresh();
   };

@@ -34,8 +34,30 @@ export const DashboardsPage = ({ context }) => {
     to: '2030-01-01T00:00:00Z',
   });
   const action = useApiAction(context.addToast);
+  const canReadReports = context.hasWorkspacePermission('report.read');
+  const canManageWorkspaceReports = context.hasWorkspacePermission('report.manage');
+  const canManageProjectReports = context.hasProjectPermission('report.manage');
+  const selectedDashboard = dashboards.find((dashboard) => dashboard.id === dashboardId) || null;
+  const canCreateDashboard = dashboardVisibilityAllowed(
+    dashboardForm.visibility,
+    context,
+    canReadReports,
+    canManageWorkspaceReports,
+    canManageProjectReports,
+  );
+  const canManageSelectedDashboard = dashboardWritable(
+    selectedDashboard,
+    context.currentUser?.id,
+    canReadReports,
+    canManageWorkspaceReports,
+    canManageProjectReports,
+  );
 
   const load = async () => {
+    if (!canReadReports) {
+      action.setError('Your current workspace role cannot read dashboards');
+      return;
+    }
     if (!context.workspaceId) {
       action.setError('Select a workspace before loading dashboards');
       return;
@@ -51,6 +73,10 @@ export const DashboardsPage = ({ context }) => {
 
   const createDashboard = async (event) => {
     event.preventDefault();
+    if (!canCreateDashboard) {
+      action.setError('Your current membership cannot create a dashboard with this visibility');
+      return;
+    }
     const dashboard = await action.run(() => context.services.dashboards.create(context.workspaceId, {
       name: dashboardForm.name,
       visibility: dashboardForm.visibility,
@@ -65,6 +91,10 @@ export const DashboardsPage = ({ context }) => {
 
   const createWidget = async (event) => {
     event.preventDefault();
+    if (!canManageSelectedDashboard) {
+      action.setError('You do not have write access to the selected dashboard');
+      return;
+    }
     await action.run(() => context.services.dashboards.createWidget(dashboardId, {
       widgetType: widgetForm.widgetType,
       title: widgetForm.title,
@@ -78,6 +108,10 @@ export const DashboardsPage = ({ context }) => {
   };
 
   const renderDashboard = async () => {
+    if (!canReadReports) {
+      action.setError('Your current workspace role cannot render dashboards');
+      return;
+    }
     if (!dashboardId) {
       action.setError('Select a dashboard first');
       return;
@@ -89,6 +123,10 @@ export const DashboardsPage = ({ context }) => {
   };
 
   const loadImportReports = async () => {
+    if (!canReadReports) {
+      action.setError('Your current workspace role cannot load dashboard reports');
+      return;
+    }
     if (!context.workspaceId) {
       action.setError('Select a workspace before loading import reports');
       return;
@@ -130,7 +168,7 @@ export const DashboardsPage = ({ context }) => {
           <Field label="Layout JSON">
             <textarea value={dashboardForm.layoutText} onChange={(event) => setDashboardForm({ ...dashboardForm, layoutText: event.target.value })} rows={6} spellCheck="false" />
           </Field>
-          <button className="primary-button" disabled={action.pending || !context.workspaceId} type="submit"><FiPlus />Create dashboard</button>
+          <button className="primary-button" disabled={action.pending || !context.workspaceId || !canCreateDashboard || (dashboardForm.visibility === 'project' && !context.projectId)} type="submit"><FiPlus />Create dashboard</button>
         </form>
       </Panel>
       <Panel title="Widget" icon={<FiActivity />}>
@@ -151,8 +189,9 @@ export const DashboardsPage = ({ context }) => {
             <TextField label="W" type="number" value={widgetForm.width} onChange={(width) => setWidgetForm({ ...widgetForm, width })} />
             <TextField label="H" type="number" value={widgetForm.height} onChange={(height) => setWidgetForm({ ...widgetForm, height })} />
           </div>
-          <button className="primary-button" disabled={action.pending || !dashboardId} type="submit"><FiPlus />Add widget</button>
+          <button className="primary-button" disabled={action.pending || !dashboardId || !canManageSelectedDashboard} type="submit"><FiPlus />Add widget</button>
         </form>
+        {!canManageSelectedDashboard && <p className="muted">Select a dashboard you can edit before adding widgets.</p>}
       </Panel>
       <Panel title="Render" icon={<FiEye />} wide>
         <div className="button-row wrap">
@@ -182,4 +221,27 @@ export const DashboardsPage = ({ context }) => {
       </Panel>
     </div>
   );
+};
+
+const dashboardVisibilityAllowed = (visibility, context, canReadReports, canManageWorkspaceReports, canManageProjectReports) => {
+  if (visibility === 'private') {
+    return canReadReports;
+  }
+  if (visibility === 'project') {
+    return canManageProjectReports && Boolean(context.projectId);
+  }
+  return canManageWorkspaceReports;
+};
+
+const dashboardWritable = (dashboard, currentUserId, canReadReports, canManageWorkspaceReports, canManageProjectReports) => {
+  if (!dashboard) {
+    return false;
+  }
+  if (dashboard.visibility === 'private') {
+    return canReadReports && dashboard.ownerId === currentUserId;
+  }
+  if (dashboard.visibility === 'project') {
+    return canManageProjectReports;
+  }
+  return canManageWorkspaceReports;
 };

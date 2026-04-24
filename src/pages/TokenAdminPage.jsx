@@ -17,13 +17,14 @@ export const TokenAdminPage = ({ context }) => {
   const [personalForm, setPersonalForm] = useState({ name: 'API token', scopes: 'work_item.read,report.read', expiresAt: '' });
   const [serviceForm, setServiceForm] = useState({ name: 'Service token', username: 'service-user', displayName: 'Service User', roleId: '', scopes: 'work_item.read,agent.manage', expiresAt: '' });
   const action = useApiAction(context.addToast);
+  const canManageUsers = context.hasWorkspacePermission('user.manage');
 
   const load = async () => {
     const personal = await action.run(() => context.services.auth.listPersonalTokens());
     if (personal) {
       setPersonalTokens(personal || []);
     }
-    if (context.workspaceId) {
+    if (context.workspaceId && canManageUsers) {
       const result = await action.run(() => Promise.all([
         context.services.auth.listServiceTokens(context.workspaceId),
         context.services.security.listWorkspaceRoles(context.workspaceId),
@@ -34,12 +35,15 @@ export const TokenAdminPage = ({ context }) => {
         setWorkspaceRoles(roles || []);
         setServiceForm((current) => ({ ...current, roleId: current.roleId || roles?.[0]?.id || '' }));
       }
+    } else {
+      setServiceTokens([]);
+      setWorkspaceRoles([]);
     }
   };
 
   useEffect(() => {
     load();
-  }, [context.workspaceId]);
+  }, [canManageUsers, context.workspaceId]);
 
   const createPersonal = async (event) => {
     event.preventDefault();
@@ -56,6 +60,10 @@ export const TokenAdminPage = ({ context }) => {
 
   const createService = async (event) => {
     event.preventDefault();
+    if (!canManageUsers) {
+      action.setError('Your current workspace role cannot create service tokens');
+      return;
+    }
     const token = await action.run(() => context.services.auth.createServiceToken(context.workspaceId, {
       name: serviceForm.name,
       username: serviceForm.username,
@@ -80,6 +88,7 @@ export const TokenAdminPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending} type="submit"><FiPlus />Create token</button>
         </form>
       </Panel>
+      {canManageUsers && (
       <Panel title="Service Token" icon={<FiSettings />}>
         <form className="stack" onSubmit={createService}>
           <TextField label="Name" value={serviceForm.name} onChange={(name) => setServiceForm({ ...serviceForm, name })} />
@@ -91,6 +100,7 @@ export const TokenAdminPage = ({ context }) => {
           <button className="primary-button" disabled={action.pending || !context.workspaceId || !serviceForm.roleId} type="submit"><FiPlus />Create service token</button>
         </form>
       </Panel>
+      )}
       <Panel title="Tokens" icon={<FiEye />} wide>
         <div className="button-row">
           <button className="secondary-button" disabled={action.pending} onClick={load} type="button"><FiRefreshCw />Refresh</button>

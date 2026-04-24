@@ -35,12 +35,7 @@ export const apiErrorMessage = (error) => {
 };
 
 const createCsrfTokenProvider = (baseUrl) => {
-  let cachedToken = '';
-
   return async () => {
-    if (cachedToken) {
-      return cachedToken;
-    }
     const response = await fetch(new URL('/api/v1/auth/csrf', baseUrl).toString(), {
       credentials: 'include',
       headers: {
@@ -51,7 +46,7 @@ const createCsrfTokenProvider = (baseUrl) => {
       return undefined;
     }
     const body = await response.json();
-    cachedToken = body?.token || body?.csrfToken?.token || '';
-    return cachedToken || undefined;
+    const token = body?.token || body?.csrfToken?.token || '';
+    return token || undefined;
   };
 };

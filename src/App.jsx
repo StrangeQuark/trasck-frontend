@@ -13,6 +13,7 @@ import { createSearchService } from './api/services/searchService';
 import { createSecurityService } from './api/services/securityService';
 import { createWorkItemsService } from './api/services/workItemsService';
 import { Shell } from './app/Shell';
+import { RouteAccessGate } from './components/RouteAccessGate';
 import { ToastStack } from './components/ToastStack';
 import { AgentsPage } from './pages/AgentsPage';
 import { AuthPage } from './pages/AuthPage';
@@ -35,6 +36,7 @@ import { SystemAdminPage } from './pages/SystemAdminPage';
 import { TokenAdminPage } from './pages/TokenAdminPage';
 import { WorkPage } from './pages/WorkPage';
 import { WorkspaceSettingsPage } from './pages/WorkspaceSettingsPage';
+import { hasAnyPermissionKey, hasPermissionKey, projectPermissionKeys, workspacePermissionKeys } from './utils/permissions';
 import './styles/app.css';
 
 const App = () => {
@@ -139,6 +141,30 @@ const App = () => {
   }, [services]);
 
   const context = {
+    hasAnyProjectPermission: (permissionKeys) => hasAnyPermissionKey(projectPermissionKeys({
+      projectId,
+      projectOptions,
+      workspaceId,
+      workspaceOptions,
+    }), permissionKeys),
+    hasAnyWorkspacePermission: (permissionKeys) => hasAnyPermissionKey(workspacePermissionKeys({
+      projectId,
+      projectOptions,
+      workspaceId,
+      workspaceOptions,
+    }), permissionKeys),
+    hasProjectPermission: (permissionKey) => hasPermissionKey(projectPermissionKeys({
+      projectId,
+      projectOptions,
+      workspaceId,
+      workspaceOptions,
+    }), permissionKey),
+    hasWorkspacePermission: (permissionKey) => hasPermissionKey(workspacePermissionKeys({
+      projectId,
+      projectOptions,
+      workspaceId,
+      workspaceOptions,
+    }), permissionKey),
     addToast,
     applySessionContext,
     clearSessionContext,
@@ -155,6 +181,7 @@ const App = () => {
     selectWorkspace,
     sessionContext,
     setWorkspaceId,
+    systemAdmin: Boolean(sessionContext?.systemAdmin),
     workspaceId,
     workspaceOptions,
   };
@@ -167,28 +194,112 @@ const App = () => {
             <Route path="/" element={<OverviewPage context={context} />} />
             <Route path="/setup" element={<SetupPage context={context} />} />
             <Route path="/auth" element={<AuthPage context={context} />} />
-            <Route path="/work" element={<WorkPage context={context} />} />
-            <Route path="/planning" element={<PlanningPage context={context} />} />
-            <Route path="/programs" element={<ProgramsPage context={context} />} />
-            <Route path="/planning/boards/:boardId" element={<BoardDetailPage context={context} />} />
-            <Route path="/planning/releases/:releaseId" element={<ReleaseDetailPage context={context} />} />
-            <Route path="/planning/roadmaps/:roadmapId" element={<RoadmapDetailPage context={context} />} />
-            <Route path="/configuration" element={<ConfigurationPage context={context} />} />
-            <Route path="/configuration/custom-fields/:customFieldId" element={<CustomFieldDetailPage context={context} />} />
-            <Route path="/configuration/screens/:screenId" element={<ScreenDetailPage context={context} />} />
-            <Route path="/automation" element={<AutomationPage context={context} />} />
-            <Route path="/automation/rules/:ruleId" element={<AutomationRuleDetailPage context={context} />} />
-            <Route path="/automation/webhooks/:webhookId" element={<WebhookDetailPage context={context} />} />
-            <Route path="/imports" element={<ImportsPage context={context} />} />
-            <Route path="/imports/jobs/:importJobId" element={<ImportJobDetailPage context={context} />} />
-            <Route path="/imports/templates/:mappingTemplateId" element={<ImportTemplateDetailPage context={context} />} />
-            <Route path="/dashboards" element={<DashboardsPage context={context} />} />
-            <Route path="/filters" element={<SearchPage context={context} />} />
-            <Route path="/agents" element={<AgentsPage context={context} />} />
+            <Route path="/work" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasProjectPermission('work_item.read')} message="Your current project membership cannot read work items.">
+                <WorkPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/planning" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasAnyProjectPermission(['project.read', 'board.admin'])} message="Your current project membership cannot access planning.">
+                <PlanningPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/programs" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('workspace.read')} message="Your current workspace membership cannot access programs.">
+                <ProgramsPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/planning/boards/:boardId" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasAnyProjectPermission(['project.read', 'work_item.read'])} message="Your current project membership cannot access boards.">
+                <BoardDetailPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/planning/releases/:releaseId" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasProjectPermission('project.read')} message="Your current project membership cannot access releases.">
+                <ReleaseDetailPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/planning/roadmaps/:roadmapId" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && (context.hasWorkspacePermission('workspace.read') || context.hasProjectPermission('project.read'))} message="Your current membership cannot access roadmaps.">
+                <RoadmapDetailPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/configuration" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('workspace.read')} message="Your current workspace membership cannot access configuration.">
+                <ConfigurationPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/configuration/custom-fields/:customFieldId" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('workspace.read')} message="Your current workspace membership cannot access custom field details.">
+                <CustomFieldDetailPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/configuration/screens/:screenId" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('workspace.read')} message="Your current workspace membership cannot access screen details.">
+                <ScreenDetailPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/automation" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('automation.admin')} message="Your current workspace membership cannot access automation.">
+                <AutomationPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/automation/rules/:ruleId" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('automation.admin')} message="Your current workspace membership cannot access automation rules.">
+                <AutomationRuleDetailPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/automation/webhooks/:webhookId" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('automation.admin')} message="Your current workspace membership cannot access automation webhooks.">
+                <WebhookDetailPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/imports" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('workspace.admin')} message="Your current workspace membership cannot access imports.">
+                <ImportsPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/imports/jobs/:importJobId" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('workspace.admin')} message="Your current workspace membership cannot access import jobs.">
+                <ImportJobDetailPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/imports/templates/:mappingTemplateId" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('workspace.admin')} message="Your current workspace membership cannot access import templates.">
+                <ImportTemplateDetailPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/dashboards" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasWorkspacePermission('report.read')} message="Your current workspace membership cannot access dashboards.">
+                <DashboardsPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/filters" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && (context.hasWorkspacePermission('workspace.read') || context.hasWorkspacePermission('report.read'))} message="Your current workspace membership cannot access saved filters and views.">
+                <SearchPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/agents" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasAnyWorkspacePermission(['agent.provider.manage', 'agent.profile.manage', 'repository_connection.manage'])} message="Your current workspace membership cannot access agent administration.">
+                <AgentsPage context={context} />
+              </RouteAccessGate>
+            )} />
             <Route path="/tokens" element={<TokenAdminPage context={context} />} />
-            <Route path="/system" element={<SystemAdminPage context={context} />} />
-            <Route path="/workspace-settings" element={<WorkspaceSettingsPage context={context} />} />
-            <Route path="/project-settings" element={<ProjectSettingsPage context={context} />} />
+            <Route path="/system" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && Boolean(sessionContext?.systemAdmin)} message="Only system administrators can access this area.">
+                <SystemAdminPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/workspace-settings" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasAnyWorkspacePermission(['workspace.admin', 'user.manage'])} message="Your current workspace membership cannot access workspace settings.">
+                <WorkspaceSettingsPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/project-settings" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasProjectPermission('project.admin')} message="Your current project membership cannot access project settings.">
+                <ProjectSettingsPage context={context} />
+              </RouteAccessGate>
+            )} />
             <Route path="/public/projects/:projectId" element={<PublicProjectPreviewPage context={context} />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

@@ -6,11 +6,16 @@ import { StatusPill } from '../components/StatusPill';
 export const Shell = ({ children, context }) => {
   const {
     currentUser,
+    hasAnyProjectPermission,
+    hasAnyWorkspacePermission,
+    hasProjectPermission,
+    hasWorkspacePermission,
     projectId,
     projectOptions,
     selectWorkspace,
     setProjectId,
     setupAvailable,
+    systemAdmin,
     workspaceId,
     workspaceOptions,
   } = context;
@@ -58,23 +63,23 @@ export const Shell = ({ children, context }) => {
         <RouteLink to="/" icon={<FiActivity />} label="Overview" />
         {!signedIn && setupAvailable && <RouteLink to="/setup" icon={<FiDatabase />} label="Setup" />}
         {!signedIn && <RouteLink to="/auth" icon={<FiLogIn />} label="Sign in" />}
-        <RouteLink to="/work" icon={<FiList />} label="Work" />
-        <RouteLink to="/planning" icon={<FiUsers />} label="Planning" />
-        <RouteLink to="/programs" icon={<FiLayers />} label="Programs" />
-        <RouteLink to="/configuration" icon={<FiSliders />} label="Config" />
-        <RouteLink to="/automation" icon={<FiBell />} label="Automation" />
-        <RouteLink to="/imports" icon={<FiUploadCloud />} label="Imports" />
-        <RouteLink to="/filters" icon={<FiFilter />} label="Filters" />
-        <RouteLink to="/dashboards" icon={<FiBarChart2 />} label="Dashboards" />
-        <RouteLink to="/agents" icon={<FiCpu />} label="Agents" />
+        {signedIn && hasProjectPermission('work_item.read') && <RouteLink to="/work" icon={<FiList />} label="Work" />}
+        {signedIn && hasAnyProjectPermission(['project.read', 'board.admin']) && <RouteLink to="/planning" icon={<FiUsers />} label="Planning" />}
+        {signedIn && hasWorkspacePermission('workspace.read') && <RouteLink to="/programs" icon={<FiLayers />} label="Programs" />}
+        {signedIn && hasWorkspacePermission('workspace.read') && <RouteLink to="/configuration" icon={<FiSliders />} label="Config" />}
+        {signedIn && hasWorkspacePermission('automation.admin') && <RouteLink to="/automation" icon={<FiBell />} label="Automation" />}
+        {signedIn && hasWorkspacePermission('workspace.admin') && <RouteLink to="/imports" icon={<FiUploadCloud />} label="Imports" />}
+        {signedIn && (hasWorkspacePermission('workspace.read') || hasWorkspacePermission('report.read')) && <RouteLink to="/filters" icon={<FiFilter />} label="Filters" />}
+        {signedIn && hasWorkspacePermission('report.read') && <RouteLink to="/dashboards" icon={<FiBarChart2 />} label="Dashboards" />}
+        {signedIn && hasAnyWorkspacePermission(['agent.provider.manage', 'agent.profile.manage', 'repository_connection.manage']) && <RouteLink to="/agents" icon={<FiCpu />} label="Agents" />}
       </nav>
 
       {signedIn && (
         <nav className="route-tabs admin-tabs" aria-label="Administration">
           <RouteLink to="/tokens" icon={<FiKey />} label="Tokens" />
-          <RouteLink to="/system" icon={<FiShield />} label="System" />
-          <RouteLink to="/workspace-settings" icon={<FiUsers />} label="Workspace" />
-          <RouteLink to="/project-settings" icon={<FiSettings />} label="Project" />
+          {systemAdmin && <RouteLink to="/system" icon={<FiShield />} label="System" />}
+          {hasAnyWorkspacePermission(['workspace.admin', 'user.manage']) && <RouteLink to="/workspace-settings" icon={<FiUsers />} label="Workspace" />}
+          {hasProjectPermission('project.admin') && <RouteLink to="/project-settings" icon={<FiSettings />} label="Project" />}
         </nav>
       )}
 
