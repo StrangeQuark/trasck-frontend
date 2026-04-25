@@ -7,7 +7,9 @@ import { createAutomationService } from './api/services/automationService';
 import { createConfigurationService } from './api/services/configurationService';
 import { createDashboardsService } from './api/services/dashboardsService';
 import { createImportsService } from './api/services/importsService';
+import { createOrganizationsService } from './api/services/organizationsService';
 import { createPlanningService } from './api/services/planningService';
+import { createProjectsService } from './api/services/projectsService';
 import { createProgramsService } from './api/services/programsService';
 import { createSearchService } from './api/services/searchService';
 import { createSecurityService } from './api/services/securityService';
@@ -66,7 +68,9 @@ const App = () => {
     configuration: createConfigurationService(api),
     dashboards: createDashboardsService(api),
     imports: createImportsService(api),
+    organizations: createOrganizationsService(api),
     planning: createPlanningService(api),
+    projects: createProjectsService(api),
     programs: createProgramsService(api),
     search: createSearchService(api),
     security: createSecurityService(api),

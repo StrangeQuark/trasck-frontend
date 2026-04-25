@@ -126,7 +126,7 @@ describe('App', () => {
     expect(screen.getByRole('heading', { level: 2, name: 'Project Security State' })).toBeInTheDocument();
   });
 
-  it('navigates to the homepage after successful first-run setup', async () => {
+  it('prompts for optional organization setup after creating the first super admin', async () => {
     window.history.pushState({}, '', '/setup');
     let setupCompleted = false;
     let loginCompleted = false;
@@ -180,7 +180,13 @@ describe('App', () => {
 
     render(<App />);
 
-    fireEvent.click(await screen.findByRole('button', { name: /Create/i }));
+    fireEvent.change(await screen.findByLabelText('Admin email'), { target: { value: 'admin@example.com' } });
+    fireEvent.change(screen.getByLabelText('Username'), { target: { value: 'admin' } });
+    fireEvent.change(screen.getByLabelText('Display name'), { target: { value: 'Admin User' } });
+    fireEvent.change(screen.getByLabelText('Password'), { target: { value: 'correct-horse-battery-staple' } });
+    fireEvent.click(await screen.findByRole('button', { name: /Create super admin/i }));
+    expect(await screen.findByRole('button', { name: /Create organization/i })).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: /Skip for now/i }));
     expect(await screen.findByRole('heading', { level: 2, name: 'Workspace' })).toBeInTheDocument();
     expect(window.location.pathname).toBe('/');
     expect(screen.queryByRole('link', { name: /First-run setup/i })).not.toBeInTheDocument();
@@ -425,12 +431,4 @@ const authenticatedContext = () => ({
 
 const firstSetupResponse = () => ({
   adminUser: authenticatedUser(),
-  organization: {
-    id: '00000000-0000-0000-0000-000000000201',
-    name: 'Demo Organization',
-    slug: 'demo-organization',
-  },
-  workspace: authenticatedContext().defaultWorkspace,
-  project: authenticatedContext().defaultProject,
-  seedData: {},
 });

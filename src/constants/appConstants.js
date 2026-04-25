@@ -7,6 +7,7 @@ export const defaultSetupForm = {
   organizationSlug: '',
   workspaceName: '',
   workspaceKey: '',
+  teamName: '',
   projectName: '',
   projectKey: '',
 };
