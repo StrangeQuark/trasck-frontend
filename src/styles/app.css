@@ -70,6 +70,10 @@
   padding-top: 0;
 }
 
+.planning-subnav {
+  padding-top: 0;
+}
+
 .route-tab,
 .action-tile {
   display: inline-flex;
@@ -132,6 +136,124 @@
 
 .content-grid.three {
   grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.planning-layout {
+  display: grid;
+  gap: 10px;
+}
+
+.planning-hero,
+.planning-toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+}
+
+.planning-hero-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.planning-hero-copy h3 {
+  margin: 0;
+  font-size: 1.35rem;
+}
+
+.planning-hero-copy p {
+  margin: 0;
+  max-width: 720px;
+  color: #53616a;
+}
+
+.planning-record-list,
+.planning-work-list,
+.board-column-editor-list {
+  display: grid;
+  gap: 12px;
+}
+
+.planning-record,
+.planning-record-card,
+.planning-work-row,
+.board-column-editor {
+  border: 1px solid #dde4e8;
+  border-radius: 8px;
+  background: #f8fafb;
+  padding: 14px;
+}
+
+.planning-record {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.planning-record-card,
+.planning-work-row {
+  display: grid;
+  gap: 6px;
+}
+
+.planning-record-card span,
+.planning-record div span,
+.planning-work-row span {
+  color: #60707a;
+  font-size: 0.84rem;
+  font-weight: 700;
+}
+
+.planning-record-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.planning-work-row {
+  align-items: center;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+}
+
+.status-option-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.status-option {
+  display: grid;
+  gap: 4px;
+  border: 1px solid #d6dfe5;
+  border-radius: 8px;
+  background: #ffffff;
+  padding: 10px 12px;
+  color: #24323b;
+  font-size: 0.88rem;
+  font-weight: 800;
+}
+
+.status-option.selected {
+  border-color: #1c6d7d;
+  background: #eef7f9;
+}
+
+.status-option input {
+  width: auto;
+  margin: 0;
+}
+
+.status-option small {
+  color: #687782;
+  font-size: 0.76rem;
+  font-weight: 700;
 }
 
 .panel {

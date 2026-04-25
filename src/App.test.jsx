@@ -73,6 +73,9 @@ describe('App', () => {
   });
 
   it.each([
+    ['/planning/backlog', 'Backlog'],
+    ['/planning/active-board', 'Active Sprint Board'],
+    ['/planning/admin', 'Planning Records'],
     ['/programs', 'Program Portfolio'],
     ['/configuration/custom-fields/00000000-0000-0000-0000-000000000001', 'Custom Field Detail'],
     ['/configuration/screens/00000000-0000-0000-0000-000000000002', 'Screen Detail'],

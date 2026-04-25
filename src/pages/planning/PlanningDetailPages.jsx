@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { FiActivity, FiBarChart2, FiCheck, FiEye, FiList, FiRefreshCw, FiSliders, FiX } from 'react-icons/fi';
+import { BoardColumnEditor } from '../../components/BoardColumnEditor';
 import { BoardCardColumns } from '../../components/BoardCardColumns';
 import { DetailLayout } from '../../components/DetailLayout';
 import { ErrorLine } from '../../components/ErrorLine';
@@ -19,6 +20,7 @@ export const BoardDetailPage = ({ context }) => {
   const action = useApiAction(context.addToast);
   const [board, setBoard] = useState(null);
   const [columns, setColumns] = useState([]);
+  const [statusOptions, setStatusOptions] = useState([]);
   const [swimlanes, setSwimlanes] = useState([]);
   const [cards, setCards] = useState(null);
   const [moveForm, setMoveForm] = useState({ workItemId: '', targetColumnId: '', previousWorkItemId: '', nextWorkItemId: '', transitionKey: '' });
@@ -35,15 +37,17 @@ export const BoardDetailPage = ({ context }) => {
     const result = await action.run(() => Promise.all([
       context.services.planning.getBoard(boardId),
       context.services.planning.listBoardColumns(boardId),
+      context.services.planning.listBoardStatusOptions(boardId),
       context.services.planning.listBoardSwimlanes(boardId),
       canReadWorkItems ? context.services.planning.listBoardWorkItems(boardId, { limitPerColumn: 50 }) : Promise.resolve(null),
     ]));
     if (result) {
-      const [boardRow, columnRows, swimlaneRows, cardRows] = result;
+      const [boardRow, columnRows, statusRows, swimlaneRows, cardRows] = result;
       const firstColumn = firstBoardColumn(columnRows);
       const firstCard = firstBoardCard(cardRows);
       setBoard(boardRow);
       setColumns(columnRows || []);
+      setStatusOptions(statusRows || []);
       setSwimlanes(swimlaneRows || []);
       setCards(cardRows || null);
       setMoveForm((current) => ({
@@ -117,7 +121,7 @@ export const BoardDetailPage = ({ context }) => {
   };
 
   return (
-    <DetailLayout backTo="/planning" title="Board Detail">
+    <DetailLayout backTo="/planning/admin" title="Board Detail">
       <Panel title="Board" icon={<FiList />}>
         <form className="stack" onSubmit={save}>
           <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
@@ -147,13 +151,13 @@ export const BoardDetailPage = ({ context }) => {
       {canManagePlanning && (
       <Panel title="Columns And Swimlanes" icon={<FiSliders />} wide>
         <div className="data-columns two no-margin">
-          <JsonRecordEditor
-            records={columns}
-            title="Columns"
-            onDelete={(record) => context.services.planning.deleteBoardColumn(boardId, record.id)}
-            onSave={(record, draft) => context.services.planning.updateBoardColumn(boardId, record.id, pick(draft, ['name', 'statusIds', 'position', 'wipLimit', 'doneColumn']))}
-            onSuccess={load}
+          <BoardColumnEditor
             action={action}
+            columns={columns}
+            onDelete={(record) => context.services.planning.deleteBoardColumn(boardId, record.id)}
+            onSave={(record, draft) => context.services.planning.updateBoardColumn(boardId, record.id, draft)}
+            onSuccess={load}
+            statusOptions={statusOptions}
           />
           <JsonRecordEditor
             records={swimlanes}
@@ -243,7 +247,7 @@ export const ReleaseDetailPage = ({ context }) => {
   };
 
   return (
-    <DetailLayout backTo="/planning" title="Release Detail">
+    <DetailLayout backTo="/planning/admin" title="Release Detail">
       <Panel title="Release" icon={<FiActivity />}>
         <form className="stack" onSubmit={save}>
           <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
@@ -330,7 +334,7 @@ export const RoadmapDetailPage = ({ context }) => {
   };
 
   return (
-    <DetailLayout backTo="/planning" title="Roadmap Detail">
+    <DetailLayout backTo="/planning/admin" title="Roadmap Detail">
       <Panel title="Roadmap" icon={<FiBarChart2 />}>
         <form className="stack" onSubmit={save}>
           <TextField label="Name" value={form.name} onChange={(name) => setForm({ ...form, name })} />
