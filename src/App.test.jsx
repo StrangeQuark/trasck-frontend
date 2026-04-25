@@ -25,7 +25,8 @@ describe('App', () => {
     expect(within(primaryNavigation).getByRole('link', { name: /^Work$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Planning$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Programs$/i })).toBeInTheDocument();
-    expect(within(primaryNavigation).getByRole('link', { name: /^Agents$/i })).toBeInTheDocument();
+    const operationsNavigation = screen.getByRole('navigation', { name: 'Operations' });
+    expect(within(operationsNavigation).getByRole('link', { name: /^Agents$/i })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Administration' })).toBeInTheDocument();
   });
 
@@ -73,6 +74,9 @@ describe('App', () => {
   });
 
   it.each([
+    ['/planning/backlog', 'Backlog'],
+    ['/planning/active-board', 'Active Sprint Board'],
+    ['/planning/admin', 'Planning Records'],
     ['/programs', 'Program Portfolio'],
     ['/configuration/custom-fields/00000000-0000-0000-0000-000000000001', 'Custom Field Detail'],
     ['/configuration/screens/00000000-0000-0000-0000-000000000002', 'Screen Detail'],

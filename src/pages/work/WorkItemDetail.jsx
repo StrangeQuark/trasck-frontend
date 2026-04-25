@@ -37,6 +37,16 @@ const emptyCollaboration = () => ({
   workspaceLabels: [],
 });
 
+const detailTabs = [
+  { id: 'comments', label: 'Comments', icon: <FiMessageSquare /> },
+  { id: 'links', label: 'Links', icon: <FiLink /> },
+  { id: 'watchers', label: 'Watchers', icon: <FiWatch /> },
+  { id: 'worklogs', label: 'Work logs', icon: <FiEdit2 /> },
+  { id: 'labels', label: 'Labels', icon: <FiTag /> },
+  { id: 'attachments', label: 'Files', icon: <FiPaperclip /> },
+  { id: 'activity', label: 'Activity', icon: <FiRefreshCw /> },
+];
+
 export const WorkItemDetail = ({ context, item, projectItems }) => {
   const action = useApiAction(context.addToast);
   const fileInputRef = useRef(null);
@@ -50,6 +60,7 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
   const [labelId, setLabelId] = useState('');
   const [attachmentForm, setAttachmentForm] = useState({ checksum: '', visibility: 'restricted' });
   const [draggingFile, setDraggingFile] = useState(false);
+  const [activeTab, setActiveTab] = useState('comments');
 
   const workspaceId = item?.workspaceId || context.workspaceId;
   const currentUserId = context.currentUser?.id;
@@ -130,6 +141,7 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
     setWorkLogForm({ minutesSpent: '30', workDate: today(), descriptionMarkdown: '' });
     setWorkLogEdit(null);
     setLabelId('');
+    setActiveTab('comments');
     if (item?.id) {
       loadCollaboration(item.id);
     }
@@ -417,8 +429,22 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
 
       <ErrorLine message={action.error} />
 
+      <nav className="detail-tabs" aria-label="Work item detail sections">
+        {detailTabs.map((tab) => (
+          <button
+            className={activeTab === tab.id ? 'active' : ''}
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            type="button"
+          >
+            {tab.icon}
+            <span>{tab.label}</span>
+          </button>
+        ))}
+      </nav>
+
       <div className="collaboration-grid">
-        <section className="collaboration-section">
+        <section className="collaboration-section" hidden={activeTab !== 'comments'}>
           <h3><FiMessageSquare />Comments</h3>
           <form className="stack" onSubmit={createComment}>
             <Field label="Comment">
@@ -459,7 +485,7 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
           </RecordStack>
         </section>
 
-        <section className="collaboration-section">
+        <section className="collaboration-section" hidden={activeTab !== 'links'}>
           <h3><FiLink />Links</h3>
           <form className="stack" onSubmit={createLink}>
             <Field label="Target work item">
@@ -493,7 +519,7 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
           </RecordStack>
         </section>
 
-        <section className="collaboration-section">
+        <section className="collaboration-section" hidden={activeTab !== 'watchers'}>
           <h3><FiWatch />Watchers</h3>
           <div className="button-row wrap">
             <button className="primary-button" disabled={action.pending || watchingSelf} onClick={addWatcher} type="button">
@@ -514,7 +540,7 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
           </RecordStack>
         </section>
 
-        <section className="collaboration-section">
+        <section className="collaboration-section" hidden={activeTab !== 'worklogs'}>
           <h3><FiEdit2 />Work Logs</h3>
           <form className="stack" onSubmit={createWorkLog}>
             <div className="two-column compact">
@@ -561,7 +587,7 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
           </RecordStack>
         </section>
 
-        <section className="collaboration-section">
+        <section className="collaboration-section" hidden={activeTab !== 'labels'}>
           <h3><FiTag />Labels</h3>
           <form className="stack" onSubmit={createWorkspaceLabel}>
             <div className="two-column compact">
@@ -610,7 +636,7 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
           </details>
         </section>
 
-        <section className="collaboration-section">
+        <section className="collaboration-section" hidden={activeTab !== 'attachments'}>
           <h3><FiPaperclip />Attachments</h3>
           <div
             className={`attachment-drop-zone${draggingFile ? ' attachment-drop-zone-active' : ''}`}
@@ -652,7 +678,7 @@ export const WorkItemDetail = ({ context, item, projectItems }) => {
           </RecordStack>
         </section>
 
-        <section className="collaboration-section">
+        <section className="collaboration-section" hidden={activeTab !== 'activity'}>
           <h3><FiRefreshCw />Activity</h3>
           <RecordStack emptyLabel="No activity loaded">
             {collaboration.activity.map((event) => (

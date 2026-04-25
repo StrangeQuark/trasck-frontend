@@ -57,8 +57,35 @@ export const createPlanningService = (api) => ({
     });
   },
 
+  listIterationWorkItems(iterationId) {
+    return api.request('get', '/api/v1/iterations/{iterationId}/work-items', {
+      path: { iterationId },
+    });
+  },
+
+  addIterationWorkItem(iterationId, request) {
+    return api.request('post', '/api/v1/iterations/{iterationId}/work-items', {
+      path: { iterationId },
+      body: request,
+    });
+  },
+
+  removeIterationWorkItem(iterationId, workItemId) {
+    return api.request('delete', '/api/v1/iterations/{iterationId}/work-items/{workItemId}', {
+      path: { iterationId, workItemId },
+      responseType: 'void',
+    });
+  },
+
   commitIteration(iterationId, request) {
     return api.request('post', '/api/v1/iterations/{iterationId}/commit', {
+      path: { iterationId },
+      body: request,
+    });
+  },
+
+  closeIteration(iterationId, request) {
+    return api.request('post', '/api/v1/iterations/{iterationId}/close', {
       path: { iterationId },
       body: request,
     });
@@ -100,6 +127,12 @@ export const createPlanningService = (api) => ({
     return api.request('get', '/api/v1/boards/{boardId}/work-items', {
       path: { boardId },
       query,
+    });
+  },
+
+  listBoardStatusOptions(boardId) {
+    return api.request('get', '/api/v1/boards/{boardId}/status-options', {
+      path: { boardId },
     });
   },
 

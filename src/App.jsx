@@ -26,7 +26,10 @@ import { ImportJobDetailPage, ImportTemplateDetailPage } from './pages/imports/I
 import { ImportsPage } from './pages/imports/ImportsPage';
 import { OverviewPage } from './pages/OverviewPage';
 import { BoardDetailPage, ReleaseDetailPage, RoadmapDetailPage } from './pages/planning/PlanningDetailPages';
+import { PlanningBacklogPage } from './pages/planning/PlanningBacklogPage';
+import { PlanningAdminPage } from './pages/planning/PlanningAdminPage';
 import { PlanningPage } from './pages/planning/PlanningPage';
+import { PlanningSprintBoardPage } from './pages/planning/PlanningSprintBoardPage';
 import { ProjectSettingsPage } from './pages/ProjectSettingsPage';
 import { ProgramsPage } from './pages/ProgramsPage';
 import { PublicProjectPreviewPage } from './pages/PublicProjectPreviewPage';
@@ -202,6 +205,21 @@ const App = () => {
             <Route path="/planning" element={(
               <RouteAccessGate allowed={Boolean(currentUser) && context.hasAnyProjectPermission(['project.read', 'board.admin'])} message="Your current project membership cannot access planning.">
                 <PlanningPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/planning/backlog" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasAnyProjectPermission(['project.read', 'work_item.read'])} message="Your current project membership cannot access the backlog.">
+                <PlanningBacklogPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/planning/active-board" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasAnyProjectPermission(['project.read', 'work_item.read'])} message="Your current project membership cannot access the active board.">
+                <PlanningSprintBoardPage context={context} />
+              </RouteAccessGate>
+            )} />
+            <Route path="/planning/admin" element={(
+              <RouteAccessGate allowed={Boolean(currentUser) && context.hasAnyProjectPermission(['project.read', 'board.admin'])} message="Your current project membership cannot access planning administration.">
+                <PlanningAdminPage context={context} />
               </RouteAccessGate>
             )} />
             <Route path="/programs" element={(
