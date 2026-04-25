@@ -54,7 +54,10 @@ export const BoardCardColumns = ({ boardWorkItems, onMove }) => {
           onDragOver={(event) => event.preventDefault()}
           onDrop={(event) => columnDrop(event, column)}
         >
-          <h3>{column.columnName}</h3>
+          <header className="board-column-header">
+            <h3>{column.columnName}</h3>
+            <span>{(column.workItems || []).length}</span>
+          </header>
           {(column.workItems || []).length === 0 ? (
             <EmptyState label="No work items" />
           ) : (column.workItems || []).map((item) => (
@@ -66,9 +69,9 @@ export const BoardCardColumns = ({ boardWorkItems, onMove }) => {
               onDragStart={(event) => dragStart(event, item.id)}
               onDrop={(event) => cardDrop(event, column, item)}
             >
-              <span>{item.key}</span>
+              <span className="board-card-key">{item.key}</span>
               <strong>{item.title}</strong>
-              <small>{item.statusKey || item.typeKey}</small>
+              <small>{[item.typeKey, item.statusKey, item.estimatePoints ? `${item.estimatePoints} pts` : null].filter(Boolean).join(' | ')}</small>
             </article>
           ))}
         </section>

@@ -25,7 +25,8 @@ describe('App', () => {
     expect(within(primaryNavigation).getByRole('link', { name: /^Work$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Planning$/i })).toBeInTheDocument();
     expect(within(primaryNavigation).getByRole('link', { name: /^Programs$/i })).toBeInTheDocument();
-    expect(within(primaryNavigation).getByRole('link', { name: /^Agents$/i })).toBeInTheDocument();
+    const operationsNavigation = screen.getByRole('navigation', { name: 'Operations' });
+    expect(within(operationsNavigation).getByRole('link', { name: /^Agents$/i })).toBeInTheDocument();
     expect(screen.getByRole('navigation', { name: 'Administration' })).toBeInTheDocument();
   });
 

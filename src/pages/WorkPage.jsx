@@ -88,6 +88,26 @@ export const WorkPage = ({ context }) => {
   return (
     <Panel title="Project Work" icon={<FiList />} wide>
       <div className="work-layout">
+        <div className="work-command-bar">
+          <div className="metric-strip">
+            <div>
+              <span>Total loaded</span>
+              <strong>{items.length}</strong>
+            </div>
+            <div>
+              <span>Selected</span>
+              <strong>{selected?.key || 'None'}</strong>
+            </div>
+            <div>
+              <span>Project</span>
+              <strong>{context.projectOptions.find((project) => project.id === context.projectId)?.key || 'None'}</strong>
+            </div>
+          </div>
+          <form className="button-row wrap" onSubmit={(event) => { event.preventDefault(); loadItems(); }}>
+            <button className="primary-button" disabled={action.pending || !context.projectId} type="submit"><FiRefreshCw />Refresh</button>
+            <button className="secondary-button" disabled={!nextCursor || action.pending} onClick={() => loadItems(nextCursor)} type="button">More</button>
+          </form>
+        </div>
         <form className="stack" onSubmit={(event) => { event.preventDefault(); loadItems(); }}>
           <details className="advanced-field">
             <summary>Custom field filters</summary>
@@ -98,10 +118,6 @@ export const WorkPage = ({ context }) => {
               <TextField label="Value to" value={workQuery.customFieldValueTo} onChange={(customFieldValueTo) => setWorkQuery({ ...workQuery, customFieldValueTo })} />
             </div>
           </details>
-          <div className="button-row">
-            <button className="primary-button" disabled={action.pending || !context.projectId} type="submit"><FiRefreshCw />Refresh</button>
-            <button className="secondary-button" disabled={!nextCursor || action.pending} onClick={() => loadItems(nextCursor)} type="button">More</button>
-          </div>
         </form>
         {canCreateWorkItems && (
           <form className="stack create-strip" onSubmit={create}>
@@ -113,7 +129,7 @@ export const WorkPage = ({ context }) => {
         )}
         <ErrorLine message={action.error} />
         <div className="work-columns">
-          <ResultList items={items} titleKey="title" eyebrowKey="key" onOpen={(item) => openItem(item.id)} />
+          <ResultList items={items} titleKey="title" eyebrowKey="key" selectedId={selected?.id} onOpen={(item) => openItem(item.id)} />
           <WorkItemDetail context={context} item={selected} projectItems={items} />
         </div>
       </div>
